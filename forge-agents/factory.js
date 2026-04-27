@@ -70,27 +70,36 @@ function loadCatalog() {
       const yaml = fmMatch[1];
       const body = fmMatch[2].trim();
 
-      const entry = { file, body };
-      for (const line of yaml.split('\n')) {
-        const kv = line.match(/^(\w+):\s*(.*)/);
-        if (!kv) continue;
-        const [, key, val] = kv;
-        if (val.startsWith('[')) {
-          entry[key] = val.slice(1, -1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-        } else {
-          entry[key] = val.trim().replace(/^["']|["']$/g, '');
-        }
-      }
+      const entry = { file, body, matches: {} };
+      let currentBlock = null;
 
-      // Parse nested matches block
-      const matchesBlock = yaml.match(/matches:\n((?:\s+\w+:.*\n?)*)/);
-      if (matchesBlock) {
-        entry.matches = {};
-        for (const mline of matchesBlock[1].split('\n')) {
-          const mkv = mline.match(/^\s+(\w+):\s*\[([^\]]*)\]/);
+      for (const line of yaml.split('\n')) {
+        // Nested key under matches: block (indented with spaces)
+        if (currentBlock === 'matches' && /^\s+\w+:/.test(line)) {
+          const mkv = line.match(/^\s+(\w+):\s*\[([^\]]*)\]/);
           if (mkv) {
             entry.matches[mkv[1]] = mkv[2].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
           }
+          continue;
+        }
+
+        // Top-level key
+        const kv = line.match(/^(\w+):\s*(.*)/);
+        if (!kv) continue;
+        const [, key, val] = kv;
+
+        if (key === 'matches' && val.trim() === '') {
+          currentBlock = 'matches';
+          continue;
+        }
+        currentBlock = null;
+
+        if (val.startsWith('[')) {
+          // Inline array — handle multi-line arrays by collecting until closing bracket
+          const fullVal = val.endsWith(']') ? val : val;
+          entry[key] = fullVal.slice(1, -1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+        } else {
+          entry[key] = val.trim().replace(/^["']|["']$/g, '');
         }
       }
 
@@ -114,8 +123,8 @@ function matchCatalogAgents(analysis) {
   if (catalog.length === 0) return [];
 
   const planFiles = analysis.plan?.all_files || [];
-  const planText = (analysis.plan?.objective || '') + ' ' + (analysis.plan?.raw || '');
-  const planLower = planText.toLowerCase();
+  const objectiveText = (analysis.plan?.objective || '').toLowerCase();
+  const rawText = (analysis.plan?.raw || '').toLowerCase();
 
   // Extract signals from the plan
   const fileExtensions = new Set(planFiles.map(f => path.extname(f).toLowerCase().replace('.', '')).filter(Boolean));
@@ -129,52 +138,76 @@ function matchCatalogAgents(analysis) {
     const reasons = [];
     const m = agent.matches || {};
 
-    // Language match (from file extensions)
+    // Language match (from file extensions) — baseline signal
     const langMap = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', py: 'python', java: 'java', go: 'go', rs: 'rust', kt: 'kotlin', swift: 'swift', dart: 'dart' };
     const planLangs = new Set([...fileExtensions].map(ext => langMap[ext]).filter(Boolean));
     if (m.languages) {
       const langHits = m.languages.filter(l => planLangs.has(l));
-      if (langHits.length > 0) { score += 20 * langHits.length; reasons.push(`lang: ${langHits.join(',')}`); }
+      if (langHits.length > 0) { score += 15 * langHits.length; reasons.push(`lang: ${langHits.join(',')}`); }
     }
 
-    // Framework match (from plan text)
+    // Framework match — strong signal, 2x if found in objective
     if (m.frameworks) {
-      const fwHits = m.frameworks.filter(fw => planLower.includes(fw.toLowerCase()));
-      if (fwHits.length > 0) { score += 30 * fwHits.length; reasons.push(`fw: ${fwHits.join(',')}`); }
-    }
-
-    // File pattern match
-    if (m.file_patterns) {
-      for (const pattern of m.file_patterns) {
-        const patternParts = pattern.replace(/\*\*/g, '').replace(/\*/g, '').split('/').filter(Boolean);
-        for (const part of patternParts) {
-          if (part.startsWith('.')) {
-            if (fileExtensions.has(part.replace('.', ''))) { score += 10; reasons.push(`ext: ${part}`); break; }
-          } else if (planFiles.some(f => f.includes(part))) {
-            score += 15; reasons.push(`path: ${part}`); break;
-          }
+      for (const fw of m.frameworks) {
+        const fwLower = fw.toLowerCase();
+        if (objectiveText.includes(fwLower)) {
+          score += 40; reasons.push(`fw(obj): ${fw}`);
+        } else if (rawText.includes(fwLower)) {
+          score += 20; reasons.push(`fw: ${fw}`);
         }
       }
     }
 
-    // Capability match
+    // File pattern match — weak signal (files touched != plan intent)
+    if (m.file_patterns) {
+      let patternHits = 0;
+      for (const pattern of m.file_patterns) {
+        const patternParts = pattern.replace(/\*\*/g, '').replace(/\*/g, '').split('/').filter(Boolean);
+        for (const part of patternParts) {
+          if (part.startsWith('.')) {
+            if (fileExtensions.has(part.replace('.', ''))) { patternHits++; break; }
+          } else if (planFiles.some(f => f.includes(part))) {
+            patternHits++; break;
+          }
+        }
+      }
+      if (patternHits > 0) {
+        score += Math.min(patternHits * 5, 15);
+        reasons.push(`path: ${patternHits} hits`);
+      }
+    }
+
+    // Capability match — strong signal
     if (m.capabilities) {
       const capHits = m.capabilities.filter(c => capNames.has(c));
       if (capHits.length > 0) { score += 25 * capHits.length; reasons.push(`cap: ${capHits.join(',')}`); }
     }
 
-    // Keyword match (from plan text)
+    // Keyword match — strongest signal, 3x weight for objective matches
     if (m.keywords) {
-      const kwHits = m.keywords.filter(kw => planLower.includes(kw.toLowerCase()));
-      if (kwHits.length > 0) {
-        const kwScore = Math.min(kwHits.length * 5, 30);
+      let kwScore = 0;
+      const objHits = [];
+      const bodyHits = [];
+      for (const kw of m.keywords) {
+        const kwLower = kw.toLowerCase();
+        if (objectiveText.includes(kwLower)) {
+          kwScore += 15;
+          objHits.push(kw);
+        } else if (rawText.includes(kwLower)) {
+          kwScore += 5;
+          bodyHits.push(kw);
+        }
+      }
+      if (kwScore > 0) {
         score += kwScore;
-        if (kwHits.length <= 5) reasons.push(`kw: ${kwHits.join(',')}`);
-        else reasons.push(`kw: ${kwHits.length} matches`);
+        const parts = [];
+        if (objHits.length > 0) parts.push(`kw(obj): ${objHits.length <= 4 ? objHits.join(',') : objHits.length + ' hits'}`);
+        if (bodyHits.length > 0) parts.push(`kw: ${bodyHits.length <= 3 ? bodyHits.join(',') : bodyHits.length + ' hits'}`);
+        reasons.push(parts.join('; '));
       }
     }
 
-    // Priority weighting (higher priority agents get a small boost)
+    // Priority weighting
     score += agent.priority;
 
     if (score > 0) {
@@ -492,14 +525,17 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
     parts.push(selection.primary.body);
   }
 
-  // If secondary agents matched, include their expertise sections
+  // If secondary agents matched, include their expertise (with renamed headings to avoid collision)
   if (selection.agents.length > 1) {
     for (const agent of selection.agents.slice(1)) {
       if (agent.body) {
-        // Extract just the ## Expertise and ## Patterns sections from secondary agents
         const expertiseMatch = agent.body.match(/## Expertise[\s\S]*?(?=## Constraints|## Anti-Patterns|$)/);
         if (expertiseMatch) {
-          parts.push(`\n## Additional Domain Knowledge (${agent.name})\n${expertiseMatch[0]}`);
+          const renamed = expertiseMatch[0]
+            .replace(/^## Expertise/m, `### ${agent.name} — Expertise`)
+            .replace(/^## Patterns/m, `### ${agent.name} — Patterns`)
+            .replace(/^### (?!.*—)/gm, (h) => h.replace('### ', `#### `));
+          parts.push(`\n## Additional Domain Knowledge (${agent.name})\n${renamed}`);
         }
       }
     }
