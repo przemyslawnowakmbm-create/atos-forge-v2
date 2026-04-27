@@ -122,20 +122,6 @@ Execute all plans in a phase.
 
 Usage: `/forge-execute-phase 5`
 
-### Auto Mode
-
-**`/forge-auto`**
-Run autonomous mode — walk away and come back to built software.
-
-- Reads disk state to determine next unit of work
-- Dispatches fresh context per task (no context rot)
-- Crash recovery via lock files
-- Stuck detection (retry once, then stop)
-- Cost tracking per unit
-
-Usage: `/forge-auto`
-Usage: `/forge-auto --verbose --timeout 900`
-
 ### Quick Mode
 
 **`/forge-quick`**

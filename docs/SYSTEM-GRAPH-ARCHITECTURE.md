@@ -527,7 +527,11 @@ ${systemContext.contract_constraints.map(c => '- ' + c).join('\n')}
 `;
 ```
 
-### 7.2 Parallel Planner (`forge-agents/parallel-planner.js`)
+### 7.2 Parallel Planner — REMOVED IN V2
+
+> **V2 Note:** parallel-planner.js and forge-containers/ were removed in the V2 refactor. Execution is now sequential. Cross-repo dependency ordering is handled by the planner's `depends_on` field. The sections below are retained for historical reference.
+
+### ~~7.2 Parallel Planner (`forge-agents/parallel-planner.js`)~~
 
 **Current:** Plans waves within one repo based on file dependencies.
 

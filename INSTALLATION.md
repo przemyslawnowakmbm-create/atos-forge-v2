@@ -66,9 +66,7 @@ This copies to `~/.claude/`:
 - `forge-config/` — unified configuration and doctor/settings helpers
 - `forge-session/` — session memory (ledger, decisions, knowledge, crash-recovery, metrics)
 - `forge-verify/` — verification pipeline (9-layer engine, auto-fix loop, cache, test stubs, browser layer)
-- `forge-assess/` — task assessment (assessor, splitter with connected_component strategy)
-- `forge-agents/` — agent factory, parallel planner, output schema
-- `forge-containers/` — Docker/worktree orchestration with 3-tier timeout
+- `forge-agents/` — catalog-based agent factory, plan assessment, output schema
 - `forge-system/` — multi-repo system graph and interface validation
 - `forge-analyze/` — requirement impact analyzer
 - `hooks/` — statusline, context monitor, update checker
@@ -195,9 +193,7 @@ Removes all Forge files from `~/.claude/` but preserves your project's `.forge/`
 ├── forge-graph/                    Code graph engine
 ├── forge-session/                  Session memory
 ├── forge-verify/                   Verification pipeline
-├── forge-assess/                   Task assessment
-├── forge-agents/                   Agent factory
-├── forge-containers/               Execution isolation
+├── forge-agents/                   Catalog-based agent factory
 ├── forge-system/                   Multi-repo system graph
 ├── forge-analyze/                  Requirement impact analyzer
 ├── hooks/                          Claude Code hooks

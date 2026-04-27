@@ -7,7 +7,7 @@
 
 ## 1. Przegląd systemu
 
-Forge to AI-powered spec-driven development system działający wewnątrz Claude Code, Codex, OpenCode i Gemini. Buduje graf kodu (SQLite), zarządza pamięcią sesji, orkiestruje agentów w izolowanych kontenerach/worktree, weryfikuje wyniki 9-warstwowym pipeline, i może działać autonomicznie (auto mode).
+Forge to AI-powered spec-driven development system działający wewnątrz Claude Code, Codex, OpenCode i Gemini. Buduje graf kodu (SQLite), zarządza pamięcią sesji, orkiestruje agentów (catalog 15 specjalistów), weryfikuje wyniki 9-warstwowym pipeline, i wykonuje plany sekwencyjnie.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -16,23 +16,23 @@ Forge to AI-powered spec-driven development system działający wewnątrz Claude
 ├─────────────┬──────────────┬────────────────┬───────────────┤
 │ forge-graph │ forge-session│ forge-agents   │ forge-verify  │
 │ (SQLite DB, │ (ledger,     │ (factory,      │ (9 layers,    │
-│  call graph,│  decisions,  │  parallel-     │  auto-fix,    │
-│  dead code, │  knowledge,  │  planner,      │  cache,       │
-│  watcher)   │  metrics,    │  output-schema)│  test-stubs,  │
-│             │  crash-      │                │  browser)     │
-│             │  recovery)   │                │               │
+│  call graph,│  decisions,  │  catalog/,     │  auto-fix,    │
+│  dead code, │  knowledge,  │  plan-         │  cache,       │
+│  watcher)   │  metrics,    │  assessment,   │  test-stubs,  │
+│             │  crash-      │  cache,        │  browser)     │
+│             │  recovery)   │  output-schema)│               │
 ├─────────────┼──────────────┼────────────────┼───────────────┤
-│ forge-assess│ forge-config │ forge-containers│ forge-system │
-│ (assessor,  │ (config,     │ (Docker,       │ (multi-repo,  │
-│  splitter)  │  doctor,     │  worktree,     │  interfaces,  │
-│             │  settings)   │  resource-mgr, │  dashboard)   │
-│             │              │  3-tier timeout)│              │
+│ forge-config│ forge-system │ forge-analyze  │ atos-forge/bin│
+│ (config,    │ (multi-repo, │ (impact        │ (forge-tools  │
+│  doctor,    │  interfaces, │  analyzer)     │  + 21 lib/    │
+│  settings)  │  dashboard)  │                │  modules)     │
 ├─────────────┼──────────────┼────────────────┼───────────────┤
-│ forge-auto  │ forge-       │ atos-forge/bin │ hooks/        │
-│ (state      │  analyze     │ (forge-tools   │ (statusline,  │
-│  machine,   │ (impact      │  + 21 lib/     │  context-     │
-│  dispatcher,│  analyzer)   │  modules)      │  monitor,     │
-│  auto mode) │              │                │  check-update)│
+│ hooks/      │ skills/      │ agents/        │ tests/        │
+│ (statusline,│ (41 forge    │ (11 agent      │ (112 tests)   │
+│  context-   │  skills)     │  definitions)  │               │
+│  monitor,   │              │                │               │
+│  check-     │              │                │               │
+│  update)    │              │                │               │
 └─────────────┴──────────────┴────────────────┴───────────────┘
 ```
 
@@ -93,12 +93,14 @@ dead_code                                  — symbols with 0 callers (symbol_id
 
 | Plik | Opis |
 |------|------|
-| `factory.js` | 7-step pipeline: analyze → archetype → prompt (grounding, directives, conventions, locked decisions, previous findings) → context (3-level compression) → verify → container → session |
+| `factory.js` | Catalog-based selector + injector: analyze → select specialist → prompt (grounding, directives, conventions, locked decisions, previous findings) → context (3-level compression) → verify → session |
+| `catalog/` | 15 specialist agent definitions (prompt templates, capabilities, constraints) |
+| `plan-assessment.js` | Context overflow detection (moved from forge-assess/assessor.js) |
 | `cache.js` | Agent cache: persist built configs to `.forge/agents/`, SHA-256 keyed, staleness detection, registry |
-| `parallel-planner.js` | DAG scheduling, bin-packing into waves |
 | `agent-output-schema.js` | Structured JSON output: findings, decisions, confidence |
 
 **Factory intelligence (all implemented):**
+- Catalog-based specialist selection (15 agents, no archetypes)
 - Decision Registry integration (decisions.db → agent prompt)
 - Mechanical directives injection (`agent-directives.md` → system prompt)
 - Fact-Grounding (graph exports/signatures → "Grounded Facts" section)
@@ -108,7 +110,7 @@ dead_code                                  — symbols with 0 callers (symbol_id
 - Agent Memory Chain (previous findings → "Previous Agent Findings" section)
 - Structured output instruction (json:agent-output block)
 - Test stub inclusion (always_load test stubs for RED→GREEN)
-- Agent Cache (SHA-256 keyed, auto-save/load, staleness detection, `--skip-cache` for wave-to-wave)
+- Agent Cache (SHA-256 keyed, auto-save/load, staleness detection)
 
 ### 2.4 forge-verify/ — Verification Pipeline
 
@@ -132,61 +134,20 @@ dead_code                                  — symbols with 0 callers (symbol_id
 8. ARCHITECTURAL (optional) — LLM-based architecture review
 9. BROWSER (optional, disabled by default) — Playwright e2e tests
 
-### 2.5 forge-assess/ — Task Assessment & Splitting
-
-| Plik | Opis |
-|------|------|
-| `assessor.js` | Context overflow detection (INTERFACE-level token estimation) |
-| `splitter.js` | 4 strategies: connected_component → module → concern → file |
-
-### 2.6 forge-containers/ — Execution Isolation
-
-| Plik | Opis |
-|------|------|
-| `orchestrator.js` | Docker lifecycle + agent output parsing + 3-tier timeout supervision |
-| `worktree-orchestrator.js` | Docker-free fallback via git worktrees + 3-tier timeout |
-| `config.js` | Resource detection (CPU, RAM, max_concurrent) |
-| `resource-manager.js` | Semaphore + slot management |
-| `container-spec.js` | Image selection (node/python/full) |
-| `agent-entrypoint.js` | Container entrypoint |
-| `agent-verifier.js` | Lightweight container verifier |
-| `patch-collector.js` | git apply --3way |
-
-**Timeout supervision (3-tier):**
-- Soft: warning at 70% of hard timeout
-- Idle: kill if no git changes for 5 minutes
-- Hard: existing kill mechanism
-
-### 2.7 forge-auto/ — Auto Mode
-
-| Plik | Opis |
-|------|------|
-| `auto.js` | Main loop: read disk state → determine next → dispatch → repeat. Crash-safe, stuck detection. |
-| `state-machine.js` | Phase transitions: IDLE → RESEARCH → PLAN → EXECUTE → VERIFY → COMPLETE → REASSESS |
-| `dispatcher.js` | Fresh session dispatch via `claude --print` with pre-inlined context |
-
-**Auto mode features:**
-- Fresh context per unit (zero context rot)
-- Disk-driven (reads .forge/ + .planning/ — zero in-memory state)
-- Crash-safe (writeLock per unit, clearLock after)
-- Cost tracking (metrics.js per unit)
-- Stuck detection (same unit 2x → retry once → stop)
-- Command: `/forge-auto`
-
-### 2.8 forge-system/ — Multi-Repo System Graph
+### 2.5 forge-system/ — Multi-Repo System Graph
 
 builder.js, query.js, schema.sql, detect.js, validate.js, sync.js, system-init.js, dashboard.js.
 System-level SQLite (system-graph.db): services, interfaces, dependencies, teams, sync_log, service_metrics.
 
-### 2.9 forge-config/ — Configuration
+### 2.6 forge-config/ — Configuration
 
-config.js (unified, 13 schema sections), doctor.js (18 health checks incl. crash lock), settings.js.
+config.js (unified, 11 schema sections), doctor.js (health checks incl. crash lock), settings.js.
 
-### 2.10 forge-analyze/ — Requirement Impact Analyzer
+### 2.7 forge-analyze/ — Requirement Impact Analyzer
 
 analyzer.js: keyword extraction → interface search → impact analysis → scope detection.
 
-### 2.11 atos-forge/ — CLI & Workflows
+### 2.8 atos-forge/ — CLI & Workflows
 
 - `bin/forge-tools.cjs` — 709L thin dispatcher
 - `bin/lib/` — 22 modułów CJS
@@ -194,21 +155,21 @@ analyzer.js: keyword extraction → interface search → impact analysis → sco
 - `templates/` — plan/summary/config templates
 - `references/` — 11 reference docs (incl. `agent-directives.md` — shared directive text for installed skills and spawned agents; mirrored in `CLAUDE.md` when working inside the FDP repo)
 
-### 2.12 hooks/
+### 2.9 hooks/
 
 - `forge-statusline.js` — model, task, context bar + bridge file for monitor
 - `forge-context-monitor.js` — PostToolUse: WARNING at 35%, CRITICAL at 25%
 - `forge-check-update.js` — background update check
 
-### 2.13 skills/
+### 2.10 skills/
 
 41 Forge skills, including project workflows (`forge-new-project`, `forge-plan-phase`, `forge-execute-phase`), graph utilities (`forge-graph-status`, `forge-graph-overview`, `forge-graph-show`, `forge-graph-hotspots`, `forge-graph-cycles`, `forge-graph-capabilities`, `forge-graph-visualize`), and health/config helpers (`forge-doctor`, `forge-health`, `forge-settings`).
 
-### 2.14 agents/
+### 2.11 agents/
 
 11 agents: executor, planner, verifier, debugger, plan-checker, codebase-mapper, research-synthesizer, phase-researcher, project-researcher, roadmapper, integration-checker.
 
-### 2.15 tests/
+### 2.12 tests/
 
 5 test files (helpers.cjs, core.test.cjs, frontmatter.test.cjs, misc.test.cjs, agent-cache.test.cjs) + 1 CLI test (forge-tools.test.cjs). Total: 112 testów.
 
@@ -222,26 +183,27 @@ analyzer.js: keyword extraction → interface search → impact analysis → sco
 | 2 | Fact-Grounding (graph→prompt) | forge-agents/factory.js | DONE |
 | 3 | Plan-Lock (locked_decisions) | factory.js + engine.js + planner + frontmatter | DONE |
 | 4 | Test-First Pipeline (RED→GREEN) | forge-verify/test-stub-generator.js | DONE |
-| 5 | Context Compression (3-level) | forge-agents/factory.js + assessor.js | DONE |
+| 5 | Context Compression (3-level) | forge-agents/factory.js + plan-assessment.js | DONE |
 | 6 | Incremental Verification | forge-verify/engine.js + loop.js | DONE |
 | 7 | Agent Memory Chain (structured JSON) | agent-output-schema.js + orchestrators | DONE |
-| 8 | Smart Splitting (connected components) | forge-assess/splitter.js | DONE |
+| 8 | Plan Assessment (context fit) | forge-agents/plan-assessment.js | DONE |
 | 9 | Execution Cache | forge-verify/cache.js | DONE |
 | 10 | Convention Detector | forge-graph/convention-detector.js | DONE |
 | 11 | Agent Cache (persist + reuse) | forge-agents/cache.js + factory.js | DONE |
 
 ---
 
-## 4. GSD-2 Features — zaimplementowane
+## 4. Additional Features — zaimplementowane
 
 | # | Feature | Plik | Status |
 |---|---------|------|--------|
 | 4.1 | Crash Recovery | forge-session/crash-recovery.js + doctor.js + workflows | DONE |
-| 4.2 | Auto Mode (state machine) | forge-auto/ (3 pliki) + command + workflow | DONE |
-| 4.3 | Timeout Supervision (3-tier) | orchestrator.js + worktree-orchestrator.js | DONE |
-| 4.4 | Cost/Token Tracking | forge-session/metrics.js + dashboard Cost tab | DONE |
-| 4.5 | Roadmap Reassessment | atos-forge/workflows/reassess-roadmap.md + command | DONE |
-| 4.6 | Browser Layer 9 (Playwright) | forge-verify/browser-layer.js + engine.js | DONE |
+| 4.2 | Cost/Token Tracking | forge-session/metrics.js + dashboard Cost tab | DONE |
+| 4.3 | Roadmap Reassessment | atos-forge/workflows/reassess-roadmap.md + command | DONE |
+| 4.4 | Browser Layer 9 (Playwright) | forge-verify/browser-layer.js + engine.js | DONE |
+| 4.5 | Catalog-Based Agent Factory | forge-agents/factory.js + catalog/ (15 specialists) | DONE |
+| 4.6 | Requirements Validator CLI | requirements validate command | DONE |
+| 4.7 | Plan-Checker (10 dimensions) | plan-checker agent + Research Alignment | DONE |
 
 ---
 
@@ -266,15 +228,14 @@ analyzer.js: keyword extraction → interface search → impact analysis → sco
 | Runtime | Node.js CJS | Ten sam runtime co Claude Code, zero Python dependency |
 | Graph model | Relacyjny (SQL) + custom BFS/DFS | Prostsze niż Cypher, wystarczające dla import/call graphs |
 | Parser | Tree-sitter (JS bindings) | Multi-language, AST-level accuracy |
-| Agent isolation | Docker / git worktree | Full filesystem isolation, parallel execution |
+| Agent execution | Sequential via Claude CLI | Simpler, reliable, knowledge propagation between plans |
 | Session memory | Markdown ledger + SQLite decisions | Ledger for readability, SQLite for queryability |
 | Verification | 9-layer fail-fast | Independent layers, toggleable, auto-fix loop |
 | Context injection | Pre-inline (3-level) | FULL/INTERFACE/SUMMARY — 40-60% token savings |
 | Anti-hallucination | Fact-grounding from graph | Verified exports/signatures in prompt |
 | Air-gapped | TAK | Only Claude Code itself needs network |
 | CGC integration | NIE (SQLite + own extensions) | Avoids Python dep, preserves sync queries, custom tables |
-| GSD-2 integration | Selective feature port | Auto mode, crash recovery, cost tracking, timeouts, browser |
-| Auto mode | claude --print per unit | Fresh context, disk-driven state, crash-safe |
+| Agent selection | Catalog-based (15 specialists) | Better than archetype heuristic, extensible, domain-specific prompts |
 
 ---
 
@@ -285,10 +246,10 @@ analyzer.js: keyword extraction → interface search → impact analysis → sco
 - [x] 2-FDP: Monolith split (6554→709L, 21 modules), tests (101), /forge-validate-phase, --repair
 - [x] 3-FDP: Rebrand "Atos"→"Forge" (~70 files), Exo font→system fonts, dead code cleanup (16 files)
 - [x] Intelligence Upgrade: 11 optimization points (decisions.db, grounding, plan-lock, test-first, compression, incremental verify, memory chain, smart split, cache, conventions, agent cache)
-- [x] Architecture Roadmap: GSD-2 features (crash recovery, auto mode, timeouts, metrics, reassessment, browser L9) + graph extensions (call_graph, class_hierarchy, dead_code, watcher, dashboard tabs)
+- [x] Architecture Roadmap: features (crash recovery, metrics, reassessment, browser L9) + graph extensions (call_graph, class_hierarchy, dead_code, watcher, dashboard tabs)
+- [x] V2 Simplification: removed forge-containers, forge-auto, forge-assess (splitter), parallel-planner; catalog-based agent factory, sequential execution, requirements validator, 10-dimension plan-checker
 
 ### Przyszłe możliwości
-- [ ] Enhanced auto mode: integration z factory.js agent configs (grounding, conventions w dispatched sessions)
 - [ ] Enhanced complexity analysis: cyclomatic per function (not just file-level)
 - [ ] Skill discovery system: auto-detect domain → load domain-specific skills
 - [ ] Multi-provider support: abstract claude --print za provider interface (OpenAI, Gemini, local)
@@ -333,7 +294,7 @@ Copies Forge components into the selected runtime configuration directory. Calle
 - Codex: `~/.codex/skills/` from `.codex/skills/` plus runtime-adapted `~/.codex/agents/` and hooks
 - OpenCode: flattened `command/forge-*.md` commands generated from the same skill sources
 - `atos-forge/` — CLI, workflows, templates, references
-- `forge-graph/`, `forge-config/`, `forge-session/`, `forge-verify/`, `forge-assess/`, `forge-agents/`, `forge-containers/`, `forge-system/`, `forge-analyze/` — engine modules
+- `forge-graph/`, `forge-config/`, `forge-session/`, `forge-verify/`, `forge-agents/`, `forge-system/`, `forge-analyze/` — engine modules
 - `hooks/` — statusline, context-monitor, check-update (with PostToolUse/SessionStart config)
 - Runtime settings / hooks config — updated with hook registrations where supported
 
@@ -351,7 +312,7 @@ Step-by-step guide covering: quick install, what each step does, installation mo
 ## 9. Inwentarz plików
 
 ```
-FDP Root (59 JS/CJS modules | 41 skills | 34 workflows | 11 agents | 3 hooks | 112 tests)
+Forge Root (41 skills | 34 workflows | 11 agents | 3 hooks | 112 tests)
 ├── atos-forge/                    CLI entry point
 │   ├── bin/forge-tools.cjs        709L thin dispatcher
 │   ├── bin/lib/                   21 CJS modules
@@ -374,9 +335,10 @@ FDP Root (59 JS/CJS modules | 41 skills | 34 workflows | 11 agents | 3 hooks | 1
 │   ├── crash-recovery.js          Lock files + PID detection + recovery briefing
 │   └── metrics.js                 Per-unit token/cost tracking + budget ceiling
 ├── forge-agents/                  Agent Orchestration
-│   ├── factory.js                 Agent builder (grounding, conventions, compression, plan-lock)
+│   ├── factory.js                 Catalog-based selector + injector
+│   ├── catalog/                   15 specialist agent definitions
+│   ├── plan-assessment.js         Context overflow detection (from forge-assess)
 │   ├── cache.js                   Agent cache (SHA-256 keyed, .forge/agents/, registry)
-│   ├── parallel-planner.js        DAG scheduling + bin-packing
 │   └── agent-output-schema.js     Structured JSON output parsing
 ├── forge-verify/                  Verification Pipeline
 │   ├── engine.js                  9-layer fail-fast + incremental + cache
@@ -385,21 +347,10 @@ FDP Root (59 JS/CJS modules | 41 skills | 34 workflows | 11 agents | 3 hooks | 1
 │   ├── cache.js                   Content-addressed verification cache
 │   ├── test-stub-generator.js     RED→GREEN test stubs from plan
 │   └── browser-layer.js           Optional Layer 9: Playwright e2e
-├── forge-assess/                  Task Assessment
-│   ├── assessor.js                Context overflow detection
-│   └── splitter.js                4-strategy splitting (connected_component first)
-├── forge-containers/              Execution Isolation
-│   ├── orchestrator.js            Docker lifecycle + 3-tier timeout
-│   ├── worktree-orchestrator.js   Git worktree fallback + 3-tier timeout
-│   └── config.js, resource-manager.js, container-spec.js, agent-*.js, patch-collector.js
-├── forge-auto/                    Auto Mode
-│   ├── auto.js                    Main loop (crash-safe, stuck detection)
-│   ├── state-machine.js           Phase transitions (IDLE→RESEARCH→PLAN→EXECUTE→VERIFY→COMPLETE)
-│   └── dispatcher.js              Fresh session dispatch via claude --print
 ├── forge-system/                  Multi-Repo System Graph
 │   └── builder.js, query.js, schema.sql, detect.js, validate.js, sync.js, system-init.js, dashboard.js
 ├── forge-config/                  Configuration
-│   └── config.js (13 sections), doctor.js (18 checks), settings.js
+│   └── config.js (11 sections), doctor.js, settings.js
 ├── forge-analyze/                 Impact Analyzer
 │   └── analyzer.js
 ├── skills/                       41 forge skills (forge-*/SKILL.md)

@@ -8,12 +8,12 @@
  *
  * Exports:
  *   loadConfig(cwd)          — merged config + source info
- *   resolveEffective(cwd)    — merged + system detection (resolved container limits)
+ *   resolveEffective(cwd)    — merged + system detection
  *   getDefault()             — fresh copy of defaults
  *   validate(config)         — schema validation
  *   saveProjectConfig(cwd, c) — write .forge/config.json
  *   getVerification(cwd)     — backward-compat shape for engine.js / loop.js
- *   getContainers(cwd)       — backward-compat shape for containers/config.js
+ *   getContainers(cwd)       — deprecated, returns empty object
  *   getExecution(cwd)        — backward-compat shape for assessor.js
  *   getLegacyToolsConfig(cwd) — backward-compat flat shape for forge-tools.cjs
  */
@@ -44,7 +44,6 @@ const DEFAULTS = {
   },
   execution: {
     mode: 'interactive',
-    container_backend: 'worktree',
     context_budget: 200000,
     safety_margin: 0.20,
     assessment_threshold: 0.80,
@@ -54,21 +53,6 @@ const DEFAULTS = {
     min_action_budget: 15000,
     chars_per_token: 4,
     budget_ceiling_usd: null,
-  },
-  containers: {
-    max_concurrent: 'auto',
-    max_memory_per_container: '2g',
-    max_cpu_per_container: 1.0,
-    max_total_memory: 'auto',
-    max_total_cpu: 'auto',
-    timeout_seconds: 600,
-    network_access: false,
-    cleanup_on_exit: true,
-    image_prefix: 'forge-agent',
-    worktree_base: path.join(os.tmpdir(), 'forge-worktrees'),
-    output_base: path.join(os.tmpdir(), 'forge-output'),
-    cleanup_on_success: true,
-    cleanup_on_failure: false,
   },
   agents: {
     factory_enabled: true,
@@ -292,35 +276,6 @@ function resolveEffective(cwd) {
   const totalCores = os.cpus().length;
   const totalMemBytes = os.totalmem();
 
-  const memPerContainer = parseMemoryString(config.containers.max_memory_per_container);
-  const cpuPerContainer = config.containers.max_cpu_per_container;
-
-  const maxTotalMemory = config.containers.max_total_memory === 'auto'
-    ? Math.floor(totalMemBytes * 0.7)
-    : parseMemoryString(config.containers.max_total_memory);
-  const maxTotalCpu = config.containers.max_total_cpu === 'auto'
-    ? Math.max(1, totalCores - 2)
-    : parseFloat(config.containers.max_total_cpu);
-
-  let maxConcurrent;
-  if (config.containers.max_concurrent === 'auto') {
-    const byMemory = Math.floor(maxTotalMemory / memPerContainer);
-    const byCpu = Math.floor(maxTotalCpu / cpuPerContainer);
-    maxConcurrent = Math.min(byMemory, byCpu);
-    maxConcurrent = Math.max(1, Math.min(8, maxConcurrent));
-  } else {
-    maxConcurrent = Math.max(1, Math.min(8, parseInt(config.containers.max_concurrent) || 1));
-  }
-
-  config.containers._resolved = {
-    max_concurrent: maxConcurrent,
-    max_memory_per_container_bytes: memPerContainer,
-    max_memory_per_container_str: formatMemory(memPerContainer),
-    max_total_memory_bytes: maxTotalMemory,
-    max_total_memory_str: formatMemory(maxTotalMemory),
-    max_total_cpu: maxTotalCpu,
-  };
-
   config._system = {
     total_cores: totalCores,
     total_memory_bytes: totalMemBytes,
@@ -348,8 +303,6 @@ function validate(config) {
     ['execution.safety_margin', config.execution?.safety_margin, v => v >= 0 && v <= 1],
     ['execution.context_budget', config.execution?.context_budget, v => v > 0],
     ['execution.max_fix_loops', config.execution?.max_fix_loops, v => v >= 0 && v <= 20],
-    ['containers.timeout_seconds', config.containers?.timeout_seconds, v => v > 0],
-    ['containers.max_cpu_per_container', config.containers?.max_cpu_per_container, v => v > 0],
     ['verification.max_fix_loops', config.verification?.max_fix_loops, v => v >= 0 && v <= 20],
     ['verification.test_timeout', config.verification?.test_timeout, v => v > 0],
     ['session.ledger_max_tokens', config.session?.ledger_max_tokens, v => v > 0],
@@ -371,7 +324,6 @@ function validate(config) {
 
   const enumChecks = [
     ['execution.mode', config.execution?.mode, ['interactive', 'autonomous', 'supervised']],
-    ['execution.container_backend', config.execution?.container_backend, ['docker', 'worktree']],
     ['agents.provider', config.agents?.provider, ['auto', 'claude', 'codex']],
     ['agents.active_profile', config.agents?.active_profile, ['quality', 'balanced', 'budget']],
     ['agents.default_archetype', config.agents?.default_archetype, ['specialist', 'integrator', 'careful', 'general']],
@@ -417,14 +369,6 @@ function validate(config) {
     }
     if (config.system.ignore_repos && !Array.isArray(config.system.ignore_repos)) {
       errors.push('system.ignore_repos: expected array');
-    }
-  }
-
-  // Validate containers.max_concurrent: must be 'auto' or a positive integer
-  const mc = config.containers?.max_concurrent;
-  if (mc !== undefined && mc !== null && mc !== 'auto') {
-    if (typeof mc !== 'number' || mc < 1 || !Number.isInteger(mc)) {
-      errors.push(`containers.max_concurrent: must be 'auto' or a positive integer, got ${mc}`);
     }
   }
 
@@ -484,11 +428,10 @@ function getVerification(cwd) {
 }
 
 /**
- * Get containers config matching old loadContainerConfig shape.
+ * @deprecated Containers module removed in V2. Returns empty object for backward compatibility.
  */
 function getContainers(cwd) {
-  const { config } = loadConfig(cwd);
-  return { ...config.containers };
+  return {};
 }
 
 /**

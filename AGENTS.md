@@ -1,16 +1,16 @@
 # Forge — Agent Instructions
 
 ## Module Layout & Path Resolution
-Forge consists of `atos-forge/` (CLI entry point) and 9 sibling engine modules:
+Forge consists of `atos-forge/` (CLI entry point) and 6 sibling engine modules:
   forge-graph/, forge-config/, forge-session/, forge-verify/,
-  forge-assess/, forge-agents/, forge-containers/, forge-system/, forge-analyze/
+  forge-agents/, forge-system/, forge-analyze/
 
 All modules must be siblings under the same parent directory (the "forge root").
 `forge-tools.cjs` resolves the forge root via `getForgeRoot()`:
 1. `FORGE_HOME` env var (if set)
 2. Default: 2 levels up from `atos-forge/bin/forge-tools.cjs`
 
-The installer (`bin/install.js`) copies all 10 directories to the target config dir.
+The installer (`bin/install.js`) copies all 7 directories to the target config dir.
 
 ## Code Graph
 Before modifying any file, query the code graph for context:
@@ -142,112 +142,62 @@ Configuration in .forge/config.json (impact_analysis section):
 
 Programmatic: require('forge-analyze/analyzer').{analyzeRequirement, extractKeywords, resolveSystemDb, generateImpactMarkdown, writeImpact, findImpactFile}
 
-## Task Assessment & Splitting
-When a plan overflows context, use the assessor + splitter pipeline:
-  node forge-assess/assessor.js <plan-file> --root .    — Detect overflow, recommend strategy
-  node forge-assess/splitter.js <plan-file> --root .    — Split into context-fitting sub-plans
-  node forge-assess/splitter.js --test --root .         — Run pipeline self-test
+## Task Assessment
+When a plan overflows context, use the plan assessor:
+  node forge-agents/plan-assessment.js <plan-file> --root .    — Detect overflow, recommend strategy
 
-Strategies: module (by module boundaries), concern (schema→impl→test→config), file (by symbols).
-Cascading fallback: if a group still exceeds budget, it subdivides further (concern→file→symbol).
-Each sub-plan includes graph_context and session_context loading instructions.
+Context overflow detection uses INTERFACE-level token estimation.
 
 Configuration in .forge/config.json or .planning/config.json (execution section):
   context_budget (default 200000), assessment_threshold (default 0.80),
   safety_margin (default 0.20), auto_split, max_fix_loops, overhead_per_subtask.
 
 ## Execution Pipeline
-The execute-phase workflow (atos-forge/workflows/execute-phase.md) runs the full pipeline:
+The execute-phase workflow (atos-forge/workflows/execute-phase.md) runs the sequential pipeline:
 
-1. **Load plans** — discover incomplete plans, filter by wave/gaps
-2. **Assess & split** — assessor checks context fit, splitter breaks oversized plans
-3. **Create agents** — factory builds specialized configs (archetype, prompt, context, verification)
-4. **Plan parallel** — planner produces resource-aware execution waves (DAG + bin-packing)
-5. **Execute waves** — per wave:
-   a. Launch containers (or Task subagents in worktree fallback)
-   b. Collect patches → apply via git apply --3way
-   c. Quick verify (tsc, lint) → revert + fix-agent if failed (up to max_fix_loops)
+1. **Load plans** — discover incomplete plans, order by dependencies
+2. **Assess** — plan-assessment checks context fit
+3. **Create agents** — factory selects specialist from catalog, injects context
+4. **Execute sequentially** — for each plan:
+   a. Build agent config via catalog-based factory
+   b. Execute plan
+   c. Quick verify (tsc, lint) → fix if failed (up to max_fix_loops)
    d. Update graph incrementally, save snapshot
-   e. Write agent learnings to ledger (logWarning, logDiscovery, logWaveComplete)
-   f. Re-build remaining agents with updated ledger (knowledge propagation)
-6. **Full verification** — TypeScript, tests, lint, build, phase goal check
-7. **Commit** with agent metadata: "feat(module): desc [forge:archetype]"
-8. **Cleanup** — containers, worktrees, temp files, final graph update
-9. **Log completion** — ledger update, archive on phase complete
+   e. Write agent learnings to ledger (logWarning, logDiscovery)
+5. **Full verification** — TypeScript, tests, lint, build, phase goal check
+6. **Commit** with agent metadata
+7. **Cleanup** — temp files, final graph update
+8. **Log completion** — ledger update, archive on phase complete
 
-Knowledge propagation: Wave N warnings → ledger → Wave N+1 session_context → agents avoid pitfalls.
-Execution modes: container (Docker), worktree (no Docker fallback), weak machine (sequential).
-16 workflow steps, 15 modules consumed, 9 structural sections.
+Knowledge propagation: Plan N warnings → ledger → Plan N+1 session_context → agents avoid pitfalls.
 
-## Ephemeral Containers
-Containerized agent execution for isolated, parallel sub-plan work.
-
-CLI commands (all return JSON when relevant):
-  node forge-containers/orchestrator.js status [--root .] [--json]  — Docker + resource status
-  node forge-containers/orchestrator.js check-docker                — Docker availability (JSON)
-  node forge-containers/orchestrator.js resources [--root .]        — System resources (JSON)
-  node forge-containers/orchestrator.js ensure-image [template] [--root .] [--force]  — Build/verify agent image
-  node forge-containers/orchestrator.js launch-wave <config.json> --root .  — Launch container wave
-  node forge-containers/orchestrator.js build <template> [--force]  — Build image (node|python|full)
-  node forge-containers/orchestrator.js cleanup [--json]            — Remove stopped containers
-
-Container mode requires: execution.container_backend = "docker" in .forge/config.json AND Docker available.
-Default is "worktree" (Task subagent fallback). Set via: forge-tools settings set execution.container_backend docker
-
-launch-wave config.json format:
-  { "tasks": [{ "taskId": "...", "agentConfig": {...} }], "applyPatches": true }
-
-Lifecycle: acquire slot → git worktree → build spec → run container → collect patches → log learnings → cleanup.
-Resource limits in .forge/config.json (containers section): max_concurrent, max_memory_per_container, timeout_seconds.
-Auto-detection: max_concurrent = min(floor((cores-2)/cpu), floor((ram*0.7)/mem)), hard cap 8.
-Patches collected from /output/patches/, applied via git apply --3way.
-Agent warnings/discoveries written to session ledger on collection.
-
-Container entrypoints (baked into Docker images):
-  agent-entrypoint.js — Full agent: reads agent.json, copies repo, applies previous patches,
-    builds system prompt with session context, invokes the LLM subprocess, captures git diff as patch.
-  agent-verifier.js — Lightweight: applies patches, runs verification steps (tsc, tests, lint),
-    reports pass/fail. Auto-detects checks or uses explicit verification_steps from config.
-
-## Worktree Orchestrator (Docker-free fallback)
-Drop-in replacement when Docker is unavailable:
-  node forge-containers/worktree-orchestrator.js status  [--root .]  — LLM CLI + resource status
-  node forge-containers/worktree-orchestrator.js cleanup [--root .]  — Remove orphan worktrees
-  node forge-containers/worktree-orchestrator.js detect  [--root .]  — Auto-detect execution mode
-
-Same interface as Docker orchestrator: launch(), launchAll(), cleanup().
-Lifecycle: acquire slot → git worktree → write agent config + graph DB + ledger → LLM subprocess
-  (codex or OpenAI API call) → git diff as patch → apply to main repo → log learnings.
-Parallelism: Promise pool via ResourceManager semaphore (same concurrency limits).
-Auto-detection: `autoDetect(cwd)` returns { mode: 'container'|'worktree'|'none', orchestrator, reason }.
-
-## Dynamic Agent Factory
-Builds specialized agent configurations from sub-plans:
-  node forge-agents/factory.js analyze <plan-file> --root .  — Show archetype, risk, context, verification
+## Dynamic Agent Factory (Catalog-Based)
+Selects specialist agents from the catalog and injects context:
+  node forge-agents/factory.js analyze <plan-file> --root .  — Show selected agent, risk, context, verification
   node forge-agents/factory.js build <plan-file> --root .    — Output full agent config as JSON
   node forge-agents/factory.js build-all <dir> --root .      — Build configs for all .md plans in directory
 
-7-step pipeline:
+The factory uses a catalog of 15 specialist agents (`forge-agents/catalog/`) instead of the
+old archetype system. It analyzes each plan, selects the best-matching specialist, and injects
+graph context, session context, and verification steps.
+
+Pipeline:
 1. Analyze task — graph context (getContextForTask), capabilities, risk, ledger state,
    **system graph context** (cross-repo exports, consumers, imports via FORGE_SYSTEM_GRAPH_PATH or FORGE_SYSTEM_GRAPH env or .forge/system-graph.db)
    For multi-repo plans with `service:` in frontmatter, uses frontmatter service (not CWD) for system graph lookup
-2. Determine archetype — specialist (single module + strong cap), integrator (3+ modules),
-   careful (high/critical risk), general (fallback)
-3. Compose system prompt — base executor + archetype behavior + capability agent_context + session context
+2. Select specialist — match plan to best catalog agent (15 specialists available)
+3. Compose system prompt — specialist prompt + capability agent_context + session context
    + **Cross-Repo Context section** (exported interfaces, consumer warnings, imported dependencies)
 4. Compose context package — always_load (plan + task files), task_specific (deps, consumers, tests),
    reference (interfaces, **neighbor interfaces.yaml**). Token budget: 70% of context window.
 5. Define verification — plan verify fields + capability-mapped checks (typescript, npm_test, etc.)
-6. Define container spec — image auto-selection (node/python/full), resource config
-7. Extract session context — decisions, warnings, preferences, rejected approaches from ledger
+6. Extract session context — decisions, warnings, preferences, rejected approaches from ledger
    + **persistent knowledge_base** from knowledge.js (filtered by module relevance)
 
-Cross-repo agent awareness (Phase 4):
+Cross-repo agent awareness:
 - Agents receive system_context in config: service_id, exports, consumers, imports, system_db_path
 - System prompt includes "Do NOT change exported interfaces without coordination" when consumers exist
 - Neighbor interfaces.yaml files loaded as reference context
-- Container spec mounts system-graph.db at /graph/system-graph.db (FORGE_SYSTEM_GRAPH_PATH env)
-- Worktree orchestrator copies system-graph.db + neighbor interfaces to agent worktree
 
 Agent Cache — built agents persist to `.forge/agents/` for reuse:
   node atos-forge/bin/forge-tools.cjs agents list              — List cached agents with staleness
@@ -266,27 +216,6 @@ Programmatic: require('forge-agents/cache').{loadCached, saveToCache, listAgents
 Factory: require('forge-agents/factory').buildAgentConfig(planPath, cwd, opts)
   opts.skipCache = true → bypass cache (used for wave-to-wave rebuilds)
 Returns: { agentConfig, containerParams, analysis, _fromCache? }
-
-## Parallel Execution Planner
-Schedules agent execution in resource-aware waves:
-  node forge-agents/parallel-planner.js plan <dir> --root .       — Plan from .md plans directory
-  node forge-agents/parallel-planner.js dry-run <dir> --root .    — Plan without ledger write
-  node forge-agents/parallel-planner.js plan-configs <json> --root . — Plan from pre-built JSON
-
-Algorithm:
-1. Build dependency DAG from agentConfig.plan_meta.frontmatter.depends_on
-   + **cross-repo edges** from system graph (provider changes before consumer updates)
-2. Topological sort (Kahn's) → independent groups (waves)
-3. Per wave, bin-pack respecting: max_concurrent, max_total_memory, max_total_cpu
-4. If wave exceeds limits → split into sub-waves
-5. Output ordered waves with resource allocation + time estimates
-
-Fuzzy dependency matching: `depends_on: [PLAN-auth-service]` resolves to `04-PLAN-auth-service` via suffix/service-id matching.
-Detects cycles. Logs plan to session ledger (waves_planned, total_agents, estimated_duration).
-Archetype time estimates: specialist 2-5min, integrator 4-8min, careful 5-10min, general 3-6min.
-
-Programmatic: require('forge-agents/parallel-planner').planExecution(factoryResults, cwd, opts)
-Returns: { waves[], summary, resources, dependencies }
 
 ## 8-Layer Verification Engine
 Graph-aware, fail-fast verification pipeline:
@@ -354,10 +283,6 @@ Loop prevention:
 Fix agents receive session_context from ledger (warnings, decisions, rejected approaches).
 Each fix attempt logged: ledger.logError({ error, fix_applied, auto_fixed: true, fix_loop: N }).
 
-Wave integration:
-- verifyAfterWave(opts) — lighter check (layers 1-4), max 2 loops, after each wave
-- verifyFull(opts) — all 6 layers, max 3 loops, after all waves complete
-
 Programmatic: require('forge-verify/loop').verifyLoop({ cwd, files, maxLoops, commit, ... })
 Returns: { overall, loops[], fix_summary[], graph_diff, learnings[], escalated, escalation_reason }
 
@@ -368,12 +293,11 @@ Single source of truth for all Forge configuration:
 Merge order: defaults ← ~/.forge/config.json (global) ← .forge/config.json (project).
 Deep merge: objects merged recursively, arrays replaced, nulls preserved.
 
-Schema sections (12 primary + 4 legacy):
+Schema sections (11 primary + 4 legacy):
 - project: { name, description }
 - graph: { enabled, auto_update, languages, ignore_patterns, module_detection, capability_detection, dashboard_auto_regenerate, snapshot_retention }
-- execution: { mode, container_backend, context_budget, assessment_threshold, auto_split, max_fix_loops, ... }
-- containers: { max_concurrent, max_memory_per_container, max_cpu_per_container, timeout_seconds, network_access, cleanup_on_exit, image_prefix }
-- agents: { factory_enabled, default_archetype, model_profiles: { quality, balanced, budget }, active_profile }
+- execution: { mode, context_budget, assessment_threshold, auto_split, max_fix_loops, ... }
+- agents: { factory_enabled, model_profiles: { quality, balanced, budget }, active_profile }
 - verification: { layers: { structural, type_check, interface_contracts, dependency_analysis, tests, behavioral, contract, architectural }, auto_fix, test_command, type_check_command }
 - knowledge: { enabled, auto_promote, max_entries, promote_severity_threshold }
 - impact_analysis: { enabled, auto_detect, max_depth, scope_threshold }
@@ -385,13 +309,12 @@ Schema sections (12 primary + 4 legacy):
 
 Key functions:
   loadConfig(cwd) → { config, sources: { defaults, global, project }, projectSource }
-  resolveEffective(cwd) → config + _system (cores, RAM) + containers._resolved (concrete limits)
+  resolveEffective(cwd) → config + _system (cores, RAM)
   validate(config) → { valid, errors[] }
   saveProjectConfig(cwd, config) → writes .forge/config.json
 
 Section accessors (backward-compatible return shapes):
   getVerification(cwd) — maps lowercase→UPPERCASE for engine.js/loop.js
-  getContainers(cwd) — matches old loadContainerConfig shape
   getExecution(cwd) — matches old loadForgeConfig shape
   getSystem(cwd) — system graph config with _resolved_workers
   getKnowledge(cwd) — knowledge base config
@@ -414,10 +337,10 @@ Subcommands:
   node atos-forge/bin/forge-tools.cjs doctor [--raw for JSON]
   node forge-config/doctor.js --root . [--json]
 
-17 health checks across 3 categories:
-1. Dependencies (7): Node.js, Git, Docker, Codex CLI, tree-sitter, better-sqlite3, chalk
-2. Project Health (9): Configuration, Code Graph (with staleness warning >24h), Dashboard, Session Ledger, Snapshots, Git Hooks (post-commit forge updater), Docker Images (forge agent images), System Graph (existence + staleness + stats), Interfaces (existence + validation)
-3. System (1): Resources (cores, RAM, max concurrent agents)
+Health checks across 3 categories:
+1. Dependencies: Node.js, Git, Claude CLI, Codex CLI, tree-sitter, better-sqlite3, chalk
+2. Project Health: Configuration, Code Graph (with staleness warning >24h), Dashboard, Session Ledger, Snapshots, Git Hooks (post-commit forge updater), System Graph (existence + staleness + stats), Interfaces (existence + validation)
+3. System: Resources (cores, RAM)
 
 Box-drawing terminal output with status icons. Returns { checks[], summary: { ok, warn, fail, skip } }.
 
@@ -452,4 +375,4 @@ DB resolution order: --db flag → FORGE_SYSTEM_GRAPH_PATH env → .forge/system
 - $forge-impact <file-or-phase> — Impact analysis shortcut
 - $forge-graph-visualize — Generate and open HTML dashboard
 - $forge-settings — Show config, interactive edit, validate, recommend (validates before saving)
-- $forge-doctor — Check all deps, graph health, container readiness, system graph, interfaces
+- $forge-doctor — Check all deps, graph health, system graph, interfaces

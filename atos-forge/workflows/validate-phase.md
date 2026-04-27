@@ -156,7 +156,7 @@ Issues:
         Fix: Add `verify:` field to plan frontmatter with test/check criteria.
 
   WARN  {plan-id} — Estimated token cost 175k exceeds 60% of budget (160k effective)
-        Fix: Consider splitting via `node forge-assess/splitter.js {plan-file} --root .`
+        Fix: Reduce plan scope — break into smaller plans with fewer tasks, or refine requirements upstream.
 
   WARN  {plan-id} — File src/api/routes.ts not found on disk
         Fix: Verify file path or update plan references.

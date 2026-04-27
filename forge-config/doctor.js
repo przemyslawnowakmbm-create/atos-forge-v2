@@ -5,7 +5,7 @@
  * Forge Doctor — comprehensive health check for the Forge environment.
  *
  * Checks: external deps, graph health, dashboard freshness, ledger status,
- * snapshot count, container readiness, system resources, config validity.
+ * snapshot count, system resources, config validity.
  *
  * Usage:
  *   node forge-config/doctor.js --root . [--json]
@@ -98,15 +98,6 @@ function checkGit() {
     return { name: 'Git', status: 'ok', detail: match ? match[1] : v };
   } catch {
     return { name: 'Git', status: 'fail', detail: 'NOT FOUND (required)' };
-  }
-}
-
-function checkDocker() {
-  try {
-    const v = execSync('docker version --format "{{.Server.Version}}"', { stdio: 'pipe', timeout: 5000, encoding: 'utf8' }).trim();
-    return { name: 'Docker', status: 'ok', detail: `v${v}` };
-  } catch {
-    return { name: 'Docker', status: 'warn', detail: 'not found (optional, worktree fallback)' };
   }
 }
 
@@ -273,36 +264,15 @@ function checkGitHooks(cwd) {
   }
 }
 
-function checkDockerImages() {
-  // First check if Docker is available
-  try {
-    execSync('docker version --format "{{.Server.Version}}"', { stdio: 'pipe', timeout: 5000 });
-  } catch {
-    return { name: 'Docker Images', status: 'skip', detail: 'Docker not available' };
-  }
-  try {
-    const images = execSync('docker images --format "{{.Repository}}" 2>/dev/null', { stdio: 'pipe', timeout: 10000, encoding: 'utf8' });
-    const forgeImages = images.split('\n').filter(l => l.includes('forge'));
-    if (forgeImages.length === 0) {
-      return { name: 'Docker Images', status: 'warn', detail: 'no forge images built (run forge container build)' };
-    }
-    return { name: 'Docker Images', status: 'ok', detail: `${forgeImages.length} forge image(s) built` };
-  } catch {
-    return { name: 'Docker Images', status: 'warn', detail: 'could not list images' };
-  }
-}
-
 function checkSystem(cwd) {
   try {
     const config = require('./config');
     const effective = config.resolveEffective(cwd);
     const sys = effective._system;
-    const resolved = effective.containers._resolved;
     return {
       name: 'System',
       status: 'ok',
       detail: `${sys.total_cores} cores, ${sys.total_memory_str} RAM`,
-      extra: `max ${resolved.max_concurrent} concurrent agents`,
     };
   } catch (e) {
     return { name: 'System', status: 'warn', detail: `detection error: ${e.message}` };
@@ -398,24 +368,22 @@ function doctor(cwd, opts = {}) {
   const root = cwd || process.cwd();
   const checks = [];
 
-  // Section 1: Dependencies (indices 0-6)
+  // Section 1: Dependencies
   checks.push(checkNode());
   checks.push(checkGit());
-  checks.push(checkDocker());
   checks.push(checkClaude());
   checks.push(checkCodex());
   checks.push(checkTreeSitter(root));
   checks.push(checkBetterSqlite3(root));
   checks.push(checkChalk(root));
 
-  // Section 2: Project Health (indices 7-15)
+  // Section 2: Project Health
   checks.push(checkConfig(root));
   checks.push(checkGraph(root));
   checks.push(checkDashboard(root));
   checks.push(checkLedger(root));
   checks.push(checkSnapshots(root));
   checks.push(checkGitHooks(root));
-  checks.push(checkDockerImages());
   checks.push(checkSystemGraph(root));
   checks.push(checkInterfaces(root));
 
@@ -528,7 +496,6 @@ module.exports = {
   doctor,
   checkNode,
   checkGit,
-  checkDocker,
   checkClaude,
   checkTreeSitter,
   checkBetterSqlite3,
@@ -539,7 +506,6 @@ module.exports = {
   checkLedger,
   checkSnapshots,
   checkGitHooks,
-  checkDockerImages,
   checkSystemGraph,
   checkInterfaces,
   checkSystem,

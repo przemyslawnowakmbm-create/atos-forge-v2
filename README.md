@@ -569,19 +569,11 @@ atos-forge/
 ├── forge-session/           Session persistence
 │   └── ledger.js            Markdown ledger: decisions, warnings, state
 │
-├── forge-agents/            Agent orchestration
-│   ├── factory.js           Build agent configs from plans + graph context
+├── forge-agents/            Catalog-based agent factory
+│   ├── factory.js           Select catalog agents + inject plan context
+│   ├── catalog/             15 specialist agent definitions
 │   ├── cache.js             Agent cache (persist + reuse built agents)
-│   └── parallel-planner.js  DAG scheduling, bin-packing into waves
-│
-├── forge-assess/            Task assessment
-│   ├── assessor.js          Context overflow detection
-│   └── splitter.js          Plan splitting (module/concern/file strategies)
-│
-├── forge-containers/        Execution isolation
-│   ├── orchestrator.js      Docker container lifecycle
-│   ├── worktree-orchestrator Docker-free fallback via git worktrees
-│   └── config.js            Resource detection and limits
+│   └── plan-assessment.js   Token budget estimation + plan parsing
 │
 ├── forge-verify/            Verification pipeline
 │   ├── engine.js            9-layer verification engine
