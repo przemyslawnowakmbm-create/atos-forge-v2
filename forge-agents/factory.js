@@ -5,20 +5,19 @@ const fs = require('fs');
 const path = require('path');
 
 // ============================================================
-// Dynamic Agent Factory
+// Catalog-Based Agent Factory (V2)
 // ============================================================
-// Builds specialized agent configurations from sub-plans by:
+// Builds agent configurations by selecting specialist agents from
+// a curated catalog, then injecting plan-specific context:
 // 1. Analyzing the task (graph context, capabilities, risk, ledger)
-// 2. Determining archetype (specialist / integrator / careful / general)
-// 3. Composing a system prompt with capability-specific instructions
+// 2. Matching against agent catalog → selecting specialist(s)
+// 3. Loading agent definition + injecting Plan Contract + context
 // 4. Assembling a context package (always_load / task_specific / reference)
-// 5. Defining verification criteria
-// 6. Defining container spec parameters
-// 7. Extracting session context for the agent
+// 5. Defining verification criteria from plan + capabilities
 // ============================================================
 
 // Lazy-loaded dependencies (only resolved when called)
-let _graphQuery, _ledger, _assessor, _capDetector, _containerSpec, _containerConfig, _systemQuery, _knowledge, _agentCache;
+let _graphQuery, _ledger, _assessor, _capDetector, _systemQuery, _knowledge, _agentCache, _catalog;
 
 function graphQuery() {
   if (!_graphQuery) _graphQuery = require('../forge-graph/query');
@@ -36,8 +35,6 @@ function capDetector() {
   if (!_capDetector) _capDetector = require('../forge-graph/capability-detector');
   return _capDetector;
 }
-function containerSpec() { return null; }
-function containerConfig() { return null; }
 function systemQuery() {
   if (!_systemQuery) _systemQuery = require('../forge-system/query');
   return _systemQuery;
@@ -49,6 +46,144 @@ function knowledge() {
 function agentCache() {
   if (!_agentCache) _agentCache = require('./cache');
   return _agentCache;
+}
+
+// ============================================================
+// Agent Catalog
+// ============================================================
+
+function loadCatalog() {
+  if (_catalog) return _catalog;
+
+  const catalogDir = path.join(__dirname, 'catalog');
+  _catalog = [];
+
+  if (!fs.existsSync(catalogDir)) return _catalog;
+
+  const files = fs.readdirSync(catalogDir).filter(f => f.endsWith('.md')).sort();
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(catalogDir, file), 'utf8');
+      const fmMatch = content.match(/^---\n([\s\S]+?)\n---\n([\s\S]*)$/);
+      if (!fmMatch) continue;
+
+      const yaml = fmMatch[1];
+      const body = fmMatch[2].trim();
+
+      const entry = { file, body };
+      for (const line of yaml.split('\n')) {
+        const kv = line.match(/^(\w+):\s*(.*)/);
+        if (!kv) continue;
+        const [, key, val] = kv;
+        if (val.startsWith('[')) {
+          entry[key] = val.slice(1, -1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+        } else {
+          entry[key] = val.trim().replace(/^["']|["']$/g, '');
+        }
+      }
+
+      // Parse nested matches block
+      const matchesBlock = yaml.match(/matches:\n((?:\s+\w+:.*\n?)*)/);
+      if (matchesBlock) {
+        entry.matches = {};
+        for (const mline of matchesBlock[1].split('\n')) {
+          const mkv = mline.match(/^\s+(\w+):\s*\[([^\]]*)\]/);
+          if (mkv) {
+            entry.matches[mkv[1]] = mkv[2].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+          }
+        }
+      }
+
+      entry.priority = parseInt(entry.priority, 10) || 5;
+      _catalog.push(entry);
+    } catch { /* skip malformed catalog files */ }
+  }
+
+  return _catalog;
+}
+
+/**
+ * Match plan analysis against the agent catalog.
+ * Returns ranked list of matching agents with scores.
+ *
+ * @param {object} analysis - From analyzeTask()
+ * @returns {{ agent: object, score: number, reason: string }[]}
+ */
+function matchCatalogAgents(analysis) {
+  const catalog = loadCatalog();
+  if (catalog.length === 0) return [];
+
+  const planFiles = analysis.plan?.all_files || [];
+  const planText = (analysis.plan?.objective || '') + ' ' + (analysis.plan?.raw || '');
+  const planLower = planText.toLowerCase();
+
+  // Extract signals from the plan
+  const fileExtensions = new Set(planFiles.map(f => path.extname(f).toLowerCase().replace('.', '')).filter(Boolean));
+  const allCaps = Object.values(analysis.capabilities).flat();
+  const capNames = new Set(allCaps.map(c => c.capability));
+
+  const scored = [];
+
+  for (const agent of catalog) {
+    let score = 0;
+    const reasons = [];
+    const m = agent.matches || {};
+
+    // Language match (from file extensions)
+    const langMap = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', py: 'python', java: 'java', go: 'go', rs: 'rust', kt: 'kotlin', swift: 'swift', dart: 'dart' };
+    const planLangs = new Set([...fileExtensions].map(ext => langMap[ext]).filter(Boolean));
+    if (m.languages) {
+      const langHits = m.languages.filter(l => planLangs.has(l));
+      if (langHits.length > 0) { score += 20 * langHits.length; reasons.push(`lang: ${langHits.join(',')}`); }
+    }
+
+    // Framework match (from plan text)
+    if (m.frameworks) {
+      const fwHits = m.frameworks.filter(fw => planLower.includes(fw.toLowerCase()));
+      if (fwHits.length > 0) { score += 30 * fwHits.length; reasons.push(`fw: ${fwHits.join(',')}`); }
+    }
+
+    // File pattern match
+    if (m.file_patterns) {
+      for (const pattern of m.file_patterns) {
+        const patternParts = pattern.replace(/\*\*/g, '').replace(/\*/g, '').split('/').filter(Boolean);
+        for (const part of patternParts) {
+          if (part.startsWith('.')) {
+            if (fileExtensions.has(part.replace('.', ''))) { score += 10; reasons.push(`ext: ${part}`); break; }
+          } else if (planFiles.some(f => f.includes(part))) {
+            score += 15; reasons.push(`path: ${part}`); break;
+          }
+        }
+      }
+    }
+
+    // Capability match
+    if (m.capabilities) {
+      const capHits = m.capabilities.filter(c => capNames.has(c));
+      if (capHits.length > 0) { score += 25 * capHits.length; reasons.push(`cap: ${capHits.join(',')}`); }
+    }
+
+    // Keyword match (from plan text)
+    if (m.keywords) {
+      const kwHits = m.keywords.filter(kw => planLower.includes(kw.toLowerCase()));
+      if (kwHits.length > 0) {
+        const kwScore = Math.min(kwHits.length * 5, 30);
+        score += kwScore;
+        if (kwHits.length <= 5) reasons.push(`kw: ${kwHits.join(',')}`);
+        else reasons.push(`kw: ${kwHits.length} matches`);
+      }
+    }
+
+    // Priority weighting (higher priority agents get a small boost)
+    score += agent.priority;
+
+    if (score > 0) {
+      scored.push({ agent, score, reason: reasons.join('; ') });
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored;
 }
 
 // ============================================================
@@ -80,29 +215,9 @@ const CHARS_PER_TOKEN = 4;
 
 // Context window budgets (tokens)
 const DEFAULT_CONTEXT_WINDOW = 200000;
-const CONTEXT_LOAD_RATIO = 0.70; // Load context up to 70% of window
+const CONTEXT_LOAD_RATIO = 0.70;
 
-// Archetype thresholds
-const ARCHETYPE = {
-  SPECIALIST: 'specialist',
-  INTEGRATOR: 'integrator',
-  CAREFUL: 'careful',
-  GENERAL: 'general',
-};
-
-// Risk level → archetype bias
-const RISK_ARCHETYPE_MAP = {
-  CRITICAL: ARCHETYPE.CAREFUL,
-  HIGH: ARCHETYPE.CAREFUL,
-  MEDIUM: null, // no override
-  LOW: null,
-};
-
-// Module count thresholds for archetype
-const MODULE_THRESHOLD_SINGLE = 1;
-const MODULE_THRESHOLD_INTEGRATOR = 3;
-
-// Capability confidence threshold to include agent_context
+// Capability confidence threshold
 const CAPABILITY_CONFIDENCE_MIN = 0.3;
 
 // Verification built-in checks keyed by detected capability
@@ -276,102 +391,56 @@ function analyzeTask(plan, cwd) {
 }
 
 // ============================================================
-// Step 2: Determine Archetype
+// Step 2: Select Catalog Agent(s)
 // ============================================================
 
 /**
- * Determine agent archetype based on analysis results.
- *
- * Archetypes:
- * - specialist: Single module, strong capability match (≥1 cap at ≥0.6 confidence)
- * - integrator: 3+ modules affected, cross-boundary work
- * - careful: High/critical risk level
- * - general: Default fallback
+ * Select the best-matching catalog agent(s) for this plan.
+ * Falls back to general-executor if no specialist matches.
  *
  * @param {object} analysis - From analyzeTask()
- * @returns {{ archetype: string, reason: string }}
+ * @returns {{ agents: object[], primary: object, reason: string }}
  */
-function determineArchetype(analysis) {
-  const { risk, affectedModules, capabilities } = analysis;
+function selectAgents(analysis) {
+  const matches = matchCatalogAgents(analysis);
 
-  // Risk override takes priority
-  const riskOverride = RISK_ARCHETYPE_MAP[risk.level];
-  if (riskOverride) {
+  if (matches.length === 0) {
+    const catalog = loadCatalog();
+    const general = catalog.find(a => a.name === 'general-executor');
     return {
-      archetype: riskOverride,
-      reason: `Risk level ${risk.level} (score: ${risk.score}): ${risk.reasons.slice(0, 2).join('; ')}`,
+      agents: general ? [general] : [],
+      primary: general || null,
+      reason: 'no catalog match — using general executor',
     };
   }
 
-  // Integrator: many modules
-  if (affectedModules.length >= MODULE_THRESHOLD_INTEGRATOR) {
-    return {
-      archetype: ARCHETYPE.INTEGRATOR,
-      reason: `${affectedModules.length} modules affected: ${affectedModules.join(', ')}`,
-    };
-  }
-
-  // Specialist: single module with strong capability match
-  if (affectedModules.length <= MODULE_THRESHOLD_SINGLE) {
-    const allCaps = Object.values(capabilities).flat();
-    const strongCap = allCaps.find(c => c.confidence >= 0.6);
-    if (strongCap) {
-      return {
-        archetype: ARCHETYPE.SPECIALIST,
-        reason: `Single module with strong ${strongCap.capability} capability (${(strongCap.confidence * 100).toFixed(0)}%)`,
-      };
-    }
-  }
+  const primary = matches[0];
+  const threshold = primary.score * 0.5;
+  const selected = matches.filter(m => m.score >= threshold).slice(0, 3);
 
   return {
-    archetype: ARCHETYPE.GENERAL,
-    reason: `${affectedModules.length} module(s), no strong specialization or risk signal`,
+    agents: selected.map(s => s.agent),
+    primary: primary.agent,
+    reason: selected.map(s => `${s.agent.name}(${s.score}): ${s.reason}`).join(' | '),
   };
 }
 
-// ============================================================
-// Step 3: Compose System Prompt
-// ============================================================
 
-const BASE_EXECUTOR_PROMPT = `You are a code execution agent working inside a containerized environment.
-Your task is to implement changes according to the plan provided.
+// Keep legacy determineArchetype for backward compat (wraps catalog selection)
+function determineArchetype(analysis) {
+  const selection = selectAgents(analysis);
+  return {
+    archetype: selection.primary?.name || 'general-executor',
+    reason: selection.reason,
+  };
+}
 
-Rules:
+const BASE_EXECUTOR_RULES = `## Execution Rules
 - Read files before modifying them.
 - Make minimal, focused changes — do not refactor unrelated code.
 - Do not create unnecessary files.
 - Run verification commands when specified.
-- If you encounter an error, try to fix it. If stuck after 2 attempts, document the issue and move on.
-- Write your changes as a git diff (already handled by the entrypoint).`;
-
-const ARCHETYPE_PROMPTS = {
-  [ARCHETYPE.SPECIALIST]: `
-You are a SPECIALIST agent. Focus deeply on the specific domain and module assigned.
-- Use domain-specific best practices and patterns.
-- Prefer idiomatic solutions for the technology stack.
-- You have deep knowledge of this module — leverage it.`,
-
-  [ARCHETYPE.INTEGRATOR]: `
-You are an INTEGRATOR agent. Your task spans multiple modules.
-- Pay careful attention to module boundaries and interfaces.
-- Ensure changes in one module don't break contracts consumed by others.
-- Check import paths and export signatures across module boundaries.
-- Prefer minimal cross-module coupling.`,
-
-  [ARCHETYPE.CAREFUL]: `
-You are a CAREFUL agent. The changes you're making touch high-risk areas.
-- Verify each change thoroughly before moving on.
-- Pay special attention to backwards compatibility.
-- Check consumer count for interfaces you modify.
-- Run verification commands after each logical change.
-- If unsure about a change, document the concern in a comment.`,
-
-  [ARCHETYPE.GENERAL]: `
-You are a general-purpose execution agent.
-- Follow the plan step by step.
-- Make clean, focused changes.
-- Verify your work when verification steps are provided.`,
-};
+- If you encounter an error, try to fix it. If stuck after 2 attempts, document the issue and move on.`;
 
 /**
  * Build a grounding section with verified facts from the code graph.
@@ -413,34 +482,36 @@ function buildGroundingSection(cwd, planFiles) {
  * @param {object} sessionContext - From extractSessionContext()
  * @returns {string}
  */
-function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
-  const parts = [BASE_EXECUTOR_PROMPT];
 
-  // Archetype behavior
-  parts.push(ARCHETYPE_PROMPTS[archetypeResult.archetype] || ARCHETYPE_PROMPTS[ARCHETYPE.GENERAL]);
+function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
+  const parts = [];
+
+  // Load the primary catalog agent's expertise
+  const selection = selectAgents(analysis);
+  if (selection.primary && selection.primary.body) {
+    parts.push(selection.primary.body);
+  }
+
+  // If secondary agents matched, include their expertise sections
+  if (selection.agents.length > 1) {
+    for (const agent of selection.agents.slice(1)) {
+      if (agent.body) {
+        // Extract just the ## Expertise and ## Patterns sections from secondary agents
+        const expertiseMatch = agent.body.match(/## Expertise[\s\S]*?(?=## Constraints|## Anti-Patterns|$)/);
+        if (expertiseMatch) {
+          parts.push(`\n## Additional Domain Knowledge (${agent.name})\n${expertiseMatch[0]}`);
+        }
+      }
+    }
+  }
+
+  // Base execution rules
+  parts.push('\n' + BASE_EXECUTOR_RULES);
 
   // Agent Directives — mechanical overrides for production-grade code quality
   const directives = loadAgentDirectives();
   if (directives) {
     parts.push('\n' + directives);
-  }
-
-  // Capability-specific instructions
-  const allCaps = Object.values(analysis.capabilities).flat();
-  const relevantCaps = allCaps.filter(c => c.confidence >= CAPABILITY_CONFIDENCE_MIN);
-  if (relevantCaps.length > 0) {
-    parts.push('\n## Domain Knowledge');
-    const seen = new Set();
-    for (const cap of relevantCaps) {
-      if (seen.has(cap.capability)) continue;
-      seen.add(cap.capability);
-      // Pull agent_context from capability definitions
-      const agentCtx = getAgentContext(cap.capability, analysis.plan.path);
-      if (agentCtx) {
-        parts.push(`\n### ${cap.capability} (${(cap.confidence * 100).toFixed(0)}% confidence)`);
-        parts.push(agentCtx);
-      }
-    }
   }
 
   // Graph context summary
@@ -595,7 +666,7 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
     }
   } catch { /* conventions not available */ }
 
-  // Previous agent findings (propagated from earlier waves)
+  // Previous agent findings (propagated from earlier plans)
   if (sessionContext && sessionContext.previous_findings && sessionContext.previous_findings.length > 0) {
     const findingsLines = ['## Previous Agent Findings\n'];
     for (const f of sessionContext.previous_findings) {
@@ -621,20 +692,6 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
   parts.push('');
 
   return parts.join('\n');
-}
-
-/**
- * Get agent_context for a capability by name.
- * First checks graph DB capabilities, then falls back to CAPABILITY_DEFINITIONS.
- */
-function getAgentContext(capabilityName, planPath) {
-  try {
-    const defs = capDetector().CAPABILITY_DEFINITIONS;
-    if (defs[capabilityName] && defs[capabilityName].agent_context) {
-      return defs[capabilityName].agent_context;
-    }
-  } catch { /* capability detector not available */ }
-  return null;
 }
 
 // ============================================================
@@ -898,60 +955,8 @@ function defineVerification(analysis) {
 
 /**
  * Build parameters for container-spec.buildSpec().
- * Does NOT call buildSpec — returns the params for the orchestrator to use.
- *
- * @param {string} taskId
- * @param {string} cwd
- * @param {object} analysis
- * @param {object} agentConfig - Full agent JSON (prompt, task, context, etc.)
- * @returns {object} params suitable for containerSpec.buildSpec()
+ * (Container params removed in V2 — sequential execution only)
  */
-function defineContainerParams(taskId, cwd, analysis, agentConfig) {
-  let resourceConfig;
-  try {
-    resourceConfig = containerConfig().resolveConfig(cwd);
-  } catch {
-    // Fallback defaults
-    resourceConfig = {
-      max_memory_per_container_str: '2g',
-      max_cpu_per_container: 1.0,
-      timeout_seconds: 600,
-    };
-  }
-
-  // Determine image template
-  let dockerfile;
-  const allCaps = Object.values(analysis.capabilities).flat();
-  const capNames = new Set(allCaps.map(c => c.capability));
-
-  // If Python-related capabilities detected, use python or full template
-  const pythonCaps = ['database_sql', 'ai_ml', 'testing'];
-  const nodeCaps = ['react_advanced', 'ui_components', 'state_management', 'graphql', 'websockets'];
-  const hasPython = pythonCaps.some(c => capNames.has(c)) ||
-    analysis.plan.all_files.some(f => /\.py$/.test(f));
-  const hasNode = nodeCaps.some(c => capNames.has(c)) ||
-    analysis.plan.all_files.some(f => /\.(ts|tsx|js|jsx)$/.test(f));
-
-  if (hasPython && hasNode) {
-    dockerfile = 'full';
-  } else if (hasPython) {
-    dockerfile = 'python';
-  }
-  // else: default node (container-spec.selectImage handles it)
-
-  return {
-    taskId,
-    cwd,
-    worktreePath: null, // Set by orchestrator
-    outputDir: null,    // Set by orchestrator
-    agentConfig,
-    resourceConfig,
-    opts: {
-      dockerfile,
-      mode: 'agent',
-    },
-  };
-}
 
 // ============================================================
 // Step 7: Extract Session Context
@@ -1246,12 +1251,8 @@ function buildAgentConfig(planPath, cwd, opts = {}) {
     },
   };
 
-  // Step 6: Container params
-  const containerParams = defineContainerParams(taskId, cwd, analysis, agentConfig);
-
   const result = {
     agentConfig,
-    containerParams,
     analysis: {
       archetype: archetypeResult,
       risk: analysis.risk,
@@ -1492,11 +1493,13 @@ async function main() {
 module.exports = {
   // Core pipeline
   analyzeTask,
+  selectAgents,
+  matchCatalogAgents,
+  loadCatalog,
   determineArchetype,
   composeSystemPrompt,
   composeContextPackage,
   defineVerification,
-  defineContainerParams,
   extractSessionContext,
 
   // High-level
@@ -1504,7 +1507,6 @@ module.exports = {
   buildAll,
 
   // Constants
-  ARCHETYPE,
   CAPABILITY_CONFIDENCE_MIN,
   CAPABILITY_VERIFICATION_MAP,
 };
