@@ -160,7 +160,7 @@ const configMod = require('./lib/config.cjs');
 const { cmdConfigEnsureSection, cmdConfigSet, cmdConfigGet } = configMod;
 const miscMod = require('./lib/misc.cjs');
 const { cmdGenerateSlug, cmdCurrentTimestamp, cmdListTodos, cmdVerifyPathExists, cmdTodoComplete,
-        cmdWebsearch, cmdSummaryExtract, cmdRequirementsMarkComplete, cmdRequirementsEnhance,
+        cmdWebsearch, cmdSummaryExtract, cmdRequirementsMarkComplete, cmdRequirementsEnhance, cmdRequirementsValidate,
         cmdResolveModel, cmdFindPhase, cmdCommit, cmdVerifySummary, cmdTemplateSelect } = miscMod;
 const phaseMod = require('./lib/phase.cjs');
 const { cmdPhaseNextDecimal, cmdPhaseAdd, cmdPhaseInsert, cmdPhaseRemove, cmdPhaseComplete, cmdPhasesList, cmdPhasePlanIndex } = phaseMod;
@@ -461,8 +461,10 @@ async function main() {
         cmdRequirementsMarkComplete(cwd, args.slice(2), raw);
       } else if (subcommand === 'enhance') {
         cmdRequirementsEnhance(cwd, args[2], raw);
+      } else if (subcommand === 'validate') {
+        cmdRequirementsValidate(cwd, raw);
       } else {
-        error('Unknown requirements subcommand. Available: mark-complete, enhance');
+        error('Unknown requirements subcommand. Available: mark-complete, enhance, validate');
       }
       break;
     }

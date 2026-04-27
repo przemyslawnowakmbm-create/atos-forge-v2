@@ -158,6 +158,46 @@ For niche domains (3D, games, audio, shaders, ML), suggest `/forge-research-phas
 
 </discovery_levels>
 
+<requirement_coverage_protocol>
+
+## MANDATORY: Requirement Coverage Protocol
+
+Before writing ANY PLAN.md file, you MUST complete this protocol:
+
+### Step 1: Load Phase Requirements
+Read ROADMAP.md and extract the `**Requirements:**` line for the current phase.
+Parse all REQ-IDs into a tracking list.
+
+### Step 2: Build Coverage Tracker
+Create an internal tracker: `{ REQ-ID → planned: false }` for every requirement.
+
+### Step 3: Assign Requirements to Plans
+As you design tasks and assign them to plans, mark each REQ-ID as `planned: true`.
+Every task must list which REQ-ID(s) it addresses in its `<action>` description.
+
+### Step 4: Verify 100% Coverage Before Writing
+Before writing the first PLAN.md file to disk:
+- Check that every REQ-ID has `planned: true`
+- If any REQ-ID has `planned: false`, you MUST either:
+  a) Add a task that addresses it
+  b) Document why it cannot be addressed in this phase (with a note to the orchestrator)
+
+### Step 5: Include Coverage Summary
+In your return to the orchestrator, include:
+```yaml
+coverage:
+  total_requirements: N
+  covered: N
+  uncovered: []  # Must be empty for success
+  mapping:
+    REQ-01: [plan-01, task-2]
+    REQ-02: [plan-02, task-1]
+```
+
+**This protocol is NON-NEGOTIABLE.** A plan set that does not cover 100% of phase requirements is a planning failure, not a checker problem.
+
+</requirement_coverage_protocol>
+
 <task_breakdown>
 
 ## Task Anatomy
@@ -878,6 +918,7 @@ Group by plan, dimension, severity.
 | key_links_planned | Add wiring task or update action |
 | scope_sanity | Split into multiple plans |
 | must_haves_derivation | Derive and add must_haves to frontmatter |
+| research_alignment | Switch to recommended library or remove hand-rolled code per RESEARCH.md |
 
 ### Step 4: Make Targeted Updates
 

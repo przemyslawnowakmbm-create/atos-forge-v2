@@ -394,6 +394,48 @@ issue:
   fix_hint: "Create an API route and have the component fetch from it instead"
 ```
 
+## Dimension 10: Research Alignment
+
+**Question:** Do plans follow the phase researcher's recommendations?
+
+**Process:**
+1. If RESEARCH.md exists for this phase, read it
+2. Extract "Standard Stack" / recommended libraries from RESEARCH.md
+3. Extract "Don't Hand-Roll" warnings from RESEARCH.md
+4. For each plan task `<action>`, check:
+   a) Does it use a different library than recommended? → warning (not blocker) with note
+   b) Does it hand-roll something RESEARCH.md said not to? → BLOCKER
+   c) Does it contradict a "Pitfall" warning from RESEARCH.md? → warning
+
+**Red flags:**
+- Plan uses jsonwebtoken when RESEARCH.md recommended jose
+- Plan implements custom form validation when RESEARCH.md said "use Zod"
+- Plan creates custom auth flow when RESEARCH.md said "use next-auth"
+
+**Example issue:**
+```yaml
+issue:
+  dimension: research_alignment
+  severity: warning
+  description: "Task 2 uses jsonwebtoken but RESEARCH.md recommends jose for Edge runtime compatibility"
+  plan: "16-01"
+  task: 2
+  fix_hint: "Switch to jose library as recommended in RESEARCH.md Standard Stack section"
+```
+
+**Example blocker:**
+```yaml
+issue:
+  dimension: research_alignment
+  severity: blocker
+  description: "Task 1 hand-rolls JWT verification. RESEARCH.md Don't Hand-Roll section explicitly warns against this"
+  plan: "16-01"
+  task: 1
+  fix_hint: "Use jose library for JWT operations as specified in RESEARCH.md"
+```
+
+**Skip this dimension if:** No RESEARCH.md exists for the phase (research was optional).
+
 </verification_dimensions>
 
 <verification_process>
@@ -552,7 +594,23 @@ If either file exists:
 
 This dimension produces **suggestions only** — it never blocks execution.
 
-## Step 11: Determine Overall Status
+## Step 11: Check Research Alignment (if RESEARCH.md exists)
+
+```bash
+# Check if phase research exists
+ls "$phase_dir"/*-RESEARCH.md 2>/dev/null
+```
+
+If RESEARCH.md exists:
+1. Extract "Standard Stack" / recommended libraries
+2. Extract "Don't Hand-Roll" warnings
+3. Extract "Pitfall" warnings
+4. For each plan task `<action>`, check against research recommendations
+5. Flag hand-rolling of warned items as **blockers**, library mismatches as **warnings**
+
+Skip this step entirely if no RESEARCH.md exists for the phase.
+
+## Step 12: Determine Overall Status
 
 **passed:** All requirements covered, all tasks complete, dependency graph valid, key links planned, scope within budget, must_haves properly derived.
 
@@ -741,6 +799,10 @@ Plan verification complete when:
   - [ ] Layer boundaries respected
   - [ ] Naming conventions followed
   - [ ] Established patterns used
+- [ ] Research alignment checked (if RESEARCH.md exists):
+  - [ ] Standard stack recommendations followed
+  - [ ] No hand-rolling of warned items
+  - [ ] Pitfall warnings not contradicted
 - [ ] Overall status determined (passed | issues_found)
 - [ ] Structured issues returned (if any found)
 - [ ] Result returned to orchestrator

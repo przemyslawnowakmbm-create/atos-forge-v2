@@ -629,6 +629,105 @@ function cmdRequirementsEnhance(cwd, modeArg, raw) {
   output(result, raw, summary);
 }
 
+function cmdRequirementsValidate(cwd, raw) {
+  const reqPath = path.join(cwd, '.planning', 'REQUIREMENTS.md');
+  if (!fs.existsSync(reqPath)) {
+    error('REQUIREMENTS.md not found.');
+  }
+
+  const content = fs.readFileSync(reqPath, 'utf-8');
+  const issues = [];
+  const reqPattern = /^- \[[ x]\] \*\*([A-Z]+-\d+)\*\*:\s*(.+)$/gm;
+  let match;
+  const requirements = [];
+
+  while ((match = reqPattern.exec(content)) !== null) {
+    requirements.push({ id: match[1], text: match[2].trim(), line: content.substring(0, match.index).split('\n').length });
+  }
+
+  const weaselWords = ['appropriate', 'user-friendly', 'intuitive', 'fast', 'efficient', 'robust', 'scalable', 'flexible', 'seamless', 'easy', 'simple', 'good', 'nice', 'proper', 'adequate', 'reasonable', 'sufficient', 'optimal', 'performant'];
+
+  for (const req of requirements) {
+    const text = req.text;
+    const textLower = text.toLowerCase();
+
+    // Check 1: Testable — must have a measurable/observable outcome
+    const hasVerb = /\b(can|returns|displays|shows|receives|creates|deletes|updates|sends|redirects|renders|validates|rejects|accepts|prevents|allows|denies|stores|loads|generates|exports|imports|triggers|notifies)\b/i.test(text);
+    if (!hasVerb) {
+      issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'testable', message: 'No action verb found — may not be testable. Use "User can...", "System returns...", etc.' });
+    }
+
+    // Check 2: User-centric — should describe user-observable behavior
+    const isUserCentric = /^(user|admin|system|api|service|visitor|member|operator)\b/i.test(text) || /\buser can\b/i.test(text);
+    if (!isUserCentric) {
+      issues.push({ id: req.id, line: req.line, severity: 'info', rule: 'user-centric', message: 'Does not start with a user/actor — consider rephrasing as "User can..."' });
+    }
+
+    // Check 3: No weasel words
+    const foundWeasels = weaselWords.filter(w => textLower.includes(w));
+    if (foundWeasels.length > 0) {
+      issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'unambiguous', message: `Contains ambiguous terms: ${foundWeasels.join(', ')}. Replace with measurable criteria.` });
+    }
+
+    // Check 4: Atomic — check for "and" joining distinct behaviors
+    const andParts = text.split(/\band\b/i);
+    if (andParts.length >= 3) {
+      issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'atomic', message: 'Contains multiple "and" conjunctions — consider splitting into separate requirements.' });
+    }
+
+    // Check 5: Not too short (likely vague)
+    if (text.length < 20) {
+      issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'specific', message: `Very short requirement (${text.length} chars) — likely too vague.` });
+    }
+
+    // Check 6: Has a measurable assertion
+    const hasMeasurable = /\b(\d+|within|under|above|below|at least|at most|maximum|minimum|less than|more than|between|exactly|returns \d|status \d)\b/i.test(text);
+    const hasExplicitOutcome = /\b(returns|displays|shows|visible|hidden|enabled|disabled|redirects to|navigates to|receives|created|deleted|updated|stored)\b/i.test(text);
+    if (!hasMeasurable && !hasExplicitOutcome) {
+      issues.push({ id: req.id, line: req.line, severity: 'info', rule: 'measurable', message: 'No measurable outcome or explicit result found — consider adding success criteria.' });
+    }
+  }
+
+  // Check for duplicate IDs
+  const idCounts = {};
+  for (const req of requirements) {
+    idCounts[req.id] = (idCounts[req.id] || 0) + 1;
+  }
+  for (const [id, count] of Object.entries(idCounts)) {
+    if (count > 1) {
+      issues.push({ id, line: 0, severity: 'error', rule: 'unique-id', message: `Duplicate requirement ID: ${id} appears ${count} times.` });
+    }
+  }
+
+  // Check traceability table completeness
+  const traceSection = content.match(/## Traceability[\s\S]*$/);
+  if (traceSection) {
+    const traceRows = traceSection[0].match(/^\| [A-Z]+-\d+/gm) || [];
+    const tracedIds = new Set(traceRows.map(r => r.match(/[A-Z]+-\d+/)[0]));
+    for (const req of requirements) {
+      if (!tracedIds.has(req.id)) {
+        issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'traceability', message: 'Not in traceability table — add mapping to phase/plan.' });
+      }
+    }
+  }
+
+  const errors = issues.filter(i => i.severity === 'error');
+  const warnings = issues.filter(i => i.severity === 'warning');
+  const infos = issues.filter(i => i.severity === 'info');
+
+  const result = {
+    valid: errors.length === 0,
+    total_requirements: requirements.length,
+    issues,
+    summary: { errors: errors.length, warnings: warnings.length, info: infos.length },
+  };
+
+  const label = result.valid
+    ? `VALID: ${requirements.length} requirements, ${warnings.length} warnings, ${infos.length} info`
+    : `INVALID: ${errors.length} errors, ${warnings.length} warnings in ${requirements.length} requirements`;
+  output(result, raw, label);
+}
+
 module.exports = {
   cmdGenerateSlug,
   cmdCurrentTimestamp,
@@ -639,6 +738,7 @@ module.exports = {
   cmdSummaryExtract,
   cmdRequirementsMarkComplete,
   cmdRequirementsEnhance,
+  cmdRequirementsValidate,
   cmdResolveModel,
   cmdFindPhase,
   cmdCommit,

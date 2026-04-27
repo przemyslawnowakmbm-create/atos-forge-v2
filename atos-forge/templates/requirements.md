@@ -16,10 +16,12 @@ Template for `.planning/REQUIREMENTS.md` — the canonical place for all milesto
 ## [Category 1]
 - [ ] **CAT1-01**: [Specific, testable requirement in user-centric language]
 - [ ] **CAT1-02**: [Another requirement]
+  depends_on: [CAT1-01]
 
 ## [Category 2]
 - [ ] **CAT2-01**: [Requirement]
 - [ ] **CAT2-02**: [Requirement]
+  depends_on: [CAT2-01, CAT1-01]
 
 ## Future Requirements
 - [ ] **CAT1-03**: [Deferred to future milestone — reason]
@@ -49,6 +51,49 @@ Template for `.planning/REQUIREMENTS.md` — the canonical place for all milesto
 Examples: `AUTH-01`, `CONTENT-02`, `PAY-03`, `NOTIF-01`
 
 When adding requirements to an existing file, continue numbering from the highest existing number in that category.
+
+---
+
+## Requirement Dependencies
+
+Requirements can declare dependencies on other requirements using the `depends_on` field:
+
+```markdown
+- [ ] **AUTH-02**: User can reset password via email link that expires after 24 hours
+  depends_on: [AUTH-01]
+```
+
+**Rules:**
+- A requirement with `depends_on` MUST be planned in the same phase or a LATER phase than its dependencies
+- The planner validates that dependent requirements don't appear in earlier phases than their prerequisites
+- The plan-checker enforces this as a **blocker** — a plan cannot schedule AUTH-02 before AUTH-01 is complete
+- Dependencies are within the current milestone only (cross-milestone dependencies don't apply)
+
+**When to use:**
+- AUTH-02 (password reset) depends on AUTH-01 (login) — reset requires an existing auth system
+- PAY-02 (refund) depends on PAY-01 (charge) — can't refund without a charge
+- NOTIF-02 (notification preferences) depends on AUTH-01 — preferences need a user account
+
+**When NOT to use:**
+- Two requirements in the same category that happen to be related but could be built independently
+- Requirements that share the same database table (that's an implementation detail, not a requirement dependency)
+
+---
+
+## Requirement Validation
+
+Run `node atos-forge/bin/forge-tools.cjs requirements validate` to check all requirements against quality rules:
+
+- **testable**: Has an action verb (can, returns, displays, etc.)
+- **user-centric**: Starts with a user/actor role
+- **unambiguous**: No weasel words (appropriate, user-friendly, intuitive, etc.)
+- **atomic**: Not too many "and" conjunctions
+- **specific**: Not too short (< 20 chars is suspicious)
+- **measurable**: Has a measurable outcome or explicit result
+- **unique-id**: No duplicate REQ-IDs
+- **traceability**: Present in the traceability table
+
+The validator is deterministic — same input always produces same output. No LLM judgment involved.
 
 ---
 
