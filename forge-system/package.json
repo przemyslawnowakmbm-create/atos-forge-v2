@@ -1,0 +1,23 @@
+{
+  "name": "@atos-forge/system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "System Graph Engine — multi-repo interface detection, cross-repo dependency tracking, and system-level impact analysis.",
+  "main": "builder.js",
+  "bin": {
+    "forge-system": "query.js"
+  },
+  "scripts": {
+    "build": "node builder.js",
+    "query": "node query.js",
+    "detect": "node detect.js",
+    "validate": "node validate.js",
+    "system-init": "node system-init.js",
+    "test": "node --test test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "chalk": "^4.1.2",
+    "js-yaml": "^4.1.1"
+  }
+}

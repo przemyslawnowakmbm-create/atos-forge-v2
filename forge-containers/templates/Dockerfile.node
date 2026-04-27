@@ -1,0 +1,32 @@
+FROM node:20-slim
+
+LABEL maintainer="forge-agent" \
+      forge-agent="true"
+
+# System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    sqlite3 \
+    jq \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# tree-sitter CLI for symbol extraction
+RUN npm install -g tree-sitter-cli@0.22 2>/dev/null || true
+
+# Create workspace directories
+RUN mkdir -p /workspace /output/patches /knowledge /config /graph /entrypoint /home/forge/.local/bin /home/forge/.local/share /home/forge/.claude
+
+# Copy entrypoint scripts (build context = forge-containers/)
+COPY agent-entrypoint.js /entrypoint/agent-entrypoint.js
+COPY agent-verifier.js /entrypoint/agent-verifier.js
+
+# Non-root user for safety — home at /home/forge for Claude CLI mount
+RUN groupadd -r forge && useradd -r -g forge -d /home/forge forge
+RUN chown -R forge:forge /workspace /output /knowledge /home/forge
+
+WORKDIR /workspace
+
+# Default: run agent entrypoint
+ENTRYPOINT ["node", "/entrypoint/agent-entrypoint.js"]

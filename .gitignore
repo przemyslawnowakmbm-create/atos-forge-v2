@@ -1,0 +1,26 @@
+node_modules/
+.DS_Store
+TO-DOS.md
+/research.claude/
+commands.html
+
+# Local test installs
+.claude/
+
+# Build artifacts (committed to npm, not git)
+hooks/dist/
+
+# Animation assets
+animation/
+*.gif
+
+# Internal planning documents
+reports/
+RAILROAD_ARCHITECTURE.md
+
+# Analysis files
+gsd2-analysis.md
+gsd2-analysis.html
+
+# Generated code graph database
+.forge/

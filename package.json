@@ -1,0 +1,63 @@
+{
+  "name": "atos-forge",
+  "version": "1.20.4",
+  "description": "Forge — An enterprise-grade, AI-powered spec-driven development system with dynamic agent creation, ephemeral container execution, and code graph intelligence.",
+  "bin": {
+    "atos-forge": "bin/install.js"
+  },
+  "files": [
+    ".codex",
+    "bin",
+    "skill-sources",
+    "atos-forge",
+    "agents",
+    "hooks/dist",
+    "scripts",
+    "forge-graph",
+    "forge-config",
+    "forge-session",
+    "forge-verify",
+    "forge-assess",
+    "forge-agents",
+    "forge-containers",
+    "forge-system",
+    "forge-analyze",
+    "CLAUDE.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "codex",
+    "openai",
+    "ai",
+    "meta-prompting",
+    "context-engineering",
+    "spec-driven-development",
+    "gemini",
+    "gemini-cli"
+  ],
+  "author": "Forge Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://10.48.159.164/other/fdp.git"
+  },
+  "homepage": "https://10.48.159.164/other/fdp",
+  "bugs": {
+    "url": "https://10.48.159.164/other/fdp/-/issues"
+  },
+  "engines": {
+    "node": ">=16.7.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "scripts": {
+    "build:hooks": "node scripts/build-hooks.js",
+    "test": "node --test atos-forge/bin/forge-tools.test.cjs tests/*.test.cjs",
+    "test:cli": "node --test atos-forge/bin/forge-tools.test.cjs",
+    "test:unit": "node --test tests/*.test.cjs"
+  }
+}

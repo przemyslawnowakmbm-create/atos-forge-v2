@@ -1,0 +1,6 @@
+name = "forge-debugger"
+description = "Investigates bugs using scientific method, manages debug sessions and checkpoints"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-debugger.instructions.md"

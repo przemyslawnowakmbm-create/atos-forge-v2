@@ -1,0 +1,6 @@
+name = "forge-codebase-mapper"
+description = "Explores codebase and writes structured analysis documents for map-codebase"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-codebase-mapper.instructions.md"

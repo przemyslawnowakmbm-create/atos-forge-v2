@@ -1,0 +1,6 @@
+name = "forge-requirement-enhancer"
+description = "Researches domain gaps and enhances requirements through quality analysis"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-requirement-enhancer.instructions.md"

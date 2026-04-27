@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-check-update.js",
+            "statusMessage": "Checking for Forge updates",
+            "timeoutSec": 15
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-statusline.js",
+            "statusMessage": "",
+            "timeoutSec": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-context-monitor.js",
+            "timeoutSec": 5
+          }
+        ]
+      }
+    ]
+  }
+}

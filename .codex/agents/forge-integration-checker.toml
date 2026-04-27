@@ -1,0 +1,6 @@
+name = "forge-integration-checker"
+description = "Verifies cross-phase integration and E2E flows across phases"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-integration-checker.instructions.md"

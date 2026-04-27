@@ -1,0 +1,6 @@
+name = "forge-roadmapper"
+description = "Creates project roadmaps with phase breakdown, requirement mapping, and coverage validation"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-roadmapper.instructions.md"

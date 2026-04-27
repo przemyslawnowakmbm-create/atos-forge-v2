@@ -1,0 +1,6 @@
+name = "forge-phase-researcher"
+description = "Researches how to implement a phase before planning, produces RESEARCH.md"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-phase-researcher.instructions.md"

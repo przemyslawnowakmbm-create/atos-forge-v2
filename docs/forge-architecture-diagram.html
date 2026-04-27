@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forge — Architecture Diagram</title>
+<style>
+:root {
+  --forge-primary: #003366;
+  --forge-secondary: #2990EA;
+  --forge-accent: #008dbb;
+  --forge-navy: #001f3d;
+  --forge-sky: #e8f2fc;
+  --bg: #f5f7fa;
+  --bg-card: #ffffff;
+  --border: #dce3eb;
+  --text: #1a2e4a;
+  --text-dim: #6b7c93;
+  /* Subsystem colors */
+  --c-graph: #1565c0;
+  --c-graph-bg: #e3f2fd;
+  --c-verify: #2e7d32;
+  --c-verify-bg: #e8f5e9;
+  --c-agents: #e65100;
+  --c-agents-bg: #fff3e0;
+  --c-containers: #7b1fa2;
+  --c-containers-bg: #f3e5f5;
+  --c-session: #00695c;
+  --c-session-bg: #e0f2f1;
+  --c-config: #546e7a;
+  --c-config-bg: #eceff1;
+  --c-system: #c62828;
+  --c-system-bg: #fce4ec;
+  --c-plan: #2990EA;
+  --c-plan-bg: #e8f2fc;
+  --c-init: #003366;
+  --c-init-bg: #e8f2fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Header */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--forge-primary) 0%, var(--forge-navy) 100%);
+}
+.header::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, var(--forge-secondary), var(--forge-accent));
+}
+.header h1 { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
+.header .subtitle { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+/* Zoom controls */
+.zoom-controls {
+  position: fixed; bottom: 20px; right: 20px; z-index: 90;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.zoom-btn {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-card); color: var(--text); font-size: 18px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-family: inherit;
+}
+.zoom-btn:hover { background: var(--forge-sky); border-color: var(--forge-secondary); }
+
+/* Canvas */
+.canvas-wrap {
+  padding: 32px;
+  transform-origin: top left;
+  transition: transform 0.2s ease;
+}
+.canvas {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Section */
+.section {
+  margin-bottom: 40px;
+}
+.section-title {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-dim); margin-bottom: 16px; padding-left: 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title .line { flex: 1; height: 1px; background: var(--border); }
+
+/* Flow row */
+.flow-row {
+  display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+  justify-content: center;
+}
+.flow-row.compact { gap: 6px; }
+
+/* Process box */
+.box {
+  position: relative;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  min-width: 140px;
+  max-width: 220px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.box:hover {
+  border-color: var(--forge-secondary);
+  box-shadow: 0 4px 16px rgba(41,144,234,0.12);
+  transform: translateY(-1px);
+}
+.box.active {
+  border-color: var(--forge-secondary);
+  box-shadow: 0 4px 20px rgba(41,144,234,0.2);
+}
+.box .title {
+  font-size: 12px; font-weight: 700; margin-bottom: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.box .desc {
+  font-size: 10px; color: var(--text-dim); line-height: 1.4;
+}
+.box .file-tag {
+  font-size: 9px; font-family: monospace; color: var(--text-dim);
+  background: var(--bg); padding: 1px 5px; border-radius: 3px; margin-top: 6px;
+  display: inline-block;
+}
+
+/* Color variants */
+.box.init { border-left: 4px solid var(--c-init); }
+.box.init .title { color: var(--c-init); }
+.box.graph { border-left: 4px solid var(--c-graph); }
+.box.graph .title { color: var(--c-graph); }
+.box.plan { border-left: 4px solid var(--c-plan); }
+.box.plan .title { color: var(--c-plan); }
+.box.agents { border-left: 4px solid var(--c-agents); }
+.box.agents .title { color: var(--c-agents); }
+.box.containers { border-left: 4px solid var(--c-containers); }
+.box.containers .title { color: var(--c-containers); }
+.box.verify { border-left: 4px solid var(--c-verify); }
+.box.verify .title { color: var(--c-verify); }
+.box.session { border-left: 4px solid var(--c-session); }
+.box.session .title { color: var(--c-session); }
+.box.config { border-left: 4px solid var(--c-config); }
+.box.config .title { color: var(--c-config); }
+.box.system { border-left: 4px solid var(--c-system); }
+.box.system .title { color: var(--c-system); }
+
+/* Decision diamond */
+.diamond {
+  position: relative;
+  width: 100px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.diamond .shape {
+  position: absolute; inset: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  transform: skewX(-10deg);
+}
+.diamond:hover .shape {
+  border-color: var(--forge-secondary);
+  box-shadow: 0 2px 12px rgba(41,144,234,0.12);
+}
+.diamond .label {
+  position: relative; z-index: 1;
+  font-size: 10px; font-weight: 600; color: var(--text);
+  text-align: center; line-height: 1.3;
+}
+
+/* Database cylinder */
+.db {
+  position: relative;
+  width: 110px; text-align: center;
+  cursor: pointer;
+}
+.db .cylinder {
+  width: 100%; height: 50px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 55% / 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.db:hover .cylinder {
+  border-color: var(--forge-secondary);
+  box-shadow: 0 2px 12px rgba(41,144,234,0.12);
+}
+.db .label {
+  font-size: 11px; font-weight: 600; color: var(--text);
+}
+.db .sublabel {
+  font-size: 9px; color: var(--text-dim); margin-top: 2px;
+}
+.db.graph-db .cylinder { border-color: var(--c-graph); background: var(--c-graph-bg); }
+.db.system-db .cylinder { border-color: var(--c-system); background: var(--c-system-bg); }
+.db.session-db .cylinder { border-color: var(--c-session); background: var(--c-session-bg); }
+.db.config-db .cylinder { border-color: var(--c-config); background: var(--c-config-bg); }
+
+/* Arrow */
+.arrow {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 16px; flex-shrink: 0;
+  min-width: 24px; padding-top: 8px;
+}
+.arrow.down {
+  width: 100%; padding: 4px 0; font-size: 18px;
+}
+.arrow-label {
+  font-size: 9px; color: var(--text-dim); font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Wave loop */
+.wave-loop {
+  border: 2px dashed var(--c-containers);
+  border-radius: 14px;
+  padding: 20px;
+  position: relative;
+  background: rgba(123,31,162,0.02);
+}
+.wave-loop .loop-label {
+  position: absolute; top: -10px; left: 20px;
+  background: var(--bg); padding: 0 8px;
+  font-size: 11px; font-weight: 700; color: var(--c-containers);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* Fix loop */
+.fix-loop {
+  border: 2px dashed var(--c-verify);
+  border-radius: 14px;
+  padding: 16px;
+  position: relative;
+  background: rgba(46,125,50,0.02);
+}
+.fix-loop .loop-label {
+  position: absolute; top: -10px; left: 20px;
+  background: var(--bg); padding: 0 8px;
+  font-size: 11px; font-weight: 700; color: var(--c-verify);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* Agent factory detail */
+.factory-steps {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+  margin-top: 8px;
+}
+.factory-step {
+  text-align: center; padding: 6px 4px;
+  background: var(--c-agents-bg); border-radius: 6px;
+  font-size: 9px; font-weight: 600; color: var(--c-agents);
+  line-height: 1.3;
+}
+.factory-step .num {
+  display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px;
+}
+
+/* Verification layers */
+.verify-layers {
+  display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;
+  justify-content: center;
+}
+.verify-layer {
+  padding: 3px 6px; border-radius: 4px;
+  font-size: 9px; font-weight: 600;
+  background: var(--c-verify-bg); color: var(--c-verify);
+}
+
+/* Side panel (cross-cutting) */
+.cross-cutting {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-top: 20px;
+}
+.cc-card {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 14px; cursor: pointer;
+  transition: all 0.15s;
+}
+.cc-card:hover {
+  border-color: var(--forge-secondary);
+  box-shadow: 0 2px 12px rgba(41,144,234,0.08);
+}
+.cc-card .cc-title {
+  font-size: 12px; font-weight: 700; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.cc-card .cc-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.cc-card .cc-desc {
+  font-size: 10px; color: var(--text-dim); line-height: 1.4;
+}
+.cc-card .cc-files {
+  margin-top: 8px; font-size: 9px; font-family: monospace;
+  color: var(--text-dim); line-height: 1.6;
+}
+
+/* Detail tooltip */
+.detail-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,31,61,0.4); backdrop-filter: blur(2px);
+}
+.detail-overlay.open { display: flex; align-items: center; justify-content: center; }
+.detail-card {
+  background: var(--bg-card); border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  max-width: 520px; width: 90%; max-height: 80vh; overflow-y: auto;
+  padding: 24px;
+}
+.detail-card h2 {
+  font-size: 16px; margin-bottom: 4px;
+}
+.detail-card .detail-sub {
+  font-size: 12px; color: var(--text-dim); margin-bottom: 16px;
+}
+.detail-card .detail-section {
+  margin-bottom: 14px;
+}
+.detail-card .detail-section h4 {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-dim); margin-bottom: 4px; font-weight: 600;
+}
+.detail-card .detail-section p,
+.detail-card .detail-section li {
+  font-size: 12px; line-height: 1.5; color: var(--text);
+}
+.detail-card .detail-section ul {
+  list-style: none; padding: 0;
+}
+.detail-card .detail-section li::before {
+  content: '\2022'; color: var(--forge-secondary); margin-right: 6px;
+}
+.detail-card code {
+  font-size: 11px; background: var(--bg); padding: 1px 5px; border-radius: 3px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.detail-close {
+  position: absolute; top: 12px; right: 16px; cursor: pointer;
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--text-dim);
+}
+.detail-close:hover { background: var(--forge-sky); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .cross-cutting { grid-template-columns: repeat(2, 1fr); }
+  .factory-steps { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Forge</h1>
+    <div class="subtitle">System Architecture &amp; Execution Pipeline</div>
+  </div>
+</div>
+
+<div class="zoom-controls">
+  <button class="zoom-btn" onclick="zoomIn()">+</button>
+  <button class="zoom-btn" onclick="zoomOut()">&minus;</button>
+  <button class="zoom-btn" onclick="zoomReset()" style="font-size:12px">1:1</button>
+</div>
+
+<div class="canvas-wrap" id="canvas-wrap">
+<div class="canvas">
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 0: PROJECT KICKOFF — GREENFIELD vs BROWNFIELD -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span>0 &mdash; Project Kickoff &mdash; Greenfield vs Brownfield</span><span class="line"></span></div>
+
+  <!-- Detection -->
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="box init" data-detail="new-project">
+      <div class="title">/forge-new-project</div>
+      <div class="desc">Detects existing code<br>package files, source files</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="diamond" data-detail="brownfield-detect">
+      <div class="shape"></div>
+      <div class="label">Code<br>exists?</div>
+    </div>
+  </div>
+
+  <!-- Two paths -->
+  <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:0;margin-bottom:20px">
+
+    <!-- Greenfield path -->
+    <div style="border:2px solid var(--c-plan);border-radius:14px;padding:16px;background:rgba(41,144,234,0.02);position:relative">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;color:var(--c-plan);text-transform:uppercase;letter-spacing:0.5px">Greenfield &mdash; No Existing Code</div>
+      <div class="flow-row" style="margin-top:8px">
+        <div class="box plan" data-detail="greenfield-project">
+          <div class="title">PROJECT.md</div>
+          <div class="desc">All requirements Active<br>nothing validated yet<br>"ship to validate"</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box plan" data-detail="greenfield-research">
+          <div class="title">Research Agents</div>
+          <div class="desc">"Build from scratch"<br>research full stack<br>for this domain</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box plan" data-detail="greenfield-roadmap">
+          <div class="title">ROADMAP.md</div>
+          <div class="desc">Phases from zero<br>scaffold &rarr; core &rarr; features</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--text-dim);margin-top:10px;padding-left:4px">
+        /forge-init runs but indexes 0 files &mdash; .forge/ infra created, graph empty. Post-commit hook auto-updates as code is added.
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-dim)">OR</div>
+
+    <!-- Brownfield path -->
+    <div style="border:2px solid var(--c-agents);border-radius:14px;padding:16px;background:rgba(230,81,0,0.02);position:relative">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;color:var(--c-agents);text-transform:uppercase;letter-spacing:0.5px">Brownfield &mdash; Existing Codebase</div>
+      <div class="flow-row" style="margin-top:8px">
+        <div class="box agents" data-detail="map-codebase">
+          <div class="title">/forge-map-codebase</div>
+          <div class="desc">4 parallel mapper agents<br>analyze existing code</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box agents" data-detail="codebase-docs">
+          <div class="title">7 Documents</div>
+          <div class="desc">.planning/codebase/<br>STACK, ARCH, STRUCTURE<br>CONVENTIONS, TESTING<br>INTEGRATIONS, CONCERNS</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box plan" data-detail="brownfield-project">
+          <div class="title">PROJECT.md</div>
+          <div class="desc">Existing caps = Validated<br>new work = Active<br>inferred from codebase map</div>
+        </div>
+      </div>
+      <div class="arrow down">&darr;</div>
+      <div class="flow-row">
+        <div class="box plan" data-detail="brownfield-research">
+          <div class="title">Research Agents</div>
+          <div class="desc">"Add to existing system"<br>don't re-research<br>what already exists</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box plan" data-detail="brownfield-roadmap">
+          <div class="title">ROADMAP.md</div>
+          <div class="desc">Phases for new features<br>existing code untouched<br>unless refactored</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box graph" data-detail="brownfield-init">
+          <div class="title">/forge-init</div>
+          <div class="desc">Full index of existing code<br>modules, symbols, deps<br>capabilities, interfaces</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--text-dim);margin-top:10px;padding-left:4px">
+        /forge-init indexes all files immediately. Graph is fully populated. Agents use graph context to understand where to make changes.
+      </div>
+    </div>
+  </div>
+
+  <!-- Convergence -->
+  <div class="flow-row">
+    <div style="flex:1"></div>
+    <div class="arrow down" style="width:auto">&darr;</div>
+    <div class="box init" data-detail="converge-point" style="max-width:300px;border-left-color:var(--forge-secondary)">
+      <div class="title" style="color:var(--forge-secondary)">Both paths converge</div>
+      <div class="desc">ROADMAP.md + .forge/ infra ready<br>Milestone lifecycle begins (Section 2)<br>/forge-init runs on every repo regardless</div>
+    </div>
+    <div class="arrow down" style="width:auto">&darr;</div>
+    <div style="flex:1"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 1: INITIALIZATION -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span>1 &mdash; Initialization</span><span class="line"></span></div>
+
+  <!-- Single repo init -->
+  <div style="margin-bottom: 20px">
+    <div style="font-size:11px;font-weight:600;color:var(--c-init);margin-bottom:10px;padding-left:4px">Single Repo &mdash; /forge-init</div>
+    <div class="flow-row">
+      <div class="box init" data-detail="init-entry">
+        <div class="title">/forge-init</div>
+        <div class="desc">CLI entry point<br>forge-tools.cjs graph init</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box graph" data-detail="tree-sitter">
+        <div class="title">Parse Files</div>
+        <div class="desc">tree-sitter AST parsing<br>JS/TS/Python/Java/Go</div>
+        <div class="file-tag">builder.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box graph" data-detail="module-detect">
+        <div class="title">Detect Modules</div>
+        <div class="desc">Directory boundaries<br>package.json scopes</div>
+        <div class="file-tag">module-detector.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box graph" data-detail="cap-detect">
+        <div class="title">Detect Capabilities</div>
+        <div class="desc">Pattern matching<br>confidence scoring</div>
+        <div class="file-tag">capability-detector.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="db graph-db" data-detail="graph-db">
+        <div class="cylinder"><div class="label">graph.db</div></div>
+        <div class="sublabel">files, symbols, deps, modules</div>
+      </div>
+    </div>
+    <div class="arrow down">&darr;</div>
+    <div class="flow-row">
+      <div class="box system" data-detail="iface-detect">
+        <div class="title">Detect Interfaces</div>
+        <div class="desc">API routes, events, DB models<br>env vars, HTTP clients</div>
+        <div class="file-tag">forge-system/detect.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box system" data-detail="iface-yaml">
+        <div class="title">interfaces.yaml</div>
+        <div class="desc">Declared exports<br>protocols &amp; metadata</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box config" data-detail="config-create">
+        <div class="title">Config &amp; Setup</div>
+        <div class="desc">.forge/config.json<br>session, snapshots, hooks</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box graph" data-detail="dashboard-gen">
+        <div class="title">Dashboard</div>
+        <div class="desc">HTML visualization<br>force graph + tables</div>
+        <div class="file-tag">dashboard-generator.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box graph" data-detail="git-hooks">
+        <div class="title">Git Hooks</div>
+        <div class="desc">post-commit updater<br>incremental graph updates</div>
+        <div class="file-tag">install-hooks.js</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi repo init -->
+  <div>
+    <div style="font-size:11px;font-weight:600;color:var(--c-system);margin-bottom:10px;padding-left:4px">Multi-Repo &mdash; /forge-system-init</div>
+    <div class="flow-row">
+      <div class="box system" data-detail="sys-init">
+        <div class="title">system-init</div>
+        <div class="desc">Batch orchestrator<br>--path / --repos / --github-org</div>
+        <div class="file-tag">system-init.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box system" data-detail="discovery">
+        <div class="title">Discovery</div>
+        <div class="desc">Scan directory (2-level)<br>registry file, or GitHub API</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box system" data-detail="parallel-init">
+        <div class="title">Parallel Init</div>
+        <div class="desc">N workers run /forge-init<br>per repo concurrently</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box system" data-detail="assembly">
+        <div class="title">Assembly</div>
+        <div class="desc">Merge interfaces.yaml<br>build cross-repo edges</div>
+        <div class="file-tag">builder.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="db system-db" data-detail="system-graph-db">
+        <div class="cylinder"><div class="label">system-graph.db</div></div>
+        <div class="sublabel">services, interfaces, deps</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box system" data-detail="sys-validate">
+        <div class="title">Validate</div>
+        <div class="desc">Structural + cross-repo<br>contract validation</div>
+        <div class="file-tag">validate.js</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 2: MILESTONE & PLANNING -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span>2 &mdash; Milestone Lifecycle &amp; Planning</span><span class="line"></span></div>
+
+  <!-- Milestone lifecycle -->
+  <div class="wave-loop" style="margin-bottom:24px;border-color:var(--c-plan);background:rgba(41,144,234,0.02)">
+    <div class="loop-label" style="color:var(--c-plan)">Milestone Cycle &mdash; repeat per milestone</div>
+    <div class="flow-row" style="margin-bottom:16px">
+      <div class="box plan" data-detail="new-milestone">
+        <div class="title">/forge-new-milestone</div>
+        <div class="desc">Start milestone cycle<br>create PROJECT.md<br>gather requirements</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box plan" data-detail="roadmap">
+        <div class="title">ROADMAP.md</div>
+        <div class="desc">Numbered phases<br>progress tracking table</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box plan" data-detail="phase-mgmt">
+        <div class="title">Phase Management</div>
+        <div class="desc">/forge-add-phase<br>/forge-insert-phase (3.1)<br>/forge-remove-phase</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box plan" data-detail="plan-execute-loop" style="border-left-color:var(--c-agents)">
+        <div class="title">Plan &amp; Execute</div>
+        <div class="desc">Per phase: plan &rarr; execute<br>(sections 2b &amp; 3 below)</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box verify" data-detail="audit-milestone">
+        <div class="title">/forge-audit-milestone</div>
+        <div class="desc">Audit completion<br>identify gaps</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="diamond" data-detail="gaps-decision">
+        <div class="shape"></div>
+        <div class="label">Gaps<br>found?</div>
+      </div>
+      <div class="arrow">
+        <div class="arrow-label">yes</div>
+      </div>
+      <div class="box plan" data-detail="plan-gaps">
+        <div class="title">/forge-plan-gaps</div>
+        <div class="desc">Create phases to<br>close audit gaps</div>
+      </div>
+    </div>
+    <div class="flow-row">
+      <div style="flex:1"></div>
+      <div class="box session" data-detail="complete-milestone">
+        <div class="title">/forge-complete-milestone</div>
+        <div class="desc">Archive milestone artifacts<br>prepare for next version</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box plan" data-detail="next-milestone">
+        <div class="title">Next Milestone</div>
+        <div class="desc">Fresh ROADMAP.md<br>new planning directory<br>clean slate</div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+  </div>
+
+  <!-- Phase planning -->
+  <div style="font-size:11px;font-weight:600;color:var(--c-plan);margin-bottom:10px;padding-left:4px">Per Phase &mdash; Planning</div>
+  <div class="flow-row">
+    <div class="box plan" data-detail="discuss-phase">
+      <div class="title">/forge-discuss-phase</div>
+      <div class="desc">Adaptive questioning<br>gather phase context</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="plan-phase">
+      <div class="title">/forge-plan-phase</div>
+      <div class="desc">Phase planning workflow<br>context + research + plan</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="context-load">
+      <div class="title">Context Loading</div>
+      <div class="desc">CONTEXT.md, graph queries<br>capabilities, codebase map</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box agents" data-detail="impact-analyzer" style="border-left:4px solid #e67e22">
+      <div class="title" style="color:#e67e22">Impact Analyzer</div>
+      <div class="desc">Keywords &rarr; system-graph.db<br>SINGLE_REPO vs MULTI_REPO</div>
+      <div class="file-tag">forge-analyze/analyzer.js</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="diamond" data-detail="research-decision">
+      <div class="shape"></div>
+      <div class="label">Research<br>needed?</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="researcher">
+      <div class="title">Research Agent</div>
+      <div class="desc">Task subagent explores<br>codebase &rarr; RESEARCH.md</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="planner">
+      <div class="title">Planner Agent</div>
+      <div class="desc">Creates PLAN.md files<br>with YAML frontmatter</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box verify" data-detail="plan-checker">
+      <div class="title">Plan Checker</div>
+      <div class="desc">8 dimensions, max 3 loops<br>incl. Arch Fitness (Dim 8)</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box verify" data-detail="arch-review-gate" style="border-left:4px solid #8e44ad">
+      <div class="title" style="color:#8e44ad">Architecture Review Gate</div>
+      <div class="desc">Check plans against<br>ARCHITECTURE.md &amp; CONVENTIONS.md</div>
+      <div class="file-tag">agents/forge-plan-checker.md (Dim 8)</div>
+      <div class="verify-layers">
+        <span class="verify-layer" style="background:#8e44ad;color:#fff">Layer boundaries</span>
+        <span class="verify-layer" style="background:#8e44ad;color:#fff">Naming conventions</span>
+        <span class="verify-layer" style="background:#8e44ad;color:#fff">Endpoint patterns</span>
+        <span class="verify-layer" style="background:#8e44ad;color:#fff">Cross-cutting</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 3: EXECUTION PIPELINE -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span>3 &mdash; Execution Pipeline</span><span class="line"></span></div>
+
+  <!-- Step 1: Load & Assess -->
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="box plan" data-detail="exec-init">
+      <div class="title">/forge-execute-phase</div>
+      <div class="desc">Load plans, detect mode<br>check Docker + resources</div>
+      <div class="file-tag">execute-phase.md</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="load-plans">
+      <div class="title">Load Plans</div>
+      <div class="desc">Filter incomplete plans<br>skip has_summary=true</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="diamond" data-detail="mode-decision">
+      <div class="shape"></div>
+      <div class="label">Docker<br>available?</div>
+    </div>
+    <div class="arrow">
+      <div class="arrow-label">yes/no</div>
+    </div>
+    <div class="box containers" data-detail="mode-select">
+      <div class="title">Mode Selection</div>
+      <div class="desc">Container (Docker)<br>or Worktree (Claude CLI)</div>
+    </div>
+  </div>
+
+  <!-- Step 2: Assess & Split -->
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="box agents" data-detail="assessor">
+      <div class="title">Assessor</div>
+      <div class="desc">Token estimation<br>context budget check</div>
+      <div class="file-tag">forge-assess/assessor.js</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="diamond" data-detail="split-decision">
+      <div class="shape"></div>
+      <div class="label">Fits<br>context?</div>
+    </div>
+    <div class="arrow">
+      <div class="arrow-label">overflow</div>
+    </div>
+    <div class="box agents" data-detail="splitter">
+      <div class="title">Splitter</div>
+      <div class="desc">module &rarr; concern &rarr; file<br>cascading split strategies</div>
+      <div class="file-tag">forge-assess/splitter.js</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="sub-plans">
+      <div class="title">Sub-Plans</div>
+      <div class="desc">Context-fitting chunks<br>with internal depends_on</div>
+    </div>
+  </div>
+
+  <!-- Step 3: Agent Factory -->
+  <div style="margin-bottom:20px">
+    <div class="flow-row" style="margin-bottom:8px">
+      <div class="box agents" data-detail="factory" style="max-width:100%;min-width:100%;text-align:left;padding:16px 20px">
+        <div class="title" style="font-size:14px;margin-bottom:8px">Agent Factory &mdash; 7-Step Pipeline</div>
+        <div class="desc" style="margin-bottom:10px">Per plan/sub-plan: reads the code graph, determines agent specialization, composes full execution context</div>
+        <div class="file-tag">forge-agents/factory.js</div>
+        <div class="factory-steps">
+          <div class="factory-step" data-detail="factory-1"><span class="num">1</span>Analyze Task<br><span style="font-weight:400">graph context, risk, cycles, capabilities</span></div>
+          <div class="factory-step" data-detail="factory-2"><span class="num">2</span>Archetype<br><span style="font-weight:400">specialist, integrator, careful, general</span></div>
+          <div class="factory-step" data-detail="factory-3"><span class="num">3</span>System Prompt<br><span style="font-weight:400">base + archetype + domain + cross-repo</span></div>
+          <div class="factory-step" data-detail="factory-4"><span class="num">4</span>Context Pkg<br><span style="font-weight:400">always_load + task + reference (70% budget)</span></div>
+          <div class="factory-step" data-detail="factory-5"><span class="num">5</span>Verification<br><span style="font-weight:400">capability-mapped checks</span></div>
+          <div class="factory-step" data-detail="factory-6"><span class="num">6</span>Container Spec<br><span style="font-weight:400">image, memory, CPU, timeout</span></div>
+          <div class="factory-step" data-detail="factory-7"><span class="num">7</span>Session Ctx<br><span style="font-weight:400">decisions, warnings, knowledge</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Parallel Planner -->
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="box agents" data-detail="parallel-planner">
+      <div class="title">Parallel Planner</div>
+      <div class="desc">Build dependency DAG<br>topological sort (Kahn's)</div>
+      <div class="file-tag">parallel-planner.js</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box agents" data-detail="bin-pack">
+      <div class="title">Bin-Pack</div>
+      <div class="desc">Resource-aware grouping<br>max_concurrent, memory, CPU</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box containers" data-detail="waves">
+      <div class="title">Execution Waves</div>
+      <div class="desc">Wave 1 &rarr; Wave 2 &rarr; ... &rarr; Wave N<br>parallel within, sequential across</div>
+    </div>
+  </div>
+
+  <!-- Step 5: Wave Execution Loop -->
+  <div class="wave-loop" style="margin-bottom:20px">
+    <div class="loop-label">Wave Execution Loop &mdash; repeat per wave</div>
+    <div class="flow-row" style="margin-bottom:16px">
+      <div class="box containers" data-detail="resource-mgr">
+        <div class="title">ResourceManager</div>
+        <div class="desc">Semaphore acquire slot<br>concurrency control</div>
+        <div class="file-tag">resource-manager.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box containers" data-detail="worktree-create">
+        <div class="title">Git Worktree</div>
+        <div class="desc">Isolated checkout<br>copy graph.db + ledger</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="diamond" data-detail="exec-mode">
+        <div class="shape"></div>
+        <div class="label">Docker<br>mode?</div>
+      </div>
+    </div>
+    <div class="flow-row" style="margin-bottom:16px;gap:20px">
+      <div class="box containers" data-detail="docker-agent" style="border-left-color:var(--c-containers)">
+        <div class="title">Docker Container</div>
+        <div class="desc">agent-entrypoint.js<br>isolated execution</div>
+        <div class="file-tag">orchestrator.js</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);padding-top:16px;font-weight:600">OR</div>
+      <div class="box containers" data-detail="worktree-agent" style="border-left-color:var(--c-containers)">
+        <div class="title">Worktree Agent</div>
+        <div class="desc">claude --print subprocess<br>--dangerously-skip-permissions</div>
+        <div class="file-tag">worktree-orchestrator.js</div>
+      </div>
+    </div>
+    <div class="arrow down">&darr;</div>
+    <div class="flow-row" style="margin-bottom:16px">
+      <div class="box agents" data-detail="agent-inside">
+        <div class="title">Agent Execution</div>
+        <div class="desc">Read graph &rarr; understand code<br>make changes &rarr; git diff</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box containers" data-detail="collect-patches">
+        <div class="title">Collect Patches</div>
+        <div class="desc">git diff &rarr; .patch files<br>git apply --3way</div>
+        <div class="file-tag">patch-collector.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fix-loop">
+        <div class="loop-label">Quick Verify + Fix Loop (max 3)</div>
+        <div class="flow-row">
+          <div class="box verify" data-detail="quick-verify">
+            <div class="title">Quick Verify</div>
+            <div class="desc">tsc + eslint<br>layers 1-4</div>
+          </div>
+          <div class="arrow">&rarr;</div>
+          <div class="diamond" data-detail="verify-pass">
+            <div class="shape"></div>
+            <div class="label">Pass?</div>
+          </div>
+          <div class="arrow">
+            <div class="arrow-label">fail</div>
+          </div>
+          <div class="box verify" data-detail="fix-agent">
+            <div class="title">Fix Agent</div>
+            <div class="desc">Revert &rarr; analyze<br>archetype: careful</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="arrow down">&darr;</div>
+    <div class="flow-row">
+      <div class="box graph" data-detail="graph-update">
+        <div class="title">Graph Update</div>
+        <div class="desc">Incremental update<br>save snapshot</div>
+        <div class="file-tag">updater.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box session" data-detail="ledger-write">
+        <div class="title">Ledger Update</div>
+        <div class="desc">Log warnings, discoveries<br>wave completion stats</div>
+        <div class="file-tag">ledger.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box agents" data-detail="knowledge-prop">
+        <div class="title">Knowledge Propagation</div>
+        <div class="desc">Rebuild remaining agents<br>with updated ledger context</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6: Full Verification -->
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="box verify" data-detail="full-verify" style="max-width:320px">
+      <div class="title">Full Verification &mdash; 8 Layers</div>
+      <div class="desc">Fail-fast pipeline, each toggleable via config</div>
+      <div class="file-tag">forge-verify/engine.js</div>
+      <div class="verify-layers">
+        <span class="verify-layer">L1 Structural</span>
+        <span class="verify-layer">L2 Type/Compile</span>
+        <span class="verify-layer">L3 Contracts</span>
+        <span class="verify-layer">L4 Deps</span>
+        <span class="verify-layer">L5 Tests</span>
+        <span class="verify-layer">L6 Behavioral</span>
+        <span class="verify-layer">L7 Cross-Repo</span>
+        <span class="verify-layer">L8 Architectural</span>
+      </div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="diamond" data-detail="full-verify-decision">
+      <div class="shape"></div>
+      <div class="label">Result?</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box verify" data-detail="verify-loop">
+      <div class="title">Auto-Fix Loop</div>
+      <div class="desc">Verify &rarr; fix &rarr; re-verify<br>patch fingerprint dedup</div>
+      <div class="file-tag">forge-verify/loop.js</div>
+    </div>
+  </div>
+
+  <!-- Step 7: Commit & Cleanup -->
+  <div class="flow-row">
+    <div class="box init" data-detail="commit">
+      <div class="title">Commit</div>
+      <div class="desc">feat(phase-N): description<br>[forge:archetype] metadata</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box containers" data-detail="cleanup">
+      <div class="title">Cleanup</div>
+      <div class="desc">Remove containers/worktrees<br>temp files, final graph update</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box session" data-detail="ledger-archive">
+      <div class="title">Ledger Archive</div>
+      <div class="desc">Archive + promote knowledge<br>update ROADMAP + STATE</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="phase-complete">
+      <div class="title">Phase Complete</div>
+      <div class="desc">Mark ROADMAP checkbox<br>advance to next phase</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 4: CROSS-CUTTING SYSTEMS -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span>4 &mdash; Cross-Cutting Systems</span><span class="line"></span></div>
+  <div class="cross-cutting">
+    <div class="cc-card" data-detail="cc-graph">
+      <div class="cc-title"><span class="cc-dot" style="background:var(--c-graph)"></span>Code Graph</div>
+      <div class="cc-desc">SQLite database of files, symbols, dependencies, modules, capabilities. Queried by factory (context + risk), verification (contracts + cycles), and updater (incremental). Snapshots saved before/after execution.</div>
+      <div class="cc-files">forge-graph/builder.js<br>forge-graph/query.js<br>forge-graph/updater.js<br>forge-graph/snapshot.js</div>
+    </div>
+    <div class="cc-card" data-detail="cc-session">
+      <div class="cc-title"><span class="cc-dot" style="background:var(--c-session)"></span>Session Ledger</div>
+      <div class="cc-desc">Markdown file tracking execution state, decisions, warnings, user preferences. Written by wave execution, read by agent factory for knowledge propagation. Auto-compacts when too large, archived on phase complete.</div>
+      <div class="cc-files">forge-session/ledger.js<br>.forge/session/ledger.md<br>.forge/session/archive/</div>
+    </div>
+    <div class="cc-card" data-detail="cc-config">
+      <div class="cc-title"><span class="cc-dot" style="background:var(--c-config)"></span>Unified Config</div>
+      <div class="cc-desc">Single source of truth. Merge order: defaults &larr; ~/.forge/config.json (global) &larr; .forge/config.json (project). 12 sections: graph, execution, containers, agents, verification, knowledge, impact_analysis, session, display, git, system, project.</div>
+      <div class="cc-files">forge-config/config.js<br>forge-config/doctor.js<br>.forge/config.json</div>
+    </div>
+    <div class="cc-card" data-detail="cc-system">
+      <div class="cc-title"><span class="cc-dot" style="background:var(--c-system)"></span>System Graph</div>
+      <div class="cc-desc">Cross-repo dependency tracking. Services, interfaces, dependencies. Provides cross-repo context to agent factory (consumer warnings), verification L7 (contract drift), and parallel planner (cross-repo DAG edges).</div>
+      <div class="cc-files">forge-system/query.js<br>forge-system/sync.js<br>forge-system/dashboard.js<br>forge-verify/contract-layer.js</div>
+    </div>
+    <div class="cc-card" data-detail="cc-knowledge">
+      <div class="cc-title"><span class="cc-dot" style="background:#e67e22"></span>Knowledge Base</div>
+      <div class="cc-desc">Persistent learnings that survive across milestones. Auto-promoted from ledger on archive (decisions, warnings, pitfalls, preferences). Filtered by module relevance and injected into agent system prompts. CLI: knowledge list/add/prune/promote.</div>
+      <div class="cc-files">forge-session/knowledge.js<br>.forge/knowledge/learnings.json<br>forge-config/config.js (knowledge section)</div>
+    </div>
+    <div class="cc-card" data-detail="cc-archreview">
+      <div class="cc-title"><span class="cc-dot" style="background:#8e44ad"></span>Architecture Review</div>
+      <div class="cc-desc">Two-level architectural fitness checking. Plan-checker Dimension 8: validates plans against ARCHITECTURE.md &amp; CONVENTIONS.md (suggestions, non-blocking). Verification Layer 8: optional agent-based code review against documented conventions (off by default).</div>
+      <div class="cc-files">agents/forge-plan-checker.md (Dim 8)<br>forge-verify/engine.js (Layer 8)<br>.planning/codebase/ARCHITECTURE.md<br>.planning/codebase/CONVENTIONS.md</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- .canvas -->
+</div><!-- .canvas-wrap -->
+
+<!-- Detail overlay -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-card" id="detail-card" style="position:relative">
+    <div class="detail-close" id="detail-close">&times;</div>
+    <div id="detail-body"></div>
+  </div>
+</div>
+
+<script>
+// ── Zoom ──
+let scale = 1;
+const wrap = document.getElementById('canvas-wrap');
+function zoomIn() { scale = Math.min(2, scale + 0.15); wrap.style.transform = 'scale(' + scale + ')'; }
+function zoomOut() { scale = Math.max(0.3, scale - 0.15); wrap.style.transform = 'scale(' + scale + ')'; }
+function zoomReset() { scale = 1; wrap.style.transform = 'scale(1)'; }
+
+// ── Detail data ──
+const details = {
+  'init-entry': {
+    title: '/forge-init',
+    sub: 'CLI Entry Point',
+    sections: [
+      { h: 'File', t: 'atos-forge/bin/forge-tools.cjs → cmdGraphInit()' },
+      { h: 'What it does', list: ['Creates .forge/ directory structure', 'Runs graph builder (tree-sitter parsing)', 'Detects modules and capabilities', 'Detects interfaces → interfaces.yaml', 'Installs git post-commit hooks', 'Takes initial graph snapshot', 'Generates dashboard HTML'] },
+      { h: 'Output', t: 'JSON: { success, build_time, total_files, total_symbols, module_count, dependency_count, hooks_installed, interfaces_detected }' },
+    ]
+  },
+  'tree-sitter': {
+    title: 'File Parsing',
+    sub: 'forge-graph/builder.js → GraphBuilder',
+    sections: [
+      { h: 'Input', t: 'Repository root directory' },
+      { h: 'Process', list: ['Discover source files (respects ignore_patterns)', 'ParserManager loads tree-sitter grammars', 'AST extraction: functions, classes, imports, exports', 'Regex fallback if tree-sitter unavailable', 'Resolve import paths → dependency edges'] },
+      { h: 'Output', t: 'graph.db: files, symbols, dependencies tables' },
+    ]
+  },
+  'module-detect': {
+    title: 'Module Detection',
+    sub: 'forge-graph/module-detector.js',
+    sections: [
+      { h: 'Process', list: ['Scan for package.json, __init__.py, go.mod boundaries', 'Group files by directory hierarchy', 'Calculate file_count, public_api_count, stability', 'Compute module_dependencies from file-level edges'] },
+      { h: 'Output', t: 'graph.db: modules, module_dependencies tables' },
+    ]
+  },
+  'cap-detect': {
+    title: 'Capability Detection',
+    sub: 'forge-graph/capability-detector.js',
+    sections: [
+      { h: 'Capabilities Detected', list: ['api_server — Express/FastAPI/NestJS routes', 'database_sql — ORM models, SQL queries', 'react_advanced — React components, hooks', 'authentication — JWT, OAuth, passport', 'ai_ml — model loading, inference', 'testing — test frameworks, assertions', 'docker — Dockerfiles, compose', 'logging — structured logging'] },
+      { h: 'Output', t: 'Per module: { capability, confidence (0-1) }' },
+    ]
+  },
+  'graph-db': {
+    title: 'graph.db',
+    sub: 'Per-Repository Code Graph Database',
+    sections: [
+      { h: 'Tables', list: ['files — path, language, loc, complexity_score, module', 'symbols — name, type, file, line, exported', 'dependencies — source_file, target_file, type', 'modules — name, root_path, file_count, stability', 'module_dependencies — source, target, edge_count', 'module_capabilities — module_name, capability, confidence', 'meta — key/value (last_commit, build_date)'] },
+    ]
+  },
+  'iface-detect': {
+    title: 'Interface Detection',
+    sub: 'forge-system/detect.js → detectInterfaces()',
+    sections: [
+      { h: 'Scans for', list: ['OpenAPI/Swagger spec files', 'FastAPI/Express/NestJS route decorators', '.proto files (gRPC)', 'Kafka/RabbitMQ/Celery producers & consumers', 'Redis pub/sub channels', 'npm/PyPI package exports', 'SQLAlchemy/Prisma/TypeORM models', 'Environment variables (*_API_URL)', 'HTTP client calls (axios, fetch, requests)'] },
+      { h: 'Output', t: '.forge/interfaces.yaml — declared service interfaces with metadata (endpoints[], tables[], topics, methods[])' },
+    ]
+  },
+  'sys-init': {
+    title: 'System Init',
+    sub: 'forge-system/system-init.js → systemInit()',
+    sections: [
+      { h: 'Discovery Sources', list: ['--path <dir> — 2-level filesystem scan for git repos', '--repos <file> — JSON registry of repo paths', '--github-org <org> — Clone from GitHub API'] },
+      { h: 'Pipeline', list: ['A. Discovery — find repos, apply ignore_repos filter', 'B. Parallel Init — N workers run /forge-init per repo', 'C. Assembly — builder.js merges interfaces.yaml → system-graph.db', 'D. Validation — validate.js checks cross-repo contracts'] },
+    ]
+  },
+  'system-graph-db': {
+    title: 'system-graph.db',
+    sub: 'Cross-Repository System Database',
+    sections: [
+      { h: 'Tables', list: ['services — id, repo_path, description, team', 'interfaces — service_id, name, type, protocol, metadata (JSON)', 'dependencies — consumer_id, provider_id, interface_id, deprecated', 'service_metrics — fan_in, fan_out, coupling_score, risk_level', 'teams — id, name', 'sync_log — service_id, synced_at, hash'] },
+    ]
+  },
+  'factory': {
+    title: 'Agent Factory',
+    sub: 'forge-agents/factory.js → buildAgentConfig()',
+    sections: [
+      { h: 'Input', t: 'Path to PLAN.md file + project root' },
+      { h: 'Output', t: '{ agentConfig, containerParams, analysis }' },
+      { h: 'How agents read the graph', list: ['Step 1 opens graph.db via GraphQuery', 'getContextForTask() → files, deps, consumers, test files', 'getRiskAssessment() → risk level + reasons', 'getCycles() → circular dependency warnings', 'getCapabilities() per affected module', 'If system-graph.db exists: find service, exports, consumers, imports'] },
+      { h: 'Archetype Decision', list: ['CRITICAL/HIGH risk → careful (extra validation steps)', '3+ modules affected → integrator (cross-module awareness)', '1 module + strong capability → specialist (domain expertise)', 'Default → general'] },
+    ]
+  },
+  'factory-1': {
+    title: 'Step 1: Analyze Task',
+    sub: 'Agent Factory Pipeline',
+    sections: [
+      { h: 'Actions', list: ['Parse plan frontmatter (wave, depends_on, autonomous)', 'Open graph.db → getContextForTask(files)', 'getRiskAssessment(files) → { level, score, reasons }', 'getCycles() → circular deps', 'getModuleBoundaries() → affected modules', 'getCapabilities() per module', 'Check system-graph.db for cross-repo context', 'Read session ledger for state + decisions'] },
+    ]
+  },
+  'factory-2': {
+    title: 'Step 2: Determine Archetype',
+    sub: 'Agent Factory Pipeline',
+    sections: [
+      { h: 'Decision Rules (priority order)', list: ['Risk CRITICAL or HIGH → careful archetype', 'affectedModules >= 3 → integrator archetype', 'affectedModules <= 1 AND capability confidence >= 0.6 → specialist', 'Default → general archetype'] },
+      { h: 'Time Estimates', t: 'specialist: 2-5min, integrator: 4-8min, careful: 5-10min, general: 3-6min' },
+    ]
+  },
+  'factory-3': {
+    title: 'Step 3: Compose System Prompt',
+    sub: 'Agent Factory Pipeline',
+    sections: [
+      { h: 'Prompt Layers', list: ['BASE_EXECUTOR_PROMPT — core rules (read first, minimal changes)', 'Archetype behavior block — specialist/integrator/careful/general specific', 'Domain knowledge — capability agent_context for confidence >= 0.3', 'Graph context — files, dependencies, consumers, interfaces', 'Cross-repo context — service exports, consumer warnings', 'Session context — decisions, warnings, preferences, rejected approaches', 'Persistent knowledge — learnings from prior milestones (knowledge_base[])'] },
+    ]
+  },
+  'factory-4': {
+    title: 'Step 4: Context Package',
+    sub: 'Agent Factory Pipeline',
+    sections: [
+      { h: 'Budget', t: '70% of context_budget (default: 140k of 200k tokens)' },
+      { h: 'Layers', list: ['always_load — plan file + direct task files', 'task_specific — dependencies, consumer files, test files from graph', 'reference — interface files (sorted by consumer_count), neighbor interfaces.yaml'] },
+    ]
+  },
+  'factory-5': {
+    title: 'Step 5: Define Verification',
+    sub: 'Agent Factory Pipeline',
+    sections: [
+      { h: 'Sources', list: ['Plan frontmatter verify: fields', 'Capability-mapped: react_advanced → [typescript, npm_test]', 'Baseline: typescript if any .ts/.tsx files in plan'] },
+    ]
+  },
+  'factory-6': {
+    title: 'Step 6: Container Spec',
+    sub: 'Agent Factory Pipeline',
+    sections: [
+      { h: 'Image Selection', list: ['Python files or database_sql/ai_ml caps → python template', 'Both Python + Node → full template', 'Default → node template'] },
+      { h: 'Resources', t: 'max_memory_per_container (2g), max_cpu (1), timeout (600s), network_access (false)' },
+    ]
+  },
+  'factory-7': {
+    title: 'Step 7: Session Context',
+    sub: 'Agent Factory Pipeline',
+    sections: [
+      { h: 'Extracted from Ledger', list: ['decisions[] — do not re-ask resolved questions', 'warnings[] — filtered to affected modules/files', 'user_preferences[] — respect workflow choices', 'rejected_approaches[] — do not retry failed strategies'] },
+      { h: 'Persistent Knowledge', list: ['knowledge.relevantFor(cwd, modules, files) → filtered learnings', 'Includes: decisions, warnings, pitfalls, conventions from prior milestones', 'High-relevance entries always included regardless of module match', 'Injected as knowledge_base[] in session_context', 'Rendered as "Persistent Knowledge" section in agent system prompt'] },
+    ]
+  },
+  'parallel-planner': {
+    title: 'Parallel Planner',
+    sub: 'forge-agents/parallel-planner.js',
+    sections: [
+      { h: 'Algorithm', list: ['Build DAG from depends_on frontmatter', 'Add cross-repo edges from system-graph.db (provider → consumer)', 'Topological sort via Kahn\'s algorithm → wave groups', 'Detect cycles (wave empty but nodes remain)', 'Bin-pack per wave: sort by archetype priority, respect max_concurrent + memory + CPU'] },
+    ]
+  },
+  'docker-agent': {
+    title: 'Docker Container Agent',
+    sub: 'forge-containers/orchestrator.js',
+    sections: [
+      { h: 'Container Lifecycle', list: ['ResourceManager.acquire() — semaphore slot', 'git worktree add → isolated checkout', 'container-spec.js → Docker run args', 'ensureImage() → build if missing', 'agent-entrypoint.js runs inside:', '  Copy /repo → /workspace', '  Apply previous wave patches', '  Build system prompt + task prompt', '  claude --print → make changes', '  git diff → /output/patches/', 'collectPatches() + applyPatches()', 'extractLearnings() → ledger', 'ResourceManager.release()'] },
+    ]
+  },
+  'worktree-agent': {
+    title: 'Worktree Agent',
+    sub: 'forge-containers/worktree-orchestrator.js',
+    sections: [
+      { h: 'Lifecycle', list: ['ResourceManager.acquire() — semaphore', 'git worktree add /tmp/forge-wt-*', 'prepareWorktree() — copy graph.db, ledger, system-graph.db, interfaces', 'buildPrompt() — full context assembly', 'spawn claude --print --dangerously-skip-permissions', 'Capture git diff from worktree → patch', 'applyPatches() → main repo via git apply --3way', 'extractLearnings() → ledger', 'git worktree remove --force'] },
+    ]
+  },
+  'knowledge-prop': {
+    title: 'Knowledge Propagation',
+    sub: 'Wave N → Ledger → Wave N+1 + Cross-Milestone',
+    sections: [
+      { h: 'Within Milestone (wave-to-wave)', list: ['Wave N agents log warnings + discoveries to ledger', 'Before Wave N+1: factory.build() re-reads updated ledger', 'extractSessionContext() pulls new warnings', 'New warnings injected into Wave N+1 agents\' session_context', 'Agents see: "Account for these warnings from prior agents..."'] },
+      { h: 'Across Milestones (persistent knowledge)', list: ['On archiveAndReset(): knowledge.promote() extracts key learnings', 'Decisions, HIGH warnings, rejected approaches, preferences → learnings.json', 'Deduplication via >80% Jaccard word similarity', 'Next milestone agents receive knowledge_base[] in session_context', 'High-relevance entries always included; others filtered by module match', 'Result: Milestone N pitfalls propagate to Milestone N+1 agents'] },
+    ]
+  },
+  'full-verify': {
+    title: 'Full Verification — 8 Layers',
+    sub: 'forge-verify/engine.js → verify()',
+    sections: [
+      { h: 'Layer Details', list: ['L1 STRUCTURAL (<5s) — console.log, debugger, merge markers, bracket balance', 'L2 TYPE/COMPILE (10-30s) — tsc --noEmit, mypy, go build (auto-detected)', 'L3 INTERFACE CONTRACTS (5-15s) — contract_hash diff, breaking changes, consumer risk', 'L4 DEPENDENCY (<5s) — getCycles() for new circular deps, orphaned imports', 'L5 TESTS (30s-5min) — graph-identified test files, jest/pytest/vitest', 'L6 BEHAVIORAL (varies) — plan\'s custom verify steps from frontmatter', 'L7 CONTRACT (5-30s) — code↔YAML drift, backward compat, cross-repo ripple', 'L8 ARCHITECTURAL (optional) — agent-based review against ARCHITECTURE.md + CONVENTIONS.md'] },
+      { h: 'Output', t: '{ overall: PASS|FAIL, layers[], fix_suggestions[], auto_fixable, graph_diff }' },
+      { h: 'Note', t: 'Layer 8 is off by default (verification.layers.architectural: false). Spawns Claude CLI — expensive per invocation.' },
+    ]
+  },
+  'verify-loop': {
+    title: 'Auto-Fix Loop',
+    sub: 'forge-verify/loop.js → verifyLoop()',
+    sections: [
+      { h: 'Flow', list: ['verify() → PASS? done', 'FAIL? → analyzeFixability()', 'Auto-fixable: type errors, missing imports, syntax, contract drift', 'Human-only: behavioral failures (L6) → escalate', 'Build fix agent (archetype: careful, is_fix_agent: true)', 'Run via worktree orchestrator', 'patchFingerprint() → SHA256 dedup', 'Same hash twice → stuck → escalate', 'New failures introduced → revert → escalate', 'Max 3 loops then escalate'] },
+    ]
+  },
+  'cc-graph': {
+    title: 'Code Graph (graph.db)',
+    sub: 'Cross-cutting: queried throughout pipeline',
+    sections: [
+      { h: 'Consumers', list: ['Agent Factory — getContextForTask, getRiskAssessment, getCapabilities', 'Verification Engine — getCycles, getGraphDiff, contract checks', 'Graph Updater — incremental update on post-commit hook', 'Dashboard Generator — full codebase visualization', 'Assessor — token estimation for context budget'] },
+      { h: 'Files', t: 'forge-graph/builder.js, query.js, updater.js, snapshot.js, module-detector.js, capability-detector.js' },
+    ]
+  },
+  'cc-session': {
+    title: 'Session Ledger',
+    sub: 'Knowledge propagation mechanism',
+    sections: [
+      { h: 'Written by', list: ['Wave execution — logWarning, logDiscovery, logWaveComplete', 'Verification — logError on failures', 'User decisions — logDecision'] },
+      { h: 'Read by', list: ['Agent Factory — extractSessionContext() for each agent', 'Execute-phase — updateState() for active command tracking', 'Resume-work — full context restoration', 'Knowledge promotion — archiveAndReset() extracts key learnings'] },
+      { h: 'Wave-to-Wave', t: 'Factory re-reads ledger between waves, injects updated warnings into Wave N+1 session_context.' },
+      { h: 'Cross-Milestone', t: 'On archiveAndReset(), knowledge.promote() extracts decisions/warnings/pitfalls/preferences → learnings.json. Next milestone agents receive these as persistent knowledge.' },
+    ]
+  },
+  'cc-knowledge': {
+    title: 'Persistent Knowledge Base',
+    sub: 'Cross-milestone learning retention',
+    sections: [
+      { h: 'Problem Solved', t: 'Session ledger is archived on milestone complete but nothing reads archives back. Milestone 2 agents have zero memory of Milestone 1 pitfalls. The knowledge base persists learnings across milestones.' },
+      { h: 'How It Works', list: [
+        'learnings.json stores structured entries: {id, type, text, modules, relevance, source_milestone}',
+        'Types: decision, warning, pitfall, convention, preference',
+        'Auto-promoted from ledger on archiveAndReset() — decisions → decision, HIGH warnings → warning, rejected approaches → pitfall, user prefs → preference',
+        'Deduplication: >80% word-similarity Jaccard check prevents duplicates',
+        'Filtered by module relevance before injection into agents',
+        'High-relevance entries included regardless of module match'
+      ]},
+      { h: 'Integration Points', list: [
+        'ledger.js archiveAndReset() → knowledge.promote()',
+        'factory.js extractSessionContext() → knowledge.relevantFor()',
+        'factory.js composeSystemPrompt() → "Persistent Knowledge" section',
+        'CLI: forge-tools knowledge list|add|prune|promote'
+      ]},
+      { h: 'Files', t: 'forge-session/knowledge.js, .forge/knowledge/learnings.json, forge-config/config.js (knowledge section)' },
+    ]
+  },
+  'cc-archreview': {
+    title: 'Architecture Review Gate',
+    sub: 'Two-level architectural fitness checking',
+    sections: [
+      { h: 'Plan-Level (Dimension 8)', list: [
+        'Added to forge-plan-checker.md agent prompt',
+        'Reads .planning/codebase/ARCHITECTURE.md and CONVENTIONS.md',
+        'Checks: layer boundaries, naming conventions, endpoint patterns, cross-cutting concerns',
+        'Severity: suggestion only (non-blocking)',
+        'Skips gracefully if no codebase map exists (greenfield)'
+      ]},
+      { h: 'Code-Level (Verification Layer 8)', list: [
+        'Added to forge-verify/engine.js as ARCHITECTURAL layer',
+        'Optional, off by default (verification.layers.architectural: false)',
+        'Agent-based: spawns Claude CLI to review changed files against conventions docs',
+        'Output: { pass, issues: [{file, issue, severity, suggestion}] }',
+        'Expensive (LLM call per verification) — enable deliberately'
+      ]},
+      { h: 'Config', t: 'verification.layers.architectural (default: false), workflow.arch_review (default: true)' },
+    ]
+  },
+  'new-milestone': {
+    title: '/forge-new-milestone',
+    sub: 'Start a new milestone cycle',
+    sections: [
+      { h: 'What it does', list: ['Creates or updates PROJECT.md with project vision', 'Routes to requirements gathering (REQUIREMENTS.md)', 'Generates ROADMAP.md with numbered phases', 'Creates .planning/ directory structure', 'Initializes STATE.md for progress tracking'] },
+      { h: 'Also available', t: '/forge-new-project — for brand-new projects (deeper context gathering)' },
+    ]
+  },
+  'roadmap': {
+    title: 'ROADMAP.md',
+    sub: 'Phase-based execution plan',
+    sections: [
+      { h: 'Structure', list: ['Milestone header with version and goal', 'Numbered phases with descriptions and tags', 'Progress table tracking status per phase', 'Checkbox completion markers'] },
+      { h: 'Managed by', list: ['/forge-add-phase — append to end', '/forge-insert-phase — insert between (e.g., 3.1)', '/forge-remove-phase — remove + renumber', '/forge-progress — check status + route to next action'] },
+    ]
+  },
+  'phase-mgmt': {
+    title: 'Phase Management',
+    sub: 'Modify roadmap mid-flight',
+    sections: [
+      { h: 'Commands', list: ['/forge-add-phase — append a new phase to end of current milestone', '/forge-insert-phase — insert urgent work as decimal phase (e.g., 3.1 between 3 and 4)', '/forge-remove-phase — remove a future phase and renumber subsequent ones'] },
+      { h: 'Key Point', t: 'You can always extend or modify the roadmap. Start with whatever scope you have, add more phases later as needs evolve.' },
+    ]
+  },
+  'plan-execute-loop': {
+    title: 'Plan & Execute Per Phase',
+    sub: 'Core phase lifecycle',
+    sections: [
+      { h: 'Flow', list: ['1. /forge-discuss-phase — gather context through questions', '2. /forge-plan-phase — create PLAN.md files with research + planning agents', '3. /forge-execute-phase — run the full execution pipeline (Section 3)', '4. /forge-verify-work — UAT validation with user'] },
+      { h: 'Shortcuts', list: ['/forge-quick — execute simple tasks with forge guarantees but skip optional agents', '/forge-progress — auto-detect next action and route appropriately'] },
+    ]
+  },
+  'audit-milestone': {
+    title: '/forge-audit-milestone',
+    sub: 'Verify milestone completeness',
+    sections: [
+      { h: 'What it does', list: ['Checks all phases against original milestone intent', 'Identifies gaps between planned and actual implementation', 'Flags incomplete features, missing tests, partial work', 'Produces audit report with gap list'] },
+      { h: 'Follow-up', t: 'If gaps found → /forge-plan-milestone-gaps creates new phases to close them' },
+    ]
+  },
+  'plan-gaps': {
+    title: '/forge-plan-milestone-gaps',
+    sub: 'Close gaps from audit',
+    sections: [
+      { h: 'Process', list: ['Reads audit report for identified gaps', 'Creates new phases targeting each gap', 'Adds phases to ROADMAP.md', 'Each gap phase goes through normal plan → execute cycle'] },
+    ]
+  },
+  'complete-milestone': {
+    title: '/forge-complete-milestone',
+    sub: 'Archive and transition',
+    sections: [
+      { h: 'What it does', list: ['Archives all milestone planning artifacts', 'Moves .planning/ to archive directory', 'Archives session ledger', 'Updates PROJECT.md with completed milestone', 'Cleans up temporary files'] },
+      { h: 'Next', t: 'Run /forge-new-milestone to start the next cycle with a fresh ROADMAP.md and planning directory' },
+    ]
+  },
+  'next-milestone': {
+    title: 'Next Milestone',
+    sub: 'Fresh start for new scope',
+    sections: [
+      { h: 'What you get', list: ['New ROADMAP.md with new phases', 'Clean .planning/ directory', 'Fresh session ledger', 'Previous milestone archived for reference', 'Code graph and system graph carry forward (not reset)'] },
+    ]
+  },
+  'discuss-phase': {
+    title: '/forge-discuss-phase',
+    sub: 'Pre-planning context gathering',
+    sections: [
+      { h: 'Process', list: ['Adaptive questioning about the phase scope', 'Gathers constraints, preferences, priorities', 'Builds CONTEXT.md for the planning agent', 'Helps avoid wrong assumptions in the plan'] },
+    ]
+  },
+  'new-project': {
+    title: '/forge-new-project',
+    sub: 'Project initialization with brownfield detection',
+    sections: [
+      { h: 'Detection Heuristic', list: ['Scans for *.ts, *.js, *.py, *.go, *.rs, *.java (3 levels deep)', 'Checks for package.json, requirements.txt, Cargo.toml, go.mod', 'Sets is_brownfield=true if code or package files found', 'Sets needs_codebase_map=true if code exists but no .planning/codebase/'] },
+      { h: 'Output', t: '{ has_existing_code, has_package_file, is_brownfield, needs_codebase_map, has_git }' },
+      { h: 'Routing', list: ['Brownfield detected → offers /forge-map-codebase first', 'No code → proceeds directly to PROJECT.md creation', 'Creates git repo if none exists'] },
+    ]
+  },
+  'brownfield-detect': {
+    title: 'Brownfield Detection',
+    sub: 'Automatic heuristic',
+    sections: [
+      { h: 'Checks', list: ['Source files (*.ts, *.js, *.py, etc.) up to 3 levels deep', 'Package files (package.json, requirements.txt, go.mod, etc.)', 'Excludes node_modules/ and .git/'] },
+      { h: 'Result', t: 'is_brownfield: true if any code or package file found' },
+    ]
+  },
+  'map-codebase': {
+    title: '/forge-map-codebase',
+    sub: 'Brownfield-specific: analyze existing code',
+    sections: [
+      { h: 'When to use', list: ['Brownfield projects before /forge-new-project', 'Refreshing after significant codebase changes', 'Onboarding to unfamiliar codebase', 'Before major refactoring'] },
+      { h: 'When to skip', list: ['Greenfield projects (nothing to map)', 'Trivial codebases (<5 files)'] },
+      { h: 'Process', list: ['Spawns 4 parallel mapper agents (all background)', 'Agent 1 (tech): STACK.md + INTEGRATIONS.md', 'Agent 2 (arch): ARCHITECTURE.md + STRUCTURE.md', 'Agent 3 (quality): CONVENTIONS.md + TESTING.md', 'Agent 4 (concerns): CONCERNS.md', 'Secret scan on output before committing'] },
+      { h: 'Output', t: '7 documents in .planning/codebase/' },
+    ]
+  },
+  'codebase-docs': {
+    title: 'Codebase Map Documents',
+    sub: '.planning/codebase/ — 7 files',
+    sections: [
+      { h: 'Documents', list: ['STACK.md — languages, runtime, frameworks, dependencies, config', 'INTEGRATIONS.md — external APIs, databases, auth providers, webhooks', 'ARCHITECTURE.md — patterns, layers, data flow, abstractions, entry points', 'STRUCTURE.md — directory layout, key locations, naming conventions', 'CONVENTIONS.md — code style, naming, patterns, error handling', 'TESTING.md — framework, structure, mocking, coverage', 'CONCERNS.md — tech debt, bugs, security, performance, fragile areas'] },
+      { h: 'Used by', t: 'PROJECT.md creation (infer validated capabilities) and research agents (understand existing system)' },
+    ]
+  },
+  'greenfield-project': {
+    title: 'PROJECT.md (Greenfield)',
+    sub: 'All requirements start as hypotheses',
+    sections: [
+      { h: 'Requirements Structure', list: ['Validated: (None yet — ship to validate)', 'Active: all requirements listed as unchecked', 'Everything is a hypothesis until built and tested'] },
+    ]
+  },
+  'brownfield-project': {
+    title: 'PROJECT.md (Brownfield)',
+    sub: 'Existing capabilities pre-validated',
+    sections: [
+      { h: 'Requirements Structure', list: ['Validated: existing capabilities inferred from codebase map, marked with "existing"', 'Active: only NEW work listed as unchecked', 'Avoids re-building or re-researching what already works'] },
+      { h: 'Source', t: 'Reads .planning/codebase/ARCHITECTURE.md and STACK.md to infer existing capabilities' },
+    ]
+  },
+  'greenfield-research': {
+    title: 'Research (Greenfield)',
+    sub: 'Full stack research from scratch',
+    sections: [
+      { h: 'Agent Framing', t: '"Research the standard stack for building [domain] from scratch"' },
+      { h: 'Scope', list: ['Full technology selection', 'Architecture patterns for the domain', 'Best practices for new projects', 'No existing constraints to work around'] },
+    ]
+  },
+  'brownfield-research': {
+    title: 'Research (Brownfield)',
+    sub: 'Scoped to new features only',
+    sections: [
+      { h: 'Agent Framing', t: '"Research what\'s needed to add [target features] to an existing [domain] app. Don\'t re-research the existing system."' },
+      { h: 'Scope', list: ['Only research NEW capabilities needed', 'Respect existing stack and patterns', 'Focus on integration with existing code', 'Agents receive codebase map as context'] },
+    ]
+  },
+  'greenfield-roadmap': {
+    title: 'ROADMAP.md (Greenfield)',
+    sub: 'Phases from zero',
+    sections: [
+      { h: 'Typical Phase Pattern', list: ['Phase 1: Project scaffold + configuration', 'Phase 2: Core data models + database', 'Phase 3: Authentication + authorization', 'Phase 4+: Feature implementation', 'Starts from empty repo, builds up'] },
+    ]
+  },
+  'brownfield-roadmap': {
+    title: 'ROADMAP.md (Brownfield)',
+    sub: 'Phases for new work only',
+    sections: [
+      { h: 'Typical Phase Pattern', list: ['Phases target only NEW features/changes', 'Existing code is not re-implemented', 'May include refactoring phases if needed', 'Graph context helps agents understand existing code'] },
+    ]
+  },
+  'brownfield-init': {
+    title: '/forge-init (Brownfield)',
+    sub: 'Full index of existing codebase',
+    sections: [
+      { h: 'What happens', list: ['tree-sitter parses ALL existing source files', 'Detects all modules, symbols, dependencies', 'Capability detection with confidence scores', 'Interface detection → interfaces.yaml', 'Graph is fully populated from day one', 'Agents use this graph to understand where to make changes'] },
+    ]
+  },
+  'planner': {
+    title: 'Planner Agent',
+    sub: 'Creates PLAN.md with YAML frontmatter',
+    sections: [
+      { h: 'Input', t: 'RESEARCH.md + CONTEXT.md + REQUIREMENTS.md for the phase' },
+      { h: 'Output', list: ['PLAN.md files with YAML frontmatter (wave, depends_on, autonomous, verify)', 'Task descriptions with affected files list', 'Verification steps per task'] },
+      { h: 'Frontmatter Fields', list: ['wave — execution ordering (lower = earlier)', 'depends_on — task IDs that must complete first', 'autonomous — whether agent can run without user input', 'verify — custom verification commands'] },
+    ]
+  },
+  'plan-checker': {
+    title: 'Plan Checker Agent',
+    sub: 'agents/forge-plan-checker.md — 8 Dimensions',
+    sections: [
+      { h: 'Validation Dimensions', list: ['Dim 1: Structural — valid frontmatter, required fields', 'Dim 2: Scope — task size within context budget', 'Dim 3: Dependencies — depends_on references valid task IDs, no cycles', 'Dim 4: Files — affected files exist, no overlap between tasks', 'Dim 5: Verification — verify steps present and executable', 'Dim 6: Completeness — all requirements covered by at least one task', 'Dim 7: Risk — high-risk tasks flagged for careful archetype', 'Dim 8: Architectural Fitness — plans respect ARCHITECTURE.md + CONVENTIONS.md (suggestion severity)'] },
+      { h: 'Process', list: ['Max 3 revision loops with planner agent', 'Each loop: check all dimensions → feedback → planner revises', 'Dim 8 skips gracefully if no codebase map exists (greenfield)'] },
+      { h: 'Scoring', t: 'Per-dimension pass/warn/fail + overall score. Dim 8 is non-blocking (suggestion only).' },
+    ]
+  },
+  'ledger-archive': {
+    title: 'Ledger Archive',
+    sub: 'forge-session/ledger.js → archiveAndReset()',
+    sections: [
+      { h: 'Archive Process', list: ['Capture ledger content before reset', 'Move to .forge/session/archive/ with timestamp', 'Create fresh ledger with carried-forward user preferences'] },
+      { h: 'Knowledge Promotion', list: ['Calls knowledge.promote(cwd, archivedContent)', 'Extracts: Decisions → decision, HIGH warnings → warning', 'Extracts: Rejected approaches → pitfall, User preferences → preference', 'Deduplication via >80% Jaccard word similarity', 'Result: key learnings survive into next milestone'] },
+      { h: 'State Updates', t: 'Updates ROADMAP.md checkbox, STATE.md phase status, triggers /forge-complete-milestone flow' },
+    ]
+  },
+  'iface-yaml': {
+    title: 'interfaces.yaml',
+    sub: '.forge/interfaces.yaml — Declared Service Interfaces',
+    sections: [
+      { h: 'Generated by', t: 'forge-system/detect.js → detectInterfaces()' },
+      { h: 'Contents', list: ['Service name and description', 'Exported interfaces: REST endpoints, gRPC services, event topics', 'Consumed interfaces: HTTP clients, event subscribers', 'Database tables and schemas', 'Package exports'] },
+      { h: 'Used by', list: ['System graph builder — assembly into system-graph.db', 'Verification L7 — contract drift detection (code vs YAML)', 'Agent factory — neighbor interfaces as reference context'] },
+    ]
+  },
+  'config-create': {
+    title: 'Config Creation',
+    sub: '.forge/config.json — Project Configuration',
+    sections: [
+      { h: 'Created during', t: '/forge-init creates default project config' },
+      { h: 'Sections', list: ['graph — graph build settings, languages, ignore patterns', 'execution — context budget, mode, auto-split', 'containers — concurrency, memory, timeout', 'agents — factory, archetypes, model profiles', 'verification — per-layer toggles, test/type commands', 'knowledge — auto-promote, max entries, severity threshold', 'impact_analysis — auto-detect, max depth, scope threshold', 'session — ledger settings, auto-compact, archive', 'display — rich output, graph diff, agent learnings', 'git — atomic commits, prefix, branching', 'system — interface detection, workers, sync', 'project — name, description'] },
+    ]
+  },
+  'dashboard-gen': {
+    title: 'Dashboard Generation',
+    sub: 'forge-graph/dashboard.js',
+    sections: [
+      { h: 'What it creates', t: 'Self-contained HTML file with D3.js force-directed graph of codebase modules, dependencies, and risk hotspots' },
+      { h: 'Features', list: ['Module nodes sized by file count, colored by risk', 'Dependency edges with thickness by connection count', 'Click to drill into module details', 'Forge theme (navy/blue palette)', 'Auto-regenerate on graph update if configured'] },
+      { h: 'Output', t: '.forge/dashboard.html' },
+    ]
+  },
+  'git-hooks': {
+    title: 'Git Hooks',
+    sub: 'Post-commit graph updater',
+    sections: [
+      { h: 'Hook installed', t: '.git/hooks/post-commit — runs forge-graph/updater.js after each commit' },
+      { h: 'What it does', list: ['Detects changed files from latest commit', 'Incremental graph update (only re-parse changed files)', 'Updates dependency edges, symbols, module boundaries', 'Saves graph snapshot if configured', 'Regenerates dashboard if dashboard_auto_regenerate: true'] },
+    ]
+  },
+  'discovery': {
+    title: 'Repo Discovery',
+    sub: 'System Init — Step A',
+    sections: [
+      { h: 'Sources', list: ['--path <dir> — 2-level filesystem scan for git repos', '--repos <file> — JSON registry with explicit repo paths', '--github-org <org> — GitHub API, optionally with --workspace'] },
+      { h: 'Filters', t: 'Respects system.ignore_repos config list' },
+      { h: 'Output', t: 'Array of { path, name } objects for each discovered repo' },
+    ]
+  },
+  'parallel-init': {
+    title: 'Parallel Init',
+    sub: 'System Init — Step B',
+    sections: [
+      { h: 'Process', list: ['N workers (system.workers or auto-detect from CPU cores)', 'Each worker runs full /forge-init on one repo', 'Includes graph build, interface detection, config creation', 'Progress reporting per repo'] },
+      { h: 'Output', t: 'Each repo gets .forge/ with graph.db + interfaces.yaml' },
+    ]
+  },
+  'assembly': {
+    title: 'System Graph Assembly',
+    sub: 'System Init — Step C',
+    sections: [
+      { h: 'Process', list: ['forge-system/builder.js reads all interfaces.yaml files', 'Creates services, interfaces, dependencies tables', 'Calculates service_metrics: fan_in, fan_out, coupling_score, risk_level', 'Assigns teams from interfaces.yaml metadata'] },
+      { h: 'Output', t: 'system-graph.db — cross-repo SQLite database' },
+    ]
+  },
+  'sys-validate': {
+    title: 'System Validation',
+    sub: 'System Init — Step D',
+    sections: [
+      { h: 'Checks', list: ['Structural: valid YAML, required fields, known protocols', 'Cross-repo: referenced providers exist, no dangling dependencies', 'Contract consistency: endpoints match between provider and consumer', 'Deprecation warnings: deprecated interfaces still consumed'] },
+      { h: 'Output', t: 'Validation report: { valid, errors[], warnings[] }' },
+    ]
+  },
+  'gaps-decision': {
+    title: 'Gaps Found?',
+    sub: 'Decision after milestone audit',
+    sections: [
+      { h: 'Flow', list: ['Audit finds gaps → /forge-plan-milestone-gaps creates new phases', 'No gaps → /forge-complete-milestone archives and transitions', 'Partial gaps → user decides which to address now vs later'] },
+    ]
+  },
+  'plan-phase': {
+    title: '/forge-plan-phase',
+    sub: 'Create PLAN.md files for a phase',
+    sections: [
+      { h: 'Pipeline', list: ['Load phase context (CONTEXT.md, REQUIREMENTS.md, codebase docs)', 'Optionally run research agent for unknown technologies', 'Planner agent creates PLAN.md with tasks + frontmatter', 'Plan-checker validates across 8 dimensions', 'Max 3 revision loops between planner and checker', 'Output: verified PLAN.md ready for /forge-execute-phase'] },
+    ]
+  },
+  'context-load': {
+    title: 'Context Loading',
+    sub: 'Prepare planning context',
+    sections: [
+      { h: 'Sources', list: ['CONTEXT.md from /forge-discuss-phase', 'REQUIREMENTS.md / PROJECT.md scope', '.planning/codebase/ documents (brownfield)', 'Session ledger — decisions, preferences, warnings', 'Code graph — affected modules, capabilities', 'Knowledge base — persistent learnings from prior milestones'] },
+    ]
+  },
+  'research-decision': {
+    title: 'Need Research?',
+    sub: 'Decision point in planning pipeline',
+    sections: [
+      { h: 'When YES', list: ['Phase involves unfamiliar technology', 'New integrations not in existing stack', 'Architecture decisions without clear precedent', 'Greenfield: most phases need research'] },
+      { h: 'When NO', list: ['Well-understood feature additions', 'Brownfield: extending existing patterns', 'Bug fixes with clear root cause'] },
+    ]
+  },
+  'researcher': {
+    title: 'Research Agent',
+    sub: 'Task subagent for codebase exploration',
+    sections: [
+      { h: 'Greenfield framing', t: '"Research the standard stack for building [domain] from scratch"' },
+      { h: 'Brownfield framing', t: '"Research what\'s needed to add [features] to existing [domain] app"' },
+      { h: 'Output', t: 'RESEARCH.md — technology recommendations, patterns, trade-offs' },
+      { h: 'Context', t: 'Receives codebase map documents (brownfield) or project requirements (greenfield)' },
+    ]
+  },
+  'exec-init': {
+    title: '/forge-execute-phase',
+    sub: 'Execution Pipeline Entry Point',
+    sections: [
+      { h: 'What it does', list: ['Load all PLAN.md files for the phase', 'Auto-detect execution mode (Docker / worktree / sequential)', 'Check system resources (CPU, RAM, disk)', 'Initialize session ledger state tracking'] },
+      { h: 'File', t: 'atos-forge/workflows/execute-phase.md — 16 steps, 15 modules consumed' },
+    ]
+  },
+  'load-plans': {
+    title: 'Load Plans',
+    sub: 'Filter and prioritize phase plans',
+    sections: [
+      { h: 'Process', list: ['Discover all .md files in .planning/phases/N/', 'Filter: skip if has_summary=true in frontmatter (already executed)', 'Sort by wave number from frontmatter', 'Identify gaps (missing wave numbers) and dependencies'] },
+    ]
+  },
+  'mode-decision': {
+    title: 'Docker Available?',
+    sub: 'Execution mode auto-detection',
+    sections: [
+      { h: 'Detection', list: ['orchestrator.js check-docker → { available, version, running }', 'If Docker + execution.container_backend="docker" → container mode', 'If no Docker → worktree mode (Claude CLI subprocesses)', 'If no Claude CLI → sequential mode (single-threaded)'] },
+      { h: 'Override', t: 'forge-tools settings set execution.container_backend docker|worktree' },
+    ]
+  },
+  'mode-select': {
+    title: 'Execution Mode',
+    sub: 'Container vs Worktree vs Sequential',
+    sections: [
+      { h: 'Container Mode', t: 'Docker: isolated filesystem, reproducible, resource limits enforced. Best for CI/CD.' },
+      { h: 'Worktree Mode', t: 'Git worktrees + Claude CLI: lighter weight, uses host tools. Default for development.' },
+      { h: 'Sequential Mode', t: 'Fallback: one task at a time, no parallelism. For resource-constrained machines.' },
+    ]
+  },
+  'assessor': {
+    title: 'Context Assessor',
+    sub: 'forge-assess/assessor.js',
+    sections: [
+      { h: 'What it does', list: ['Estimate token count for plan + graph context + session context', 'Compare against context_budget (default 200k)', 'If estimate > budget × assessment_threshold (80%) → recommend split', 'Suggest strategy: module, concern, or file-based splitting'] },
+      { h: 'Output', t: '{ fits: bool, estimate_tokens, budget, recommendation, suggested_strategy }' },
+    ]
+  },
+  'split-decision': {
+    title: 'Needs Split?',
+    sub: 'Decision based on assessor output',
+    sections: [
+      { h: 'Flow', list: ['fits=true → proceed directly to factory', 'fits=false + auto_split=true → automatic splitting', 'fits=false + auto_split=false → warn user, suggest manual split'] },
+    ]
+  },
+  'splitter': {
+    title: 'Plan Splitter',
+    sub: 'forge-assess/splitter.js',
+    sections: [
+      { h: 'Strategies', list: ['module — split by module boundaries from code graph', 'concern — split by concern: schema → impl → test → config', 'file — split by individual files/symbols (last resort)'] },
+      { h: 'Cascade', t: 'If a group still exceeds budget after primary split, subdivides further (concern → file → symbol)' },
+      { h: 'Output', list: ['Multiple sub-plan .md files in .planning/phases/N/sub/', 'Each includes graph_context and session_context instructions', 'Dependency edges preserved across sub-plans'] },
+    ]
+  },
+  'sub-plans': {
+    title: 'Sub-Plans',
+    sub: 'Context-fitting plan fragments',
+    sections: [
+      { h: 'Each sub-plan contains', list: ['Subset of tasks from original plan', 'YAML frontmatter with wave, depends_on', 'graph_context: specific files to load', 'session_context: relevant ledger sections', 'Token budget: fits within context_budget × safety_margin'] },
+    ]
+  },
+  'bin-pack': {
+    title: 'Bin Packing',
+    sub: 'Resource-aware wave optimization',
+    sections: [
+      { h: 'Algorithm', list: ['Sort agents by archetype priority (careful first, then integrator)', 'Per wave: assign agents until max_concurrent reached', 'Check memory: sum of agent memory ≤ max_total_memory', 'Check CPU: sum of agent CPU ≤ max_total_cpu', 'Overflow → create new sub-wave'] },
+    ]
+  },
+  'waves': {
+    title: 'Wave Execution',
+    sub: 'Parallel batch of independent agents',
+    sections: [
+      { h: 'Per Wave', list: ['Launch all agents in parallel (Docker or worktree)', 'Wait for completion with timeout', 'Collect patches from each agent', 'Apply patches to main repo (git apply --3way)', 'Quick verify (L1-L4)', 'Update graph incrementally', 'Write learnings to ledger', 'Re-build remaining agents with updated context'] },
+    ]
+  },
+  'resource-mgr': {
+    title: 'Resource Manager',
+    sub: 'Concurrency semaphore',
+    sections: [
+      { h: 'Controls', list: ['max_concurrent slots (auto-detected from CPU/RAM)', 'acquire() blocks until slot available', 'release() frees slot for next agent', 'Hard cap: 8 concurrent agents'] },
+      { h: 'Auto-detection', t: 'max_concurrent = min(floor((cores-2)/cpu_per), floor((ram×0.7)/mem_per))' },
+    ]
+  },
+  'worktree-create': {
+    title: 'Worktree Creation',
+    sub: 'Isolated checkout for agent work',
+    sections: [
+      { h: 'Process', list: ['git worktree add /tmp/forge-wt-<taskId>', 'Copy graph.db, ledger.md to worktree', 'Copy system-graph.db and neighbor interfaces (if available)', 'Agent config written as agent.json in worktree root'] },
+    ]
+  },
+  'exec-mode': {
+    title: 'Agent Execution',
+    sub: 'Container or worktree subprocess',
+    sections: [
+      { h: 'Docker Path', list: ['docker run with resource limits', 'agent-entrypoint.js inside container', 'Copies /repo → /workspace, applies prior patches', 'Runs claude --print with system prompt'] },
+      { h: 'Worktree Path', list: ['Spawns claude --print --dangerously-skip-permissions', 'Works directly in git worktree', 'Same prompt and context as Docker variant'] },
+    ]
+  },
+  'agent-inside': {
+    title: 'Agent Internals',
+    sub: 'What runs inside each agent',
+    sections: [
+      { h: 'Execution Flow', list: ['Read agent.json config (archetype, prompt, context, verification)', 'Build full system prompt: base + archetype + domain + graph + session + knowledge', 'Load context files within token budget', 'claude --print processes the prompt → generates code changes', 'git diff captures all modifications as patch'] },
+    ]
+  },
+  'collect-patches': {
+    title: 'Patch Collection',
+    sub: 'Gather and apply agent outputs',
+    sections: [
+      { h: 'Process', list: ['Docker: patches from /output/patches/ directory', 'Worktree: git diff from worktree checkout', 'Apply via git apply --3way to main repo', 'Extract agent learnings (warnings, discoveries) → ledger'] },
+    ]
+  },
+  'quick-verify': {
+    title: 'Quick Verify',
+    sub: 'Lightweight check after each wave',
+    sections: [
+      { h: 'Layers', t: 'L1 (Structural) + L2 (Type) + L3 (Contracts) + L4 (Deps) — fast checks only' },
+      { h: 'Max loops', t: '2 fix attempts via fix-agent before escalating' },
+      { h: 'On failure', t: 'Revert wave patches, spawn fix-agent, re-verify' },
+    ]
+  },
+  'verify-pass': {
+    title: 'Quick Verify Pass?',
+    sub: 'Decision after wave verification',
+    sections: [
+      { h: 'PASS', t: 'Proceed to graph update + ledger write + next wave' },
+      { h: 'FAIL (fixable)', t: 'Spawn fix-agent with error details, re-verify (max 2 loops)' },
+      { h: 'FAIL (stuck)', t: 'Same patch hash twice or new failures introduced → escalate to user' },
+    ]
+  },
+  'fix-agent': {
+    title: 'Fix Agent',
+    sub: 'Auto-repair failed verification',
+    sections: [
+      { h: 'How it works', list: ['Archetype: careful (extra validation)', 'Receives: error details, failed layer, fix_suggestions from engine', 'Has full session_context (warnings, decisions, rejected approaches)', 'Runs in worktree, produces fix patch', 'patchFingerprint() SHA256 prevents infinite loops'] },
+      { h: 'Auto-fixable', list: ['Type errors (L2)', 'Missing imports (L4)', 'Syntax issues (L1)', 'Contract drift (L7)', 'Assertion mismatches (L5)'] },
+      { h: 'Not auto-fixable', t: 'Behavioral failures (L6) → escalate to user' },
+    ]
+  },
+  'graph-update': {
+    title: 'Incremental Graph Update',
+    sub: 'forge-graph/updater.js',
+    sections: [
+      { h: 'Process', list: ['Detect changed files from applied patches', 'Re-parse only changed files (tree-sitter or regex)', 'Update symbols, dependencies, module boundaries', 'Recalculate risk scores and module stability', 'Save snapshot (before/after) if configured'] },
+    ]
+  },
+  'ledger-write': {
+    title: 'Ledger Write',
+    sub: 'Agent learnings → session ledger',
+    sections: [
+      { h: 'Written per wave', list: ['logWarning() — issues discovered by agents', 'logDiscovery() — patterns or facts found', 'logWaveComplete() — wave N done, agents used, time taken', 'logError() — verification failures with fix details'] },
+      { h: 'Propagation', t: 'These entries are read by factory.extractSessionContext() when building Wave N+1 agents → knowledge propagation' },
+    ]
+  },
+  'full-verify-decision': {
+    title: 'Full Verification Result?',
+    sub: 'Decision after 8-layer verification',
+    sections: [
+      { h: 'PASS', t: 'All enabled layers pass → proceed to commit' },
+      { h: 'FAIL (auto-fixable)', t: 'Enter auto-fix loop: max 3 iterations, fix-agent per attempt' },
+      { h: 'FAIL (escalate)', t: 'Behavioral failures, stuck loops, or max retries → escalate to user' },
+    ]
+  },
+  'commit': {
+    title: 'Git Commit',
+    sub: 'Atomic commit with forge metadata',
+    sections: [
+      { h: 'Format', t: 'feat(module): description [forge:archetype]' },
+      { h: 'Details', list: ['Atomic: all phase changes in one commit', 'Includes archetype tag for traceability', 'Triggers post-commit hook → graph update', 'git.commit_prefix configurable, sign_commits optional'] },
+    ]
+  },
+  'cleanup': {
+    title: 'Cleanup',
+    sub: 'Remove execution artifacts',
+    sections: [
+      { h: 'What is cleaned', list: ['Docker containers (stopped forge-agent-*)', 'Git worktrees (/tmp/forge-wt-*)', 'Temporary files and agent configs', 'Final graph update to capture committed state'] },
+    ]
+  },
+  'phase-complete': {
+    title: 'Phase Complete',
+    sub: 'Advance to next phase',
+    sections: [
+      { h: 'Actions', list: ['Mark ROADMAP.md phase checkbox as complete', 'Update STATE.md with phase completion status', 'Archive phase ledger entries', 'Promote key learnings to knowledge base (if enabled)', 'Report summary: files changed, tests passed, agents used'] },
+    ]
+  },
+  'impact-analyzer': {
+    title: 'Requirement Impact Analyzer',
+    sub: 'forge-analyze/analyzer.js — Automatic multi-repo detection before planning',
+    sections: [
+      { h: 'Problem Solved', t: 'The AI plans within a single repo by default. If a phase touches interfaces consumed by other repos, the planner doesn\'t know until execution — resulting in incomplete plans and missing cross-service coordination.' },
+      { h: 'Pipeline', list: [
+        '1. Auto-read phase goal from ROADMAP.md (##-heading + first 5 body lines) or --goal flag',
+        '2. Auto-read requirements from REQUIREMENTS.md',
+        '3. Extract domain keywords (stop-word filtering removes HTTP verbs, generic API/architecture terms)',
+        '4. Identify current service via findServiceByRepoPath(cwd)',
+        '5. Search interfaceRegistry({search: keyword}) across all services in system-graph.db',
+        '6. Run impact() on matched services — resolves repo_path from service records',
+        '7. Add transitive consumers (with dependency usage reasons)',
+        '8. Classify roles: provider (has consumers) vs consumer (imports from matched set)',
+        '9. Determine scope: SINGLE_REPO (0-1 services) vs MULTI_REPO (2+ services)',
+        '10. Build execution order: providers in Wave 1, consumers in Wave 2+ (topological)',
+        '11. Write IMPACT.md + IMPACT.json to .planning/phases/{N}/'
+      ]},
+      { h: 'Keyword Extraction', list: [
+        'Strips markdown (code blocks, inline code, links, formatting)',
+        'Removes stop words: English, planning terms, HTTP verbs (POST/GET/PUT/DELETE)',
+        'Filters generic terms: service, status, user, account, request, response, endpoint, route, api',
+        'Extracts compound terms (adjacent word pairs): "jwt authentication", "refresh tokens"',
+        'Sorts by frequency, uses top 20 keywords for interface search'
+      ]},
+      { h: 'Output', list: [
+        'scope: SINGLE_REPO | MULTI_REPO',
+        'confidence: high (2+ direct matches) | medium (1 match or consumers only) | low (indirect)',
+        'affected_services[]: id, repo_path (filesystem), role, risk, fan_in, interfaces, team, reasons',
+        'execution_order: [[wave1_services], [wave2_services]] — providers before consumers',
+        'team_coordination: teams that need to coordinate',
+        'keyword_matches: { keyword: interface_count } for transparency'
+      ]},
+      { h: 'Integration', list: [
+        'plan-phase.md Step 7.6 — runs before spawning planner, asks user about multi-repo scope',
+        'forge-planner.md — if MULTI_REPO, creates per-service PLAN.md with cross-plan dependencies',
+        'factory.js — injects impact_analysis into agent session_context + "Cross-Repo Impact" prompt section',
+        'CLI: forge-tools impact analyze [--phase N] [--goal text] [--json|--raw] [--write]',
+        'CLI: forge-tools impact show --phase N'
+      ]},
+      { h: 'Config', t: 'impact_analysis: { enabled, auto_detect, max_depth (default 2), scope_threshold (default 1) }' },
+    ]
+  },
+  'arch-review-gate': {
+    title: 'Architecture Review Gate',
+    sub: 'Plan-level fitness check (Dimension 8)',
+    sections: [
+      { h: 'When it runs', t: 'After plan-checker validates structural dimensions (1-7), Dimension 8 checks architectural fitness' },
+      { h: 'Inputs', list: ['.planning/codebase/ARCHITECTURE.md — layer boundaries, patterns, data flow', '.planning/codebase/CONVENTIONS.md — naming, error handling, code style', 'PLAN.md task list — files to create/modify, endpoints, services'] },
+      { h: 'Checks', list: ['Layer boundary violations — UI code importing from database layer directly', 'Naming convention compliance — file names, function names, endpoints', 'Pattern consistency — new code follows established patterns from ARCHITECTURE.md', 'Cross-cutting concerns — error handling, logging, auth handled consistently'] },
+      { h: 'Severity', t: 'Suggestion only (non-blocking). Plans are flagged but not rejected. Agents receive warnings in session_context.' },
+      { h: 'Greenfield', t: 'Skips gracefully if no codebase map exists — nothing to check against' },
+      { h: 'Code-Level Counterpart', t: 'Verification Layer 8 (ARCHITECTURAL) performs the same review on actual code after execution. Optional, off by default.' },
+    ]
+  },
+  'cc-config': {
+    title: 'Unified Configuration',
+    sub: 'forge-config/config.js — Single source of truth',
+    sections: [
+      { h: 'Merge Order', t: 'defaults ← ~/.forge/config.json (global) ← .forge/config.json (project)' },
+      { h: '12 Sections', list: ['project — name, description', 'graph — build settings, languages, ignore patterns', 'execution — context budget, mode, container backend, auto-split', 'containers — concurrency, memory, CPU, timeout', 'agents — factory, archetypes, model profiles (quality/balanced/budget)', 'verification — per-layer toggles (8 layers), test/type commands', 'knowledge — auto-promote, max entries, severity threshold', 'impact_analysis — auto-detect, max depth, scope threshold', 'session — ledger settings, auto-compact, archive', 'display — rich output, graph diff, agent learnings', 'git — atomic commits, prefix, branching, signing', 'system — interface detection, workers, sync, registry'] },
+      { h: 'API', list: ['loadConfig(cwd) → { config, sources }', 'resolveEffective(cwd) → config + system info', 'validate(config) → { valid, errors[] }', 'Section accessors: getVerification, getContainers, getExecution, getKnowledge, getImpactAnalysis, getSystem'] },
+    ]
+  },
+  'cc-system': {
+    title: 'System Graph',
+    sub: 'Cross-repo dependency tracking',
+    sections: [
+      { h: 'What it provides', list: ['Service registry with team ownership', 'Cross-repo dependency graph (who calls whom)', 'Interface contracts between services', 'Risk analysis: fan-in, coupling score, deprecated deps'] },
+      { h: 'Consumers', list: ['Agent Factory — cross-repo context, consumer warnings', 'Verification L7 — contract drift detection', 'Parallel Planner — cross-repo DAG edges', 'System Dashboard — D3 visualization with 5 tabs'] },
+      { h: 'Files', t: 'forge-system/query.js, builder.js, sync.js, dashboard.js, detect.js, validate.js' },
+    ]
+  },
+  'converge-point': {
+    title: 'Convergence Point',
+    sub: 'Both paths produce the same artifacts',
+    sections: [
+      { h: 'Common Artifacts', list: ['ROADMAP.md — phased execution plan', '.forge/config.json — unified configuration', '.forge/graph.db — code graph (empty or populated)', '.forge/session/ — session management', 'PROJECT.md — requirements + vision', 'Git hooks — post-commit graph updates'] },
+      { h: 'Key Insight', t: '/forge-init always runs regardless of greenfield/brownfield. On greenfield it creates empty graph infrastructure. On brownfield it indexes everything. Both paths feed into the same milestone lifecycle.' },
+    ]
+  },
+};
+
+// ── Detail panel ──
+const overlay = document.getElementById('detail-overlay');
+const body = document.getElementById('detail-body');
+document.getElementById('detail-close').addEventListener('click', () => {
+  overlay.classList.remove('open');
+  document.querySelectorAll('.box.active').forEach(b => b.classList.remove('active'));
+});
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) {
+    overlay.classList.remove('open');
+    document.querySelectorAll('.box.active').forEach(b => b.classList.remove('active'));
+  }
+});
+
+function showDetail(key) {
+  const d = details[key];
+  if (!d) return;
+  let html = '<h2>' + d.title + '</h2>';
+  html += '<div class="detail-sub">' + d.sub + '</div>';
+  for (const s of d.sections) {
+    html += '<div class="detail-section"><h4>' + s.h + '</h4>';
+    if (s.t) html += '<p><code>' + s.t + '</code></p>';
+    if (s.list) {
+      html += '<ul>';
+      for (const item of s.list) html += '<li>' + item + '</li>';
+      html += '</ul>';
+    }
+    html += '</div>';
+  }
+  body.innerHTML = html;
+  overlay.classList.add('open');
+}
+
+// Wire up all clickable elements
+document.querySelectorAll('[data-detail]').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.box.active').forEach(b => b.classList.remove('active'));
+    if (el.classList.contains('box')) el.classList.add('active');
+    showDetail(el.getAttribute('data-detail'));
+  });
+});
+</script>
+</body>
+</html>

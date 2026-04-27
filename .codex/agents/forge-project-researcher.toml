@@ -1,0 +1,6 @@
+name = "forge-project-researcher"
+description = "Researches domain ecosystem before roadmap creation"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-project-researcher.instructions.md"

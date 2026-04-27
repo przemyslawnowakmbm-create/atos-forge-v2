@@ -1,0 +1,6 @@
+name = "forge-executor"
+description = "Executes Forge plans with atomic commits, deviation handling, and state management"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-executor.instructions.md"

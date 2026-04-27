@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atos Forge / FDP V2 — End-to-End Process Diagram</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:1px solid #334155;padding:20px 32px;display:flex;align-items:center;gap:16px}
+.hdr-logo{font-size:28px}
+.hdr h1{font-size:20px;font-weight:700;color:#f8fafc;letter-spacing:-.5px}
+.hdr p{font-size:12px;color:#94a3b8;margin-top:2px}
+.hdr-badge{margin-left:auto;background:#1d4ed8;color:#bfdbfe;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
+
+/* TABS */
+.tabs{display:flex;background:#1e293b;border-bottom:1px solid #334155;padding:0 32px;gap:2px;overflow-x:auto}
+.tab{background:transparent;border:none;border-bottom:2px solid transparent;color:#94a3b8;padding:11px 14px;cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;transition:all .15s}
+.tab:hover{color:#e2e8f0}
+.tab.active{color:#60a5fa;border-bottom-color:#3b82f6}
+
+/* SECTIONS */
+.sec{display:none;padding:28px 32px;max-width:1500px;margin:0 auto}
+.sec.active{display:block}
+.sec-title{font-size:17px;font-weight:700;color:#f8fafc;margin-bottom:6px}
+.sec-sub{font-size:12px;color:#94a3b8;margin-bottom:24px}
+
+/* CARDS & NODES */
+.card{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px 16px}
+.card-title{font-size:12px;font-weight:700;color:#f8fafc;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.card-body{font-size:11px;color:#94a3b8;line-height:1.6}
+
+/* NODE BOXES — used in flow diagrams */
+.node{border-radius:7px;padding:10px 14px;font-size:11px;font-weight:600;text-align:center;position:relative;border:1px solid transparent;cursor:default;transition:transform .1s}
+.node:hover{transform:scale(1.02)}
+.node.init{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd}
+.node.plan{background:#2e1b4e;border-color:#7c3aed;color:#c4b5fd}
+.node.exec{background:#0d2d2a;border-color:#0d9488;color:#5eead4}
+.node.verify{background:#2d1f00;border-color:#d97706;color:#fcd34d}
+.node.infra{background:#1e2535;border-color:#475569;color:#94a3b8}
+.node.complete{background:#052e16;border-color:#16a34a;color:#86efac}
+.node.agent{background:#1f1535;border-color:#9333ea;color:#d8b4fe}
+.node.data{background:#1a1f2e;border-color:#4f8ef7;color:#a5b4fc}
+.node.decision{background:#1f1a00;border-color:#ca8a04;color:#fde68a;border-radius:3px;transform:rotate(-1deg)}
+.node.skill{background:#0d2a1f;border-color:#059669;color:#6ee7b7}
+
+/* ARROWS */
+.arr{text-align:center;color:#475569;font-size:16px;padding:2px 0}
+.arr-h{color:#475569;font-size:14px;padding:0 4px;display:flex;align-items:center}
+.arr-label{font-size:10px;color:#64748b;margin-top:1px}
+
+/* FLEX LAYOUTS */
+.row{display:flex;gap:10px;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:6px;flex:1}
+.center-col{display:flex;flex-direction:column;align-items:center;gap:4px}
+
+/* GRID LAYOUTS */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* LANE / SWIMLANE */
+.lane{background:#1a2035;border:1px solid #253047;border-radius:8px;padding:14px}
+.lane-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #253047}
+.lane-title.blue{color:#60a5fa}
+.lane-title.purple{color:#a78bfa}
+.lane-title.teal{color:#2dd4bf}
+.lane-title.amber{color:#fbbf24}
+.lane-title.green{color:#4ade80}
+.lane-title.slate{color:#94a3b8}
+
+/* CHIPS / TAGS */
+.chip{display:inline-block;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:2px 8px;font-size:10px;color:#94a3b8;margin:2px}
+.chip.blue{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd}
+.chip.purple{background:#2e1b4e;border-color:#7c3aed;color:#c4b5fd}
+.chip.teal{background:#0d2d2a;border-color:#0d9488;color:#5eead4}
+.chip.amber{background:#2d1f00;border-color:#d97706;color:#fcd34d}
+.chip.green{background:#052e16;border-color:#16a34a;color:#86efac}
+.chip.red{background:#2d0f0f;border-color:#dc2626;color:#fca5a5}
+.chip.pink{background:#2d1020;border-color:#db2777;color:#f9a8d4}
+
+/* STEP NUMBER BADGE */
+.step-num{background:#334155;color:#cbd5e1;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* FILE PILL */
+.file{display:inline-block;background:#0f172a;border:1px solid #334155;border-radius:4px;padding:1px 7px;font-size:10px;font-family:'SF Mono',Consolas,monospace;color:#7dd3fc}
+
+/* SECTION DIVIDER */
+.divider{border:none;border-top:1px solid #253047;margin:20px 0}
+
+/* TOOLTIP */
+[title]{cursor:help}
+
+/* LEGEND */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* PHASE PIPELINE STEP */
+.pipe-step{display:flex;gap:10px;align-items:flex-start;padding:12px;background:#1a2035;border-radius:6px;border-left:3px solid #334155}
+.pipe-step.blue{border-left-color:#3b82f6}
+.pipe-step.purple{border-left-color:#7c3aed}
+.pipe-step.teal{border-left-color:#0d9488}
+.pipe-step.amber{border-left-color:#d97706}
+.pipe-step.green{border-left-color:#16a34a}
+.pipe-step.red{border-left-color:#dc2626}
+.pipe-step .label{font-size:11px;font-weight:700;color:#f8fafc;margin-bottom:3px}
+.pipe-step .detail{font-size:11px;color:#64748b;line-height:1.5}
+
+/* WAVE BOX */
+.wave{background:#1a2035;border:1px solid #253047;border-radius:6px;padding:10px}
+.wave-title{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.agent-box{background:#1f1535;border:1px solid #6d28d9;border-radius:5px;padding:8px 10px;margin-bottom:5px;font-size:11px}
+.agent-box .aname{color:#c4b5fd;font-weight:600}
+.agent-box .atype{font-size:10px;color:#7c3aed;margin-top:1px}
+
+/* LAYER ROW */
+.layer-row{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:5px;background:#1a2035;border-left:3px solid #334155;margin-bottom:5px}
+.layer-row.pass{border-left-color:#16a34a}
+.layer-row.warn{border-left-color:#d97706}
+.layer-row.fail{border-left-color:#dc2626}
+.layer-num{font-size:10px;font-weight:700;color:#64748b;width:22px;flex-shrink:0}
+.layer-name{font-size:11px;font-weight:600;color:#e2e8f0;flex:1}
+.layer-time{font-size:10px;color:#64748b;width:70px;text-align:right}
+.layer-detail{font-size:10px;color:#64748b;flex:2}
+
+/* SCROLL */
+.scrollable{overflow-x:auto}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">⚙️</div>
+  <div>
+    <h1>Atos Forge / FDP V2</h1>
+    <p>End-to-End Process Diagram — Complete System Architecture</p>
+  </div>
+  <div class="hdr-badge">v1.20.4</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="show('overview')">1 · System Overview</button>
+  <button class="tab" onclick="show('init')">2 · Project Initialization</button>
+  <button class="tab" onclick="show('phase')">3 · Phase Pipeline</button>
+  <button class="tab" onclick="show('exec')">4 · Execution Engine</button>
+  <button class="tab" onclick="show('factory')">5 · Agent Factory</button>
+  <button class="tab" onclick="show('verify')">6 · Verification Engine</button>
+  <button class="tab" onclick="show('infra')">7 · Infrastructure</button>
+  <button class="tab" onclick="show('cmds')">8 · Commands Reference</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 1: OVERVIEW -->
+<div id="overview" class="sec active">
+  <div class="sec-title">System Overview — Full Lifecycle</div>
+  <div class="sec-sub">From blank repo or existing codebase to shipped milestone, then repeating for next version</div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#3b82f6"></div>Initialization</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#7c3aed"></div>Planning</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#0d9488"></div>Execution</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#d97706"></div>Verification</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#16a34a"></div>Completion</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#475569"></div>Infrastructure</div>
+  </div>
+
+  <!-- TOP LEVEL: Entry Point -->
+  <div class="center-col" style="align-items:stretch">
+
+    <!-- Entry -->
+    <div class="row" style="justify-content:center;gap:20px;margin-bottom:4px">
+      <div class="col" style="max-width:220px;align-items:center">
+        <div class="node init" style="width:100%;font-size:12px;padding:12px">🆕 Greenfield Project<br><span style="font-size:10px;font-weight:400;color:#60a5fa">Empty repo / new idea</span></div>
+      </div>
+      <div class="col" style="max-width:220px;align-items:center">
+        <div class="node init" style="width:100%;font-size:12px;padding:12px">🔄 Brownfield Project<br><span style="font-size:10px;font-weight:400;color:#60a5fa">Existing codebase</span></div>
+      </div>
+    </div>
+
+    <div class="row" style="justify-content:center;gap:20px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;max-width:220px">
+        <div class="arr">↓</div>
+        <div class="node skill" style="width:100%">/forge:new-project</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;max-width:220px">
+        <div class="arr">↓</div>
+        <div class="node skill" style="width:100%">/forge:map-codebase → /forge:new-project</div>
+      </div>
+    </div>
+
+    <div class="arr" style="text-align:center">↓</div>
+
+    <!-- Project Foundation -->
+    <div class="lane" style="background:#111c35;border-color:#1d4ed8">
+      <div class="lane-title blue">📋 Project Foundation Created</div>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <div class="file">PROJECT.md</div>
+        <div class="file">REQUIREMENTS.md</div>
+        <div class="file">ROADMAP.md</div>
+        <div class="file">STATE.md</div>
+        <div class="file">.forge/config.json</div>
+        <div class="file">.forge/graph.db</div>
+        <div class="file">.forge/session/ledger.md</div>
+        <div class="file">.forge/interfaces.yaml</div>
+      </div>
+    </div>
+
+    <div class="arr">↓ <span style="font-size:10px;color:#64748b">For each phase in ROADMAP</span></div>
+
+    <!-- Phase Loop -->
+    <div class="lane" style="border-color:#6d28d9;background:#190d33">
+      <div class="lane-title purple">🔁 PHASE LOOP — Repeats for Every Phase</div>
+      <div class="row" style="gap:6px;align-items:flex-start">
+
+        <div class="center-col" style="flex:1">
+          <div class="node plan" style="width:100%">STEP 1<br>💬 Discuss<br><span style="font-size:10px;font-weight:400">/forge:discuss-phase N</span></div>
+          <div class="arr">↓</div>
+          <div class="node plan" style="width:100%">STEP 2<br>🔬 Research<br><span style="font-size:10px;font-weight:400">/forge:research-phase N</span></div>
+          <div class="arr">↓</div>
+          <div class="node plan" style="width:100%">STEP 3<br>📐 Plan<br><span style="font-size:10px;font-weight:400">/forge:plan-phase N</span></div>
+          <div class="arr">↓</div>
+          <div class="node plan" style="width:100%">STEP 4<br>✅ Validate<br><span style="font-size:10px;font-weight:400">/forge:validate-phase N</span></div>
+        </div>
+
+        <div class="arr-h">→</div>
+
+        <div class="center-col" style="flex:1">
+          <div class="node exec" style="width:100%;font-size:12px;padding:12px">STEP 5<br>⚡ Execute Phase<br><span style="font-size:10px;font-weight:400">/forge:execute-phase N</span></div>
+          <div style="font-size:10px;color:#0d9488;text-align:center;margin:4px 0">Assess → Split → Factory<br>→ Waves → Verify → Commit</div>
+          <div class="arr">↓</div>
+          <div class="node exec" style="width:100%;background:#0d1f1d">SUMMARY.md created<br><span style="font-size:10px;font-weight:400">Deliverables documented</span></div>
+        </div>
+
+        <div class="arr-h">→</div>
+
+        <div class="center-col" style="flex:1">
+          <div class="node verify" style="width:100%;font-size:12px;padding:12px">STEP 6<br>🧪 Verify Work<br><span style="font-size:10px;font-weight:400">/forge:verify-work</span></div>
+          <div class="arr">↓</div>
+          <div class="node decision" style="width:100%">Gaps Found?</div>
+          <div class="arr">↓ Yes</div>
+          <div class="node plan" style="width:100%">/forge:plan-milestone-gaps</div>
+          <div style="font-size:10px;color:#64748b;text-align:center">→ back to STEP 3</div>
+        </div>
+
+      </div>
+
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:#7c3aed">
+        ↑ Repeat until all phases in ROADMAP are complete ↑
+      </div>
+    </div>
+
+    <div class="arr">↓</div>
+
+    <!-- Milestone Completion -->
+    <div class="lane" style="border-color:#16a34a;background:#051a0d">
+      <div class="lane-title green">🏁 MILESTONE COMPLETION</div>
+      <div class="row" style="gap:8px;justify-content:center">
+        <div class="center-col" style="align-items:center">
+          <div class="node verify">/forge:audit-milestone</div>
+          <div class="arr">↓</div>
+          <div class="node complete">/forge:complete-milestone v1.0.0</div>
+          <div class="arr">↓</div>
+          <div class="lane" style="background:#041108;border-color:#166534;padding:10px">
+            <div style="font-size:11px;color:#4ade80;text-align:center">
+              Archive → MILESTONES.md → Git tag<br>
+              <span style="color:#64748b">.planning/milestones/v1.0-*</span>
+            </div>
+          </div>
+        </div>
+        <div class="arr-h">→</div>
+        <div class="center-col" style="align-items:center">
+          <div class="node complete">/forge:new-milestone v1.1.0</div>
+          <div class="arr">↓</div>
+          <div class="node init" style="padding:10px">New REQUIREMENTS.md<br>New ROADMAP.md phases<br><span style="font-size:10px">Knowledge base persists ✓</span></div>
+          <div class="arr">↓</div>
+          <div style="font-size:11px;color:#4ade80;font-weight:600">↑ Back to Phase Loop ↑</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arr">↓</div>
+
+    <!-- Auxiliary Commands -->
+    <div class="lane" style="border-color:#334155">
+      <div class="lane-title slate">🔧 AUXILIARY — Available Anytime</div>
+      <div class="row" style="flex-wrap:wrap;gap:8px">
+        <div class="node infra" style="flex:1;min-width:120px">/forge:progress<br><span style="font-size:10px">Status + routing</span></div>
+        <div class="node infra" style="flex:1;min-width:120px">/forge:quick<br><span style="font-size:10px">Ad-hoc tasks</span></div>
+        <div class="node infra" style="flex:1;min-width:120px">/forge:auto<br><span style="font-size:10px">Autonomous mode</span></div>
+        <div class="node infra" style="flex:1;min-width:120px">/forge:debug<br><span style="font-size:10px">Systematic debugging</span></div>
+        <div class="node infra" style="flex:1;min-width:120px">/forge:pause-work<br><span style="font-size:10px">Context handoff</span></div>
+        <div class="node infra" style="flex:1;min-width:120px">/forge:resume-work<br><span style="font-size:10px">Session restore</span></div>
+        <div class="node infra" style="flex:1;min-width:120px">/forge:add-todo<br><span style="font-size:10px">Capture idea</span></div>
+        <div class="node infra" style="flex:1;min-width:120px">/forge:enhance-requirements<br><span style="font-size:10px">Quality audit</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 2: INIT -->
+<div id="init" class="sec">
+  <div class="sec-title">Project Initialization — Greenfield vs Brownfield</div>
+  <div class="sec-sub">How Forge bootstraps a new project or onboards an existing codebase</div>
+
+  <div class="grid2" style="align-items:start">
+
+    <!-- GREENFIELD -->
+    <div class="lane" style="border-color:#3b82f6;background:#0d1e38">
+      <div class="lane-title blue">🆕 GREENFIELD PATH — /forge:new-project</div>
+
+      <div class="pipe-step blue" style="margin-bottom:6px">
+        <div class="step-num">1</div>
+        <div>
+          <div class="label">Environment Setup</div>
+          <div class="detail">Check git, Node 20+, create <span class="file">.forge/</span> <span class="file">.planning/</span> dirs<br>Initialize config, session ledger, graph DB</div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step blue" style="margin-bottom:6px">
+        <div class="step-num">2</div>
+        <div>
+          <div class="label">Configuration Questions</div>
+          <div class="detail">Depth: quick / standard / comprehensive<br>Execution: parallel / sequential<br>Git tracking, workflow agents, model profile</div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step blue" style="margin-bottom:6px">
+        <div class="step-num">3</div>
+        <div>
+          <div class="label">Deep Questioning (Adaptive)</div>
+          <div class="detail">Vision, target users, constraints, stack preferences,<br>success criteria, non-functional requirements</div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step purple" style="margin-bottom:6px">
+        <div class="step-num">4</div>
+        <div>
+          <div class="label">Parallel Research (if enabled)</div>
+          <div class="detail">4 forge-researcher agents spawn simultaneously:<br>
+            <span class="chip purple">Domain Research</span>
+            <span class="chip purple">Stack Analysis</span>
+            <span class="chip purple">Ecosystem Pitfalls</span>
+            <span class="chip purple">Feature Patterns</span><br>
+            Output: <span class="file">FEATURES.md</span> <span class="file">STACK.md</span> <span class="file">PITFALLS.md</span>
+          </div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step purple" style="margin-bottom:6px">
+        <div class="step-num">5</div>
+        <div>
+          <div class="label">Requirements Definition</div>
+          <div class="detail">forge-synthesizer consolidates research + questions<br>Creates scoped v1 / v2 / out-of-scope requirements<br>Assigns REQ-IDs with traceability<br>Output: <span class="file">REQUIREMENTS.md</span></div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step purple" style="margin-bottom:6px">
+        <div class="step-num">6</div>
+        <div>
+          <div class="label">Roadmap Creation</div>
+          <div class="detail">forge-roadmapper breaks requirements into phases<br>Maps REQ-IDs per phase, notes dependencies<br>Output: <span class="file">ROADMAP.md</span></div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step blue" style="margin-bottom:6px">
+        <div class="step-num">7</div>
+        <div>
+          <div class="label">PROJECT.md + STATE.md</div>
+          <div class="detail">Vision, core value, constraints summary<br>Initial state: Phase 0 (planning), no wave yet<br>Output: <span class="file">PROJECT.md</span> <span class="file">STATE.md</span></div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step green">
+        <div class="step-num">8</div>
+        <div>
+          <div class="label">Initial Commit</div>
+          <div class="detail">Atomic: <code>docs: init project [forge:synthesizer]</code></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROWNFIELD -->
+    <div class="lane" style="border-color:#0d9488;background:#061a18">
+      <div class="lane-title teal">🔄 BROWNFIELD PATH — /forge:map-codebase first</div>
+
+      <div class="pipe-step teal" style="margin-bottom:6px">
+        <div class="step-num">1</div>
+        <div>
+          <div class="label">Existing Code Detection</div>
+          <div class="detail">Auto-detected if files present in repo<br>Offered automatically at start of /forge:new-project<br>Or run standalone: <code>/forge:map-codebase</code></div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step teal" style="margin-bottom:6px">
+        <div class="step-num">2</div>
+        <div>
+          <div class="label">5 Parallel Codebase Explorer Agents</div>
+          <div class="detail">Each agent reads 20% of codebase<br>Agents: mapper, analyzer, reviewer, debt-detector, summarizer<br>Runs concurrently for speed</div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step teal" style="margin-bottom:6px">
+        <div class="step-num">3</div>
+        <div>
+          <div class="label">Codebase Analysis Output</div>
+          <div class="detail">
+            <span class="file">.planning/codebase/STACK.md</span> — Languages, frameworks, deps<br>
+            <span class="file">ARCHITECTURE.md</span> — Patterns, layers, data flow<br>
+            <span class="file">STRUCTURE.md</span> — Directory layout, key files<br>
+            <span class="file">CONVENTIONS.md</span> — Naming, patterns, standards<br>
+            <span class="file">TESTING.md</span> — Test structure, frameworks<br>
+            <span class="file">INTEGRATIONS.md</span> — External APIs, databases<br>
+            <span class="file">CONCERNS.md</span> — Tech debt, known issues
+          </div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step teal" style="margin-bottom:6px">
+        <div class="step-num">4</div>
+        <div>
+          <div class="label">Code Graph Built</div>
+          <div class="detail">forge-graph indexes: files, modules, symbols, imports,<br>exports, contracts, capabilities, hotspots<br>Output: <span class="file">.forge/graph.db</span> (SQLite)</div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step teal" style="margin-bottom:6px">
+        <div class="step-num">5</div>
+        <div>
+          <div class="label">Interface Detection</div>
+          <div class="detail">Exported APIs, contracts, dependencies mapped<br>Output: <span class="file">.forge/interfaces.yaml</span><br>Used for: Layer 3 + 7 verification</div>
+        </div>
+      </div>
+      <div class="arr">↓</div>
+
+      <div class="pipe-step blue" style="margin-bottom:6px">
+        <div class="step-num">6</div>
+        <div>
+          <div class="label">Continues as Greenfield Steps 2–8</div>
+          <div class="detail">But with full codebase context injected into:<br>Research phase, Planning, Agent system prompts<br>Architecture docs available for Layer 8 verification</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="card" style="margin-top:8px">
+        <div class="card-title">📂 Key Difference vs Greenfield</div>
+        <div class="card-body">
+          <div>• Planner reads <span class="file">ARCHITECTURE.md</span> + <span class="file">CONVENTIONS.md</span> before creating plans</div>
+          <div>• Agents receive codebase context in system prompt</div>
+          <div>• Verification Layer 8 (Architectural) compares against discovered patterns</div>
+          <div>• CONCERNS.md surfaces tech debt → informs scope decisions</div>
+          <div>• INTEGRATIONS.md feeds into multi-repo system graph (if applicable)</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+
+  <div class="sec-title" style="font-size:14px;margin-bottom:12px">Requirement Enhancement — /forge:enhance-requirements</div>
+  <div class="grid3">
+    <div class="pipe-step purple">
+      <div class="step-num">1</div>
+      <div><div class="label">Quality Audit</div><div class="detail">Read REQUIREMENTS.md, check each REQ for: clarity, testability, completeness, conflict detection</div></div>
+    </div>
+    <div class="pipe-step purple">
+      <div class="step-num">2</div>
+      <div><div class="label">Gap Detection</div><div class="detail">Cross-reference against ROADMAP phases. Find: orphaned REQs, uncovered phases, missing acceptance criteria</div></div>
+    </div>
+    <div class="pipe-step purple">
+      <div class="step-num">3</div>
+      <div><div class="label">Enhanced Output</div><div class="detail">Rewrite weak requirements, add missing REQ-IDs, flag conflicts, update traceability matrix</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 3: PHASE PIPELINE -->
+<div id="phase" class="sec">
+  <div class="sec-title">Phase Pipeline — Discuss → Research → Plan → Execute → Verify</div>
+  <div class="sec-sub">Detailed breakdown of every step within a single phase lifecycle</div>
+
+  <div class="row" style="gap:8px;align-items:flex-start">
+
+    <!-- STEP 1: DISCUSS -->
+    <div class="col" style="flex:1">
+      <div class="lane" style="border-color:#7c3aed;background:#190d33">
+        <div class="lane-title purple">💬 DISCUSS /forge:discuss-phase N</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">1. Load Phase Goal</div><div class="detail">Read ROADMAP.md phase N description + linked REQ-IDs</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">2. Generate Gray Areas</div><div class="detail">Phase-specific (not generic): e.g. for "User Auth" → Session handling, Error responses, Recovery flow</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">3. User Selects 3–5 Topics</div><div class="detail">Deep dive each until decisions captured</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple">
+          <div><div class="label">Output: CONTEXT.md</div><div class="detail">
+            <span class="chip purple">Phase Boundary</span>
+            <span class="chip purple">Upstream Decisions</span>
+            <span class="chip purple">Locked Decisions</span>
+            <span class="chip purple">Claude's Discretion</span>
+            <span class="chip purple">Specific Ideas</span>
+            <span class="chip purple">Deferred Ideas</span>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arr-h" style="margin-top:60px">→</div>
+
+    <!-- STEP 2: RESEARCH -->
+    <div class="col" style="flex:1">
+      <div class="lane" style="border-color:#7c3aed;background:#190d33">
+        <div class="lane-title purple">🔬 RESEARCH /forge:research-phase N <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">1. Read CONTEXT.md</div><div class="detail">Knows decisions → doesn't re-ask. Focuses research on open areas</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">2. Domain Research</div><div class="detail">Ecosystem standards, patterns, best practices for this specific phase goal</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">3. Technology Recommendations</div><div class="detail">Libraries, patterns, pitfalls + mitigations specific to this phase</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple">
+          <div><div class="label">Output: RESEARCH.md</div><div class="detail">Pattern analysis, ecosystem standards, tech recommendations, known pitfalls with mitigations</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arr-h" style="margin-top:60px">→</div>
+
+    <!-- STEP 3: PLAN -->
+    <div class="col" style="flex:1">
+      <div class="lane" style="border-color:#7c3aed;background:#190d33">
+        <div class="lane-title purple">📐 PLAN /forge:plan-phase N</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">1. Load All Context</div><div class="detail">ROADMAP + REQUIREMENTS + CONTEXT + STATE + RESEARCH + graph.db</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">2. forge-planner Agent</div><div class="detail">Creates 1+ PLAN.md files per phase. Each plan = one agent's workload</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">3. forge-plan-checker (optional)</div><div class="detail">Validates plans: completeness, context fit, dependency integrity, graph validation</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple" style="margin-bottom:6px">
+          <div><div class="label">4. Revision Loop (max 3x)</div><div class="detail">If issues → loop steps 2–3 until valid</div></div>
+        </div>
+        <div class="arr">↓</div>
+        <div class="pipe-step purple">
+          <div><div class="label">Output: NN-YY-PLAN.md files</div><div class="detail">Frontmatter: phase, wave, depends_on, requirements, verify_steps<br>Body: tasks, verification, acceptance criteria</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="arr" style="text-align:center;font-size:20px;margin:8px 0">↓</div>
+
+  <!-- PLAN.md structure -->
+  <div class="lane" style="margin-bottom:16px">
+    <div class="lane-title slate">📄 PLAN.md Structure (Frontmatter + Body)</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Frontmatter (YAML)</div>
+        <div class="card-body" style="font-family:monospace;line-height:2">
+          <div><span style="color:#60a5fa">phase:</span> 2</div>
+          <div><span style="color:#60a5fa">plan_number:</span> 01</div>
+          <div><span style="color:#60a5fa">title:</span> User Authentication</div>
+          <div><span style="color:#60a5fa">requirements:</span> [REQ-05, REQ-06]</div>
+          <div><span style="color:#60a5fa">depends_on:</span> [01-01-PLAN]</div>
+          <div><span style="color:#60a5fa">wave:</span> 1</div>
+          <div><span style="color:#60a5fa">verification_steps:</span> [npm_test, typescript]</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Body Sections</div>
+        <div class="card-body">
+          <div>• <strong>Task list</strong> — checkboxes with file targets + dependencies</div>
+          <div>• <strong>Verification</strong> — shell commands to run after completion</div>
+          <div>• <strong>Summary Acceptance Criteria</strong> — measurable outcomes</div>
+          <div>• <strong>Dependencies</strong> — which plans must complete first</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5/6: Execute + Verify summary -->
+  <div class="row" style="gap:10px">
+    <div class="lane" style="flex:1;border-color:#0d9488;background:#061a18">
+      <div class="lane-title teal">⚡ EXECUTE /forge:execute-phase N</div>
+      <div class="card-body">Full detail in Tab 4. High level:<br>
+        <span class="chip teal">Assess plans</span>
+        <span class="chip teal">Split if oversized</span>
+        <span class="chip teal">Factory builds agents</span>
+        <span class="chip teal">Plan waves (DAG)</span>
+        <span class="chip teal">Run parallel waves</span>
+        <span class="chip teal">Quick verify per wave</span>
+        <span class="chip teal">Full verify at end</span>
+        <span class="chip teal">Atomic commit</span>
+      </div>
+    </div>
+    <div class="lane" style="flex:1;border-color:#d97706;background:#1a1000">
+      <div class="lane-title amber">🧪 VERIFY /forge:verify-work</div>
+      <div class="card-body">Conversational UAT:<br>
+        <span class="chip amber">Extract deliverables from SUMMARY.md</span>
+        <span class="chip amber">Test one at a time (backend first)</span>
+        <span class="chip amber">User confirms pass/fail</span>
+        <span class="chip amber">Gap detection → plan-milestone-gaps</span>
+        <span class="chip amber">VERIFICATION.md written</span>
+      </div>
+    </div>
+    <div class="lane" style="flex:1;border-color:#16a34a;background:#051a0d">
+      <div class="lane-title green">🏁 ASSUMPTIONS /forge:list-phase-assumptions</div>
+      <div class="card-body">Run before planning to surface Claude's assumptions about phase approach. Prevents misaligned plans. Ask about: tech choices, architecture, scope boundaries, integration assumptions</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 4: EXECUTION ENGINE -->
+<div id="exec" class="sec">
+  <div class="sec-title">Execution Engine — /forge:execute-phase Deep Dive</div>
+  <div class="sec-sub">Full pipeline from plan loading to committed code</div>
+
+  <div class="row" style="gap:20px;align-items:flex-start">
+
+    <!-- Main pipeline (left column) -->
+    <div class="col" style="flex:2">
+
+      <!-- Stage 1: Load & Assess -->
+      <div class="lane" style="border-color:#3b82f6">
+        <div class="lane-title blue">STAGE 1 — Load & Assess</div>
+        <div class="row" style="gap:8px">
+          <div class="pipe-step blue" style="flex:1">
+            <div><div class="label">Load Plans</div><div class="detail">Discover incomplete PLAN.md files in phase dir. Filter by wave/gaps. Read frontmatter.</div></div>
+          </div>
+          <div class="arr-h">→</div>
+          <div class="pipe-step blue" style="flex:1">
+            <div><div class="label">Context Assessment</div><div class="detail">Estimate tokens: plan + graph context + ledger + system prompt. Budget: 200k × 70% = 140k usable</div></div>
+          </div>
+          <div class="arr-h">→</div>
+          <div class="pipe-step blue" style="flex:1">
+            <div><div class="label">Split if Oversized</div><div class="detail">Strategy cascade: module → concern → file → symbol. Each sub-plan fits in 140k budget</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arr" style="text-align:center">↓</div>
+
+      <!-- Stage 2: Factory -->
+      <div class="lane" style="border-color:#7c3aed">
+        <div class="lane-title purple">STAGE 2 — Agent Factory (7-Step Pipeline per plan)</div>
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+          <div class="node agent" style="flex:1;min-width:100px;font-size:10px">1. Analyze Task<br><span style="font-weight:400">Graph context, capabilities, risk score</span></div>
+          <div class="arr-h">→</div>
+          <div class="node agent" style="flex:1;min-width:100px;font-size:10px">2. Archetype<br><span style="font-weight:400">specialist / integrator / careful / general</span></div>
+          <div class="arr-h">→</div>
+          <div class="node agent" style="flex:1;min-width:100px;font-size:10px">3. System Prompt<br><span style="font-weight:400">Base + archetype + capabilities + session ctx</span></div>
+          <div class="arr-h">→</div>
+          <div class="node agent" style="flex:1;min-width:100px;font-size:10px">4. Context Package<br><span style="font-weight:400">always_load + task_specific + reference</span></div>
+        </div>
+        <div class="arr" style="text-align:right;padding-right:40%">↓</div>
+        <div class="row" style="gap:6px;flex-wrap:wrap;flex-direction:row-reverse">
+          <div class="node agent" style="flex:1;min-width:100px;font-size:10px">5. Verification<br><span style="font-weight:400">Plan verify fields + capability-mapped checks</span></div>
+          <div class="arr-h">←</div>
+          <div class="node agent" style="flex:1;min-width:100px;font-size:10px">6. Container Spec<br><span style="font-weight:400">Image: node/python/full, resource limits</span></div>
+          <div class="arr-h">←</div>
+          <div class="node agent" style="flex:1;min-width:100px;font-size:10px">7. Session Context<br><span style="font-weight:400">Decisions + warnings + rejected approaches from ledger</span></div>
+        </div>
+        <div style="text-align:center;margin-top:6px;font-size:10px;color:#7c3aed">→ Output: agent-config.json cached by SHA256(plan+graph+knowledge+ledger)</div>
+      </div>
+
+      <div class="arr" style="text-align:center">↓</div>
+
+      <!-- Stage 3: Parallel Planner -->
+      <div class="lane" style="border-color:#0d9488">
+        <div class="lane-title teal">STAGE 3 — Parallel Planner (DAG + Bin-Packing)</div>
+        <div class="row" style="gap:8px">
+          <div class="pipe-step teal" style="flex:1">
+            <div><div class="label">Build Dependency DAG</div><div class="detail">From frontmatter depends_on. Add cross-repo edges from system-graph.db. Detect cycles.</div></div>
+          </div>
+          <div class="arr-h">→</div>
+          <div class="pipe-step teal" style="flex:1">
+            <div><div class="label">Topological Sort → Waves</div><div class="detail">Independent tasks → same wave. Bin-pack per wave: max_concurrent, max_memory, max_cpu</div></div>
+          </div>
+          <div class="arr-h">→</div>
+          <div class="pipe-step teal" style="flex:1">
+            <div><div class="label">Resource Allocation</div><div class="detail">Auto-detect: min((cores-2)/cpu, (RAM×0.7)/mem), cap 8. If wave exceeds → split sub-waves</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arr" style="text-align:center">↓</div>
+
+      <!-- Stage 4: Wave Execution -->
+      <div class="lane" style="border-color:#0d9488;background:#061a18">
+        <div class="lane-title teal">STAGE 4 — Wave Execution (Sequential Waves, Parallel Agents Within)</div>
+
+        <!-- Wave diagram -->
+        <div class="row" style="gap:10px;margin-bottom:10px">
+          <div class="wave" style="flex:1">
+            <div class="wave-title">Wave 1</div>
+            <div class="agent-box"><div class="aname">01-PLAN — DB Schema</div><div class="atype">Archetype: specialist</div></div>
+            <div class="agent-box"><div class="aname">02-PLAN — API Routes</div><div class="atype">Archetype: integrator</div></div>
+            <div class="agent-box"><div class="aname">03-PLAN — Config Setup</div><div class="atype">Archetype: specialist</div></div>
+            <div style="font-size:10px;color:#0d9488;margin-top:6px">↓ Learnings → Ledger</div>
+          </div>
+          <div class="arr-h" style="font-size:20px">→</div>
+          <div class="wave" style="flex:1">
+            <div class="wave-title">Wave 2 (rebuilt with ledger warnings)</div>
+            <div class="agent-box"><div class="aname">04-PLAN — Auth Service</div><div class="atype">Archetype: careful (high risk)</div></div>
+            <div class="agent-box"><div class="aname">05-PLAN — Tests</div><div class="atype">Archetype: specialist</div></div>
+            <div style="font-size:10px;color:#0d9488;margin-top:6px">↓ Learnings → Ledger</div>
+          </div>
+          <div class="arr-h" style="font-size:20px">→</div>
+          <div class="wave" style="flex:1">
+            <div class="wave-title">Wave 3</div>
+            <div class="agent-box"><div class="aname">06-PLAN — Integration</div><div class="atype">Archetype: integrator</div></div>
+            <div style="font-size:10px;color:#0d9488;margin-top:6px">↓ Learnings → Ledger</div>
+          </div>
+        </div>
+
+        <!-- Per-agent lifecycle -->
+        <div class="card">
+          <div class="card-title">Per-Agent Lifecycle (within each wave)</div>
+          <div class="row" style="gap:4px;flex-wrap:wrap;margin-top:6px">
+            <div class="chip teal">Acquire slot (semaphore)</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">Create git worktree</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">Launch container or Claude subprocess</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">Agent writes code</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">Collect git diff → patch</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">Quick verify (layers 1-4)</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">git apply --3way to main</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">Log learnings to ledger</div>
+            <div style="color:#0d9488">→</div>
+            <div class="chip teal">Cleanup worktree</div>
+          </div>
+        </div>
+
+        <div style="margin-top:8px;font-size:11px;color:#14b8a6;font-weight:600">
+          Knowledge Propagation: Wave N warnings → Ledger → Wave N+1 agents rebuilt (skip-cache) → Next wave avoids pitfalls
+        </div>
+      </div>
+
+      <div class="arr" style="text-align:center">↓</div>
+
+      <!-- Stage 5: Full Verify + Commit -->
+      <div class="row" style="gap:10px">
+        <div class="lane" style="flex:1;border-color:#d97706">
+          <div class="lane-title amber">STAGE 5 — Full Verification (8 Layers)</div>
+          <div class="card-body">After all waves: runs all enabled layers (1–8) with auto-fix loop. See Tab 6 for detail.</div>
+        </div>
+        <div class="lane" style="flex:1;border-color:#16a34a">
+          <div class="lane-title green">STAGE 6 — Commit + Cleanup</div>
+          <div class="card-body">
+            Atomic commit per wave or per phase:<br>
+            <code style="color:#4ade80;font-size:10px">feat(module): desc [forge:archetype]</code><br><br>
+            Then: update graph.db, archive snapshot, update SUMMARY.md, update STATE.md, cleanup containers/worktrees
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column: Execution modes + splitting -->
+    <div class="col" style="flex:1">
+
+      <div class="lane" style="border-color:#334155">
+        <div class="lane-title slate">Execution Modes</div>
+        <div class="pipe-step teal" style="margin-bottom:6px">
+          <div><div class="label">🐳 Container Mode (Docker)</div><div class="detail">Isolated Docker containers. agent-entrypoint.js reads agent.json, copies repo, applies patches, invokes claude --print. Best for production use.</div></div>
+        </div>
+        <div class="pipe-step blue" style="margin-bottom:6px">
+          <div><div class="label">🌿 Worktree Mode (fallback)</div><div class="detail">Git worktrees + Claude CLI subprocess. No Docker required. Same concurrency limits. Drop-in replacement.</div></div>
+        </div>
+        <div class="pipe-step infra">
+          <div><div class="label">⚡ Sequential Mode</div><div class="detail">Weak machine mode. One agent at a time. No parallelism. Used when resources constrained.</div></div>
+        </div>
+      </div>
+
+      <div class="lane" style="border-color:#334155;margin-top:10px">
+        <div class="lane-title slate">Context Splitting Strategies</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">When plan exceeds 140k token budget:</div>
+        <div class="layer-row">
+          <div class="layer-num">1</div>
+          <div class="layer-name">Module Split</div>
+          <div class="layer-detail">Group by module boundaries. Preferred for 2+ modules.</div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-num">2</div>
+          <div class="layer-name">Concern Split</div>
+          <div class="layer-detail">schema → migration → impl → test → config</div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-num">3</div>
+          <div class="layer-name">File Split</div>
+          <div class="layer-detail">By exported symbols within one large file</div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-num">4</div>
+          <div class="layer-name">Symbol Split</div>
+          <div class="layer-detail">Last resort: split at function level</div>
+        </div>
+        <div style="font-size:10px;color:#64748b;margin-top:6px">Cascade fallback: if group still exceeds budget, subdivides further</div>
+      </div>
+
+      <div class="lane" style="border-color:#334155;margin-top:10px">
+        <div class="lane-title slate">Archetype Time Estimates</div>
+        <div class="layer-row">
+          <div class="layer-name">specialist</div>
+          <div class="layer-time">2–5 min</div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-name">integrator</div>
+          <div class="layer-time">4–8 min</div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-name">careful</div>
+          <div class="layer-time">5–10 min</div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-name">general</div>
+          <div class="layer-time">3–6 min</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 5: AGENT FACTORY -->
+<div id="factory" class="sec">
+  <div class="sec-title">Agent Factory — 7-Step Build Pipeline + 4 Archetypes</div>
+  <div class="sec-sub">How Forge constructs specialized agent configurations from plans</div>
+
+  <!-- 7 Steps -->
+  <div class="lane" style="border-color:#7c3aed;margin-bottom:20px">
+    <div class="lane-title purple">7-Step Factory Pipeline — forge-agents/factory.js</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">
+      <div class="card" style="border-color:#6d28d9;text-align:center">
+        <div class="card-title" style="justify-content:center;color:#c4b5fd">STEP 1<br>Analyze Task</div>
+        <div class="card-body">Graph context for changed files<br>Module capabilities<br>Risk score<br>Ledger state</div>
+      </div>
+      <div class="arr-h" style="justify-content:center;align-self:center">→</div>
+      <div class="card" style="border-color:#6d28d9;text-align:center">
+        <div class="card-title" style="justify-content:center;color:#c4b5fd">STEP 2<br>Archetype</div>
+        <div class="card-body">specialist<br>integrator<br>careful<br>general</div>
+      </div>
+      <div class="arr-h" style="justify-content:center;align-self:center">→</div>
+      <div class="card" style="border-color:#6d28d9;text-align:center">
+        <div class="card-title" style="justify-content:center;color:#c4b5fd">STEP 3<br>System Prompt</div>
+        <div class="card-body">Base executor<br>+ archetype rules<br>+ capability ctx<br>+ session ctx</div>
+      </div>
+      <div class="arr-h" style="justify-content:center;align-self:center">→</div>
+      <div class="card" style="border-color:#6d28d9;text-align:center">
+        <div class="card-title" style="justify-content:center;color:#c4b5fd">STEP 4<br>Context Pkg</div>
+        <div class="card-body">always_load<br>task_specific<br>reference<br>(70% budget)</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px">
+      <div class="card" style="border-color:#6d28d9;text-align:center">
+        <div class="card-title" style="justify-content:center;color:#c4b5fd">STEP 5<br>Verification</div>
+        <div class="card-body">Plan verify fields<br>+ capability-mapped<br>(tsc, npm_test,<br>eslint, etc.)</div>
+      </div>
+      <div class="arr-h" style="justify-content:center;align-self:center">←</div>
+      <div class="card" style="border-color:#6d28d9;text-align:center">
+        <div class="card-title" style="justify-content:center;color:#c4b5fd">STEP 6<br>Container Spec</div>
+        <div class="card-body">Image: node/<br>python/full<br>Resource limits<br>Mounts</div>
+      </div>
+      <div class="arr-h" style="justify-content:center;align-self:center">←</div>
+      <div class="card" style="border-color:#6d28d9;text-align:center">
+        <div class="card-title" style="justify-content:center;color:#c4b5fd">STEP 7<br>Session Ctx</div>
+        <div class="card-body">Decisions<br>Warnings<br>Preferences<br>Rejected approaches</div>
+      </div>
+      <div style="grid-column:span 4"></div>
+    </div>
+  </div>
+
+  <!-- 4 Archetypes -->
+  <div class="sec-title" style="font-size:14px;margin-bottom:12px">4 Agent Archetypes</div>
+  <div class="grid4">
+    <div class="card" style="border-color:#3b82f6">
+      <div class="card-title" style="color:#60a5fa">🎯 Specialist</div>
+      <div class="card-body">
+        <div><strong>When:</strong> Single module, strong capability match</div>
+        <div style="margin-top:6px"><strong>Behavior:</strong> Deep focus, assumes domain context, minimal cross-module awareness</div>
+        <div style="margin-top:6px"><strong>Verification:</strong> Module-specific tests only</div>
+        <div style="margin-top:6px"><strong>Time:</strong> 2–5 min</div>
+      </div>
+    </div>
+    <div class="card" style="border-color:#0d9488">
+      <div class="card-title" style="color:#2dd4bf">🔗 Integrator</div>
+      <div class="card-body">
+        <div><strong>When:</strong> 3+ modules touched, cross-boundary work</div>
+        <div style="margin-top:6px"><strong>Behavior:</strong> Interface-aware, extra caution at module boundaries, coordinates between services</div>
+        <div style="margin-top:6px"><strong>Verification:</strong> All touched modules' test suites</div>
+        <div style="margin-top:6px"><strong>Time:</strong> 4–8 min</div>
+      </div>
+    </div>
+    <div class="card" style="border-color:#dc2626">
+      <div class="card-title" style="color:#f87171">⚠️ Careful</div>
+      <div class="card-body">
+        <div><strong>When:</strong> High/critical risk score (auth, payments, migrations)</div>
+        <div style="margin-top:6px"><strong>Behavior:</strong> Extra verification steps, conservative approach, detailed logging, rollback planning</div>
+        <div style="margin-top:6px"><strong>Verification:</strong> Full 8-layer pipeline</div>
+        <div style="margin-top:6px"><strong>Time:</strong> 5–10 min</div>
+      </div>
+    </div>
+    <div class="card" style="border-color:#475569">
+      <div class="card-title" style="color:#94a3b8">⚙️ General</div>
+      <div class="card-body">
+        <div><strong>When:</strong> Fallback when no other archetype matches</div>
+        <div style="margin-top:6px"><strong>Behavior:</strong> Balanced approach, standard verification, follows plan literally</div>
+        <div style="margin-top:6px"><strong>Verification:</strong> Plan-defined + graph-detected</div>
+        <div style="margin-top:6px"><strong>Time:</strong> 3–6 min</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Context Package & Cache -->
+  <div class="grid2">
+    <div class="lane">
+      <div class="lane-title slate">Context Package Composition (Step 4)</div>
+      <div class="pipe-step blue" style="margin-bottom:6px">
+        <div><div class="label">always_load (mandatory)</div><div class="detail">Plan.md + task files directly referenced. Always in context window.</div></div>
+      </div>
+      <div class="pipe-step blue" style="margin-bottom:6px">
+        <div><div class="label">task_specific (graph-driven)</div><div class="detail">Dependencies, consumers, test files for changed code. From graph context-for-task query.</div></div>
+      </div>
+      <div class="pipe-step blue">
+        <div><div class="label">reference (interface context)</div><div class="detail">interfaces.yaml for touched modules. Neighbor service interfaces (multi-repo). Architecture docs if brownfield.</div></div>
+      </div>
+      <div style="font-size:10px;color:#64748b;margin-top:8px">Total budget: 70% of context window (140k of 200k tokens)</div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title slate">Agent Cache System</div>
+      <div class="card" style="margin-bottom:8px">
+        <div class="card-title">Cache Key (SHA256)</div>
+        <div class="card-body" style="font-family:monospace;font-size:11px;line-height:2">
+          SHA256(<br>
+          &nbsp;&nbsp;plan_content +<br>
+          &nbsp;&nbsp;graph.db_mtime +<br>
+          &nbsp;&nbsp;knowledge_hash +<br>
+          &nbsp;&nbsp;ledger_mtime<br>
+          )
+        </div>
+      </div>
+      <div class="pipe-step green" style="margin-bottom:6px">
+        <div><div class="label">Cache HIT</div><div class="detail">Instant reuse from .forge/agents/{task-id}/agent-config.json</div></div>
+      </div>
+      <div class="pipe-step amber" style="margin-bottom:6px">
+        <div><div class="label">Cache MISS</div><div class="detail">Full 7-step build → auto-saves to cache</div></div>
+      </div>
+      <div class="pipe-step teal">
+        <div><div class="label">Wave-to-Wave Rebuild</div><div class="detail">Next wave always uses --skip-cache to pick up new ledger warnings from previous wave</div></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Provider -->
+  <div class="lane">
+    <div class="lane-title slate">forge-agents/provider.js — Multi-Provider Support</div>
+    <div class="card-body">
+      Abstracts model invocation. Supports: Claude CLI (default), Anthropic API direct, OpenAI-compatible endpoints.
+      Model profiles: <span class="chip purple">quality (Opus)</span> <span class="chip blue">balanced (Sonnet)</span> <span class="chip">budget (Haiku)</span>.
+      Switch with <code>/forge:set-profile quality|balanced|budget</code>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 6: VERIFICATION -->
+<div id="verify" class="sec">
+  <div class="sec-title">Verification Engine — 8-Layer Pipeline + Auto-Fix Loop</div>
+  <div class="sec-sub">forge-verify/engine.js — graph-aware, fail-fast verification with automatic repair</div>
+
+  <div class="row" style="gap:20px;align-items:flex-start">
+
+    <div class="col" style="flex:2">
+      <!-- 8 Layers -->
+      <div class="lane" style="border-color:#d97706">
+        <div class="lane-title amber">8 Verification Layers (Fail-Fast Order)</div>
+
+        <div class="layer-row pass">
+          <div class="layer-num">L1</div>
+          <div class="layer-name">STRUCTURAL</div>
+          <div class="layer-time">&lt;5s</div>
+          <div class="layer-detail">Syntax errors, stray console.log/debugger, merge conflict markers, bracket balance</div>
+        </div>
+
+        <div class="layer-row pass">
+          <div class="layer-num">L2</div>
+          <div class="layer-name">TYPE / COMPILE</div>
+          <div class="layer-time">10–30s</div>
+          <div class="layer-detail">tsc --noEmit (broad tsconfig discovery) | mypy | go build. Override: type_check_command config</div>
+        </div>
+
+        <div class="layer-row warn">
+          <div class="layer-num">L3</div>
+          <div class="layer-name">INTERFACE CONTRACTS</div>
+          <div class="layer-time">5–15s</div>
+          <div class="layer-detail">Graph contract_hash comparison. Breaking change detection. High-consumer export risk (fan-in)</div>
+        </div>
+
+        <div class="layer-row pass">
+          <div class="layer-num">L4</div>
+          <div class="layer-name">DEPENDENCY</div>
+          <div class="layer-time">&lt;5s</div>
+          <div class="layer-detail">graph.getCycles() — new circular deps. Orphaned imports. Module boundary violations.</div>
+        </div>
+
+        <div class="layer-row warn">
+          <div class="layer-num">L5</div>
+          <div class="layer-name">TESTS</div>
+          <div class="layer-time">30s–5min</div>
+          <div class="layer-detail">Graph context-for-task → identifies test files for changed code. Runs npm test (or override). Timeout configurable.</div>
+        </div>
+
+        <div class="layer-row warn">
+          <div class="layer-num">L6</div>
+          <div class="layer-name">BEHAVIORAL</div>
+          <div class="layer-time">varies</div>
+          <div class="layer-detail">Plan's custom verify steps from frontmatter. Shell commands. Fail-fast on first failure. NOT auto-fixable.</div>
+        </div>
+
+        <div class="layer-row fail">
+          <div class="layer-num">L7</div>
+          <div class="layer-name">CONTRACT</div>
+          <div class="layer-time">5–30s</div>
+          <div class="layer-detail">Code↔YAML drift. Backward compatibility vs baseline. Cross-repo ripple via system-graph.db. Requires interfaces.yaml.</div>
+        </div>
+
+        <div class="layer-row" style="border-left-color:#6d28d9;opacity:.7">
+          <div class="layer-num">L8</div>
+          <div class="layer-name">ARCHITECTURAL <span style="font-size:9px;color:#6d28d9">(off by default)</span></div>
+          <div class="layer-time">LLM call</div>
+          <div class="layer-detail">Agent reviews against ARCHITECTURE.md + CONVENTIONS.md. Enable: verification.layers.architectural = true</div>
+        </div>
+      </div>
+
+      <div class="arr" style="text-align:center">↓</div>
+
+      <!-- Auto-fix loop -->
+      <div class="lane" style="border-color:#dc2626;background:#1a0505">
+        <div class="lane-title" style="color:#f87171">🔄 AUTO-FIX LOOP (forge-verify/loop.js)</div>
+        <div class="row" style="gap:8px">
+          <div class="center-col" style="flex:1">
+            <div class="node verify">Verify Layer N</div>
+            <div class="arr">↓</div>
+            <div class="node decision">Layer PASSED?</div>
+            <div class="row" style="gap:20px;margin-top:4px">
+              <div class="center-col">
+                <div style="font-size:10px;color:#16a34a">YES ↓</div>
+                <div class="node complete" style="font-size:10px">Next Layer</div>
+              </div>
+              <div class="center-col">
+                <div style="font-size:10px;color:#dc2626">NO ↓</div>
+                <div class="node decision" style="font-size:10px">Auto-fixable?</div>
+                <div class="row" style="gap:10px;margin-top:4px">
+                  <div class="center-col">
+                    <div style="font-size:9px;color:#16a34a">YES</div>
+                    <div class="node exec" style="font-size:9px">Fix Agent<br>(worktree)</div>
+                    <div class="arr" style="font-size:12px">↓</div>
+                    <div class="node verify" style="font-size:9px">Re-verify<br>(max 2 loops)</div>
+                  </div>
+                  <div class="center-col">
+                    <div style="font-size:9px;color:#dc2626">NO (L6)</div>
+                    <div class="node" style="background:#2d0505;border-color:#dc2626;color:#f87171;font-size:9px">Escalate<br>to Human</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="flex:1">
+
+      <!-- Auto-fixable vs not -->
+      <div class="lane">
+        <div class="lane-title slate">Auto-Fixable Failures</div>
+        <div class="pipe-step green" style="margin-bottom:5px"><div><div class="label">L1 — Syntax Issues</div><div class="detail">Stray debugger/console.log, bracket mismatches</div></div></div>
+        <div class="pipe-step green" style="margin-bottom:5px"><div><div class="label">L2 — Type Errors</div><div class="detail">Missing type annotations, wrong types</div></div></div>
+        <div class="pipe-step green" style="margin-bottom:5px"><div><div class="label">L3 — Interface Breaks</div><div class="detail">Signature mismatches, missing exports</div></div></div>
+        <div class="pipe-step green" style="margin-bottom:5px"><div><div class="label">L4 — Missing Imports</div><div class="detail">Orphaned imports, circular deps</div></div></div>
+        <div class="pipe-step green" style="margin-bottom:5px"><div><div class="label">L5 — Assertion Mismatches</div><div class="detail">Test expectation drift from impl changes</div></div></div>
+        <div style="margin-top:8px;border-top:1px solid #334155;padding-top:8px">
+          <div class="pipe-step" style="border-left-color:#dc2626"><div><div class="label" style="color:#f87171">L6 — NOT Auto-Fixable</div><div class="detail">Behavioral failures require human judgement</div></div></div>
+        </div>
+      </div>
+
+      <div class="lane" style="margin-top:10px">
+        <div class="lane-title slate">Loop Prevention</div>
+        <div class="card-body">
+          <div class="chip red">Same patch hash twice → stuck → escalate</div><br>
+          <div class="chip red" style="margin-top:4px">Fix introduces NEW layer failures → revert → escalate</div><br>
+          <div class="chip red" style="margin-top:4px">Max loops exceeded (default 3) → escalate</div>
+        </div>
+      </div>
+
+      <div class="lane" style="margin-top:10px">
+        <div class="lane-title slate">Wave vs Full Verification</div>
+        <div class="pipe-step teal" style="margin-bottom:6px">
+          <div><div class="label">verifyAfterWave (quick)</div><div class="detail">Layers 1–4 only. Max 2 loops. Runs after each wave completes.</div></div>
+        </div>
+        <div class="pipe-step amber">
+          <div><div class="label">verifyFull (complete)</div><div class="detail">All 6–8 layers. Max 3 loops. Runs after all waves complete.</div></div>
+        </div>
+      </div>
+
+      <div class="lane" style="margin-top:10px">
+        <div class="lane-title slate">Toggleable Layers (config)</div>
+        <div class="card-body" style="font-family:monospace;font-size:11px;line-height:2">
+          verification.layers.structural: true<br>
+          verification.layers.type_check: true<br>
+          verification.layers.interface_contracts: true<br>
+          verification.layers.dependency_analysis: true<br>
+          verification.layers.tests: true<br>
+          verification.layers.behavioral: true<br>
+          verification.layers.contract: true<br>
+          verification.layers.architectural: <span style="color:#f87171">false</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 7: INFRASTRUCTURE -->
+<div id="infra" class="sec">
+  <div class="sec-title">Supporting Infrastructure — The Forge Engine Room</div>
+  <div class="sec-sub">Code graph, session ledger, knowledge base, configuration, multi-repo system graph</div>
+
+  <div class="grid2" style="margin-bottom:16px">
+
+    <!-- CODE GRAPH -->
+    <div class="lane" style="border-color:#3b82f6">
+      <div class="lane-title blue">📊 Code Graph — forge-graph/</div>
+      <div class="card" style="margin-bottom:8px">
+        <div class="card-title">Storage: .forge/graph.db (SQLite)</div>
+        <div class="card-body">
+          <div>• <strong>Files:</strong> path, module, last-modified, exports, symbols</div>
+          <div>• <strong>Modules:</strong> name, files, stability score, capabilities</div>
+          <div>• <strong>Symbols:</strong> name, type (fn/class/interface), exported, consumers</div>
+          <div>• <strong>Dependencies:</strong> import edges, multi-hop chains</div>
+          <div>• <strong>Contracts:</strong> exported interfaces with hash for change detection</div>
+          <div>• <strong>Hotspots:</strong> high-churn files, complexity, fan-in</div>
+        </div>
+      </div>
+      <div class="card-title" style="margin-bottom:6px">Query Interface</div>
+      <div style="font-family:monospace;font-size:10px;color:#7dd3fc;line-height:1.8">
+        node forge-graph/query.js overview<br>
+        node forge-graph/query.js show &lt;file&gt;<br>
+        node forge-graph/query.js impact &lt;file&gt;<br>
+        node forge-graph/query.js context-for-task &lt;files&gt;<br>
+        node forge-graph/query.js hotspots<br>
+        node forge-graph/query.js cycles<br>
+        node forge-graph/query.js capabilities &lt;module&gt;
+      </div>
+      <div class="card" style="margin-top:8px">
+        <div class="card-title">Capabilities Detection</div>
+        <div class="card-body">Auto-detects: testing, database, api, ui, auth, cache, queue, storage. Used by factory to select archetype + verification steps.</div>
+      </div>
+    </div>
+
+    <!-- SESSION LEDGER -->
+    <div class="lane" style="border-color:#7c3aed">
+      <div class="lane-title purple">📒 Session Ledger — forge-session/ledger.js</div>
+      <div class="card" style="margin-bottom:8px">
+        <div class="card-title">File: .forge/session/ledger.md</div>
+        <div class="card-body">Persists across /clear, context compaction, restarts. Always read at session start.</div>
+      </div>
+      <div class="grid2" style="gap:6px;margin-bottom:8px">
+        <div class="pipe-step purple"><div><div class="label">Decisions</div><div class="detail">DB choice, auth method, tech stack decisions. Locked for downstream agents.</div></div></div>
+        <div class="pipe-step purple"><div><div class="label">Warnings</div><div class="detail">Wave-to-wave propagation. "API returns XML not JSON" → next wave agents know.</div></div></div>
+        <div class="pipe-step purple"><div><div class="label">Preferences</div><div class="detail">Parallel mode, model profile, verbose mode, user workflow style.</div></div></div>
+        <div class="pipe-step purple"><div><div class="label">Rejected Approaches</div><div class="detail">"MongoDB for relational data" rejected in Phase 1 → never retried.</div></div></div>
+      </div>
+      <div style="border-top:1px solid #334155;padding-top:8px">
+        <div class="card-title" style="margin-bottom:6px">Knowledge Base Promotion</div>
+        <div class="card-body">On phase complete: high-value entries promoted to <span class="file">.forge/knowledge/learnings.json</span><br>Survives milestone archive/reset. Milestone 2 agents inherit Milestone 1 pitfalls.<br>Deduplication: &gt;80% word-similarity Jaccard.<br>Types: warning, decision, pitfall, convention, preference</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+
+    <!-- CONFIGURATION -->
+    <div class="lane" style="border-color:#475569">
+      <div class="lane-title slate">⚙️ Unified Configuration — forge-config/config.js</div>
+      <div class="card" style="margin-bottom:8px">
+        <div class="card-title">Merge Order (deepmerge, arrays replaced)</div>
+        <div class="card-body" style="font-family:monospace;font-size:11px;line-height:2">
+          Built-in defaults<br>
+          ← ~/.forge/config.json (global)<br>
+          &nbsp;&nbsp;← .forge/config.json (project)
+        </div>
+      </div>
+      <div class="card-title" style="margin-bottom:6px">12 Config Sections</div>
+      <div class="row" style="flex-wrap:wrap;gap:4px">
+        <span class="chip">project</span><span class="chip">graph</span><span class="chip">execution</span>
+        <span class="chip">containers</span><span class="chip">agents</span><span class="chip">verification</span>
+        <span class="chip">knowledge</span><span class="chip">impact_analysis</span><span class="chip">session</span>
+        <span class="chip">display</span><span class="chip">git</span><span class="chip">system</span>
+      </div>
+      <div class="card" style="margin-top:8px">
+        <div class="card-title">Key Execution Settings</div>
+        <div class="card-body" style="font-family:monospace;font-size:10px;line-height:1.8">
+          execution.context_budget: 200000<br>
+          execution.assessment_threshold: 0.80<br>
+          execution.safety_margin: 0.20<br>
+          execution.container_backend: "worktree"|"docker"<br>
+          containers.max_concurrent: auto-detected<br>
+          agents.active_profile: quality|balanced|budget
+        </div>
+      </div>
+    </div>
+
+    <!-- MULTI-REPO SYSTEM GRAPH -->
+    <div class="lane" style="border-color:#0d9488">
+      <div class="lane-title teal">🌐 Multi-Repo System Graph — forge-system/</div>
+      <div class="card" style="margin-bottom:8px">
+        <div class="card-title">Storage: .forge/system-graph.db (SQLite)</div>
+        <div class="card-body">
+          <div>• <strong>services:</strong> service_id, name, repo_path, team, description</div>
+          <div>• <strong>interfaces:</strong> id, service_id, type, signature, line_number, exported</div>
+          <div>• <strong>dependencies:</strong> from_service, to_service, interface_id, usage_type</div>
+          <div>• <strong>contracts:</strong> service_id, endpoint, method, status_code, version</div>
+        </div>
+      </div>
+      <div class="pipe-step teal" style="margin-bottom:6px"><div><div class="label">System Init</div><div class="detail">Discover repos via --path/--github-org/--repos. Run forge-init on each (parallel workers). Build unified DB.</div></div></div>
+      <div class="pipe-step teal" style="margin-bottom:6px"><div><div class="label">Cross-Repo Impact Analysis</div><div class="detail">Keywords from phase goal → interface registry → impact chains. Output: IMPACT.md with affected services + execution order.</div></div></div>
+      <div class="pipe-step teal"><div><div class="label">Integration in Execution</div><div class="detail">Agent factory injects system context. Parallel planner adds provider→consumer ordering. L7 verification checks ripple.</div></div></div>
+    </div>
+
+  </div>
+
+  <!-- Quick Mode + Auto Mode -->
+  <div class="grid2">
+    <div class="lane" style="border-color:#334155">
+      <div class="lane-title slate">⚡ Quick Mode — /forge:quick</div>
+      <div class="card-body">
+        For ad-hoc tasks outside normal phase structure:<br>
+        <span class="chip">Plan quick task</span> → <span class="chip">Single agent (no waves)</span> → <span class="chip">Quick verify (L1-4)</span> → <span class="chip">Optional full verify</span> → <span class="chip">Commit</span><br><br>
+        Output: <span class="file">.planning/quick/NNN-slug/PLAN.md</span> + <span class="file">SUMMARY.md</span><br>
+        STATE.md updated with "Quick Tasks Completed" table
+      </div>
+    </div>
+    <div class="lane" style="border-color:#334155">
+      <div class="lane-title slate">🤖 Auto Mode — /forge:auto</div>
+      <div class="card-body">
+        Autonomous execution — detect next unit, execute, repeat until done or stuck:<br>
+        <span class="chip">Read disk state</span> → <span class="chip">Identify next action</span> → <span class="chip">Dispatch task</span> → <span class="chip">Crash recovery</span> → <span class="chip">Stuck detection</span> → <span class="chip">Cost tracking</span><br><br>
+        Actions: unplanned phase → plan it. Unexecuted plan → execute it. Incomplete wave → resume. Unverified phase → verify.
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Key Files Reference -->
+  <div class="sec-title" style="font-size:14px;margin-bottom:12px">Key State Files — The Control Triad + Supporting</div>
+  <div class="grid3">
+    <div class="card" style="border-color:#3b82f6">
+      <div class="card-title" style="color:#60a5fa">PROJECT.md</div>
+      <div class="card-body">Vision, decisions, requirements summary. Updated by /forge:new-project and /forge:new-milestone. Human reference + agent context.</div>
+    </div>
+    <div class="card" style="border-color:#7c3aed">
+      <div class="card-title" style="color:#c4b5fd">ROADMAP.md</div>
+      <div class="card-body">Phase breakdown, REQ-ID mapping per phase. Updated by add/insert/remove-phase. Controls what gets planned and executed.</div>
+    </div>
+    <div class="card" style="border-color:#0d9488">
+      <div class="card-title" style="color:#2dd4bf">STATE.md</div>
+      <div class="card-body">Living memory: current position, recent decisions, blockers, todos. Updated after every phase. Used by all workflows for orientation.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">REQUIREMENTS.md</div>
+      <div class="card-body">Canonical REQ-IDs with traceability, status, acceptance criteria. Archived on milestone complete.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">CONTEXT.md (per phase)</div>
+      <div class="card-body">User decisions from /forge:discuss-phase. Locked constraints for planning and execution agents.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">SUMMARY.md (per plan)</div>
+      <div class="card-body">Phase completion report, deliverables, requirements satisfied. Source for /forge:verify-work UAT tests.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ TAB 8: COMMANDS -->
+<div id="cmds" class="sec">
+  <div class="sec-title">Commands & Skills Reference — Complete Catalog</div>
+  <div class="sec-sub">All 35+ /forge: commands organized by lifecycle stage</div>
+
+  <div class="grid2" style="gap:16px">
+
+    <div>
+      <div class="lane" style="border-color:#3b82f6;margin-bottom:12px">
+        <div class="lane-title blue">🏗️ Project Initialization</div>
+        <div class="layer-row"><div class="layer-name" style="color:#60a5fa">/forge:new-project</div><div class="layer-detail">Initialize new project: research → requirements → roadmap → PROJECT.md</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#60a5fa">/forge:map-codebase</div><div class="layer-detail">Brownfield: parallel analysis → ARCHITECTURE.md CONVENTIONS.md CONCERNS.md</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#60a5fa">/forge:init</div><div class="layer-detail">Build code graph, detect interfaces, create full .forge/ environment</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#60a5fa">/forge:enhance-requirements</div><div class="layer-detail">Quality audit + gap detection on REQUIREMENTS.md</div></div>
+      </div>
+
+      <div class="lane" style="border-color:#7c3aed;margin-bottom:12px">
+        <div class="lane-title purple">📐 Phase Planning</div>
+        <div class="layer-row"><div class="layer-name" style="color:#c4b5fd">/forge:discuss-phase N</div><div class="layer-detail">Capture user decisions → CONTEXT.md before planning</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#c4b5fd">/forge:list-phase-assumptions N</div><div class="layer-detail">Surface Claude's assumptions before plan creation</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#c4b5fd">/forge:research-phase N</div><div class="layer-detail">Domain research → RESEARCH.md (feeds planner)</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#c4b5fd">/forge:plan-phase N</div><div class="layer-detail">Full planning pipeline: research → planner → plan-checker → PLAN.md</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#c4b5fd">/forge:validate-phase N</div><div class="layer-detail">Validate plans for completeness, context fit, dependency integrity</div></div>
+      </div>
+
+      <div class="lane" style="border-color:#0d9488;margin-bottom:12px">
+        <div class="lane-title teal">⚡ Execution</div>
+        <div class="layer-row"><div class="layer-name" style="color:#2dd4bf">/forge:execute-phase N</div><div class="layer-detail">Full pipeline: assess → factory → waves → verify → commit</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#2dd4bf">/forge:quick [description]</div><div class="layer-detail">Ad-hoc task: single agent, no waves, quick verify</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#2dd4bf">/forge:auto</div><div class="layer-detail">Autonomous mode: detect next work unit, execute, repeat</div></div>
+      </div>
+
+      <div class="lane" style="border-color:#d97706">
+        <div class="lane-title amber">🧪 Verification & Quality</div>
+        <div class="layer-row"><div class="layer-name" style="color:#fcd34d">/forge:verify-work</div><div class="layer-detail">Conversational UAT: extract deliverables, test one-by-one, gap detection</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#fcd34d">/forge:audit-milestone</div><div class="layer-detail">Milestone completion audit against original intent</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#fcd34d">/forge:plan-milestone-gaps</div><div class="layer-detail">Create phases to close gaps found by audit</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#fcd34d">/forge:add-tests</div><div class="layer-detail">TDD test generation for existing code</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="lane" style="border-color:#16a34a;margin-bottom:12px">
+        <div class="lane-title green">🏁 Milestone Management</div>
+        <div class="layer-row"><div class="layer-name" style="color:#86efac">/forge:complete-milestone v1.0.0</div><div class="layer-detail">Archive phases, update ROADMAP, git tag, clear requirements</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#86efac">/forge:new-milestone v1.1.0</div><div class="layer-detail">New milestone cycle: update PROJECT.md, route to requirements</div></div>
+        <div class="layer-row"><div class="layer-name" style="color:#86efac">/forge:cleanup</div><div class="layer-detail">Archive accumulated phase directories from completed milestones</div></div>
+      </div>
+
+      <div class="lane" style="border-color:#334155;margin-bottom:12px">
+        <div class="lane-title slate">🗺️ Roadmap Management</div>
+        <div class="layer-row"><div class="layer-name">/forge:add-phase</div><div class="layer-detail">Append phase to end of current milestone in ROADMAP</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:insert-phase</div><div class="layer-detail">Insert urgent work as decimal phase (e.g. 72.1) between existing phases</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:remove-phase N</div><div class="layer-detail">Remove future phase, renumber subsequent phases</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:reassess-roadmap</div><div class="layer-detail">Re-evaluate all phases against current state</div></div>
+      </div>
+
+      <div class="lane" style="border-color:#334155;margin-bottom:12px">
+        <div class="lane-title slate">🔄 Session & Progress</div>
+        <div class="layer-row"><div class="layer-name">/forge:progress</div><div class="layer-detail">Check status, show context, route to next action (execute or plan)</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:pause-work</div><div class="layer-detail">Create context handoff document for session continuity</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:resume-work</div><div class="layer-detail">Restore full context from ledger + handoff document</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:add-todo</div><div class="layer-detail">Capture idea or task from current conversation</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:check-todos</div><div class="layer-detail">List pending todos, select one to work on</div></div>
+      </div>
+
+      <div class="lane" style="border-color:#334155;margin-bottom:12px">
+        <div class="lane-title slate">🔧 Tooling & Configuration</div>
+        <div class="layer-row"><div class="layer-name">/forge:settings</div><div class="layer-detail">Show config with source attribution. Interactive edit. Validate. Recommend.</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:set-profile quality|balanced|budget</div><div class="layer-detail">Switch model profile: Opus / Sonnet / Haiku</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:health</div><div class="layer-detail">Diagnose planning directory health, optionally repair</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:doctor</div><div class="layer-detail">17 health checks: Node, Git, Docker, Claude CLI, graph, ledger, images</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:debug</div><div class="layer-detail">Systematic debugging with persistent state across context resets</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:impact [file|phase]</div><div class="layer-detail">Cross-repo impact analysis for a file or phase</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:graph-status</div><div class="layer-detail">Code graph health, stats, hotspots, capabilities</div></div>
+        <div class="layer-row"><div class="layer-name">/forge:help</div><div class="layer-detail">Show all available commands and usage guide</div></div>
+      </div>
+
+      <!-- Codex integration note -->
+      <div class="lane" style="border-color:#6d28d9;background:#190d33">
+        <div class="lane-title purple">🤖 Codex Agent Integration (New in v1.20.4)</div>
+        <div class="card-body">
+          Full <span class="file">.codex/</span> directory with 12 agent instruction sets + hooks + skills mirror.<br>
+          Agents: codebase-mapper, debugger, executor, integration-checker, phase-researcher, plan-checker, planner, project-researcher, requirement-enhancer, research-synthesizer, roadmapper, verifier.<br>
+          Hooks: forge-check-update.js, forge-context-monitor.js, forge-statusline.js<br>
+          <span style="color:#9333ea">Enables same Forge workflow via Codex agent platform.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

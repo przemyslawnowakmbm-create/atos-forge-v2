@@ -1,0 +1,6 @@
+name = "forge-plan-checker"
+description = "Verifies plans will achieve phase goal before execution via goal-backward analysis"
+model = "o3"
+
+# Instructions loaded from adjacent file
+instructions_file = "forge-plan-checker.instructions.md"
