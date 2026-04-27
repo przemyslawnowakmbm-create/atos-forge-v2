@@ -29,21 +29,15 @@ function ledger() {
   return _ledger;
 }
 function assessor() {
-  if (!_assessor) _assessor = require('../forge-assess/assessor');
+  if (!_assessor) _assessor = require('./plan-assessment');
   return _assessor;
 }
 function capDetector() {
   if (!_capDetector) _capDetector = require('../forge-graph/capability-detector');
   return _capDetector;
 }
-function containerSpec() {
-  if (!_containerSpec) _containerSpec = require('../forge-containers/container-spec');
-  return _containerSpec;
-}
-function containerConfig() {
-  if (!_containerConfig) _containerConfig = require('../forge-containers/config');
-  return _containerConfig;
-}
+function containerSpec() { return null; }
+function containerConfig() { return null; }
 function systemQuery() {
   if (!_systemQuery) _systemQuery = require('../forge-system/query');
   return _systemQuery;

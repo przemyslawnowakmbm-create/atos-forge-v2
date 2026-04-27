@@ -52,14 +52,11 @@ try {
 // Lazy Dependencies
 // ============================================================
 
-let _engine, _ledger, _factory, _worktreeOrch, _dockerOrch, _config, _graphQuery, _snapshot;
+let _engine, _ledger, _factory, _graphQuery, _snapshot;
 
 function engine()       { if (!_engine) _engine = require('./engine'); return _engine; }
 function ledger()       { if (!_ledger) try { _ledger = require('../forge-session/ledger'); } catch { _ledger = null; } return _ledger; }
 function factory()      { if (!_factory) try { _factory = require('../forge-agents/factory'); } catch { _factory = null; } return _factory; }
-function worktreeOrch() { if (!_worktreeOrch) try { _worktreeOrch = require('../forge-containers/worktree-orchestrator'); } catch { _worktreeOrch = null; } return _worktreeOrch; }
-function dockerOrch()   { if (!_dockerOrch) try { _dockerOrch = require('../forge-containers/orchestrator'); } catch { _dockerOrch = null; } return _dockerOrch; }
-function config()       { if (!_config) try { _config = require('../forge-containers/config'); } catch { _config = null; } return _config; }
 function graphQuery()   { if (!_graphQuery) try { _graphQuery = require('../forge-graph/query'); } catch { _graphQuery = null; } return _graphQuery; }
 function snapshot()     { if (!_snapshot) try { _snapshot = require('../forge-graph/snapshot'); } catch { _snapshot = null; } return _snapshot; }
 
@@ -473,43 +470,47 @@ function patchFingerprint(patchContent) {
  * @returns {Promise<{ success: boolean, patches: string, errors: string[], duration_ms: number }>}
  */
 async function runFixAgent(agentConfig, cwd, timeout) {
-  const orch = worktreeOrch();
   const provider = resolveProvider(cwd, { provider: agentConfig.provider });
 
-  // If a supported agent CLI exists, use the orchestrator path.
-  if (orch && provider.available) {
-    return runViaWorktree(agentConfig, cwd, timeout);
+  if (provider.available) {
+    return runViaCLI(agentConfig, cwd, timeout, provider);
   }
 
-  // Fallback: run fix directly via spawnSync (no agent, just commands)
   return runDirectFix(agentConfig, cwd, timeout);
 }
 
 /**
- * Run fix via worktree orchestrator (spawns Claude Code).
+ * Run fix agent via direct Claude CLI invocation.
  */
-async function runViaWorktree(agentConfig, cwd, timeout) {
-  const orch = worktreeOrch();
-  const { ResourceManager } = require('../forge-containers/resource-manager');
-  const rm = new ResourceManager({ max_concurrent: 1 });
+async function runViaCLI(agentConfig, cwd, timeout, provider) {
+  const start = Date.now();
+  const prompt = agentConfig.task_prompt
+    ? `${agentConfig.system_prompt}\n\n---\n\n${agentConfig.task_prompt}`
+    : agentConfig.system_prompt;
 
   try {
-    const result = await orch.launch(agentConfig, {
+    const result = spawnSync(provider.path, [
+      '--print', '--dangerously-skip-permissions', '-p', prompt,
+    ], {
       cwd,
-      taskId: agentConfig.task_id,
-      resourceManager: rm,
-      opts: { timeout, applyPatches: true },
+      timeout: (timeout || 300) * 1000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      encoding: 'utf8',
+      env: { ...process.env, TERM: 'dumb' },
     });
 
-    const patchContent = result.patches?.applied?.map(p => p.content || '').join('\n') || '';
+    let patches = '';
+    try {
+      patches = execSync('git diff', { cwd, encoding: 'utf8', timeout: 10000 });
+    } catch { /* no changes */ }
 
     return {
-      success: result.status === 'success' || result.status === 'partial',
-      patches: patchContent,
-      applied: result.patches?.applied?.length || 0,
-      errors: result.errors || [],
-      duration_ms: result.duration_ms || 0,
-      learnings: result.learnings || { warnings: [], discoveries: [] },
+      success: result.status === 0 && patches.length > 0,
+      patches,
+      applied: patches.length > 0 ? 1 : 0,
+      errors: result.status !== 0 ? [result.stderr || 'Agent exited with non-zero'] : [],
+      duration_ms: Date.now() - start,
+      learnings: { warnings: [], discoveries: [] },
     };
   } catch (err) {
     return {
@@ -517,7 +518,7 @@ async function runViaWorktree(agentConfig, cwd, timeout) {
       patches: '',
       applied: 0,
       errors: [err.message],
-      duration_ms: 0,
+      duration_ms: Date.now() - start,
       learnings: { warnings: [], discoveries: [] },
     };
   }

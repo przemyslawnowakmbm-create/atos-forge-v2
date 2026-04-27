@@ -211,6 +211,10 @@ function cmdSummaryExtract(cwd, summaryPath, fields, raw) {
   const parseDecisions = (decisionsList) => {
     if (!decisionsList || !Array.isArray(decisionsList)) return [];
     return decisionsList.map(d => {
+      if (typeof d === 'object' && d !== null) {
+        return { summary: d.summary || String(d), rationale: d.rationale || null };
+      }
+      if (typeof d !== 'string') return { summary: String(d), rationale: null };
       const colonIdx = d.indexOf(':');
       if (colonIdx > 0) {
         return {

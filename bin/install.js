@@ -1042,7 +1042,7 @@ function uninstall(isGlobal, runtime = 'claude') {
   // 3b. Remove forge-* engine modules
   const forgeModules = [
     'forge-graph', 'forge-config', 'forge-session', 'forge-verify',
-    'forge-assess', 'forge-agents', 'forge-containers'
+    'forge-agents'
   ];
   let modCount = 0;
   for (const mod of forgeModules) {
@@ -1537,7 +1537,7 @@ function writeManifest(configDir) {
   // Include forge-* engine modules in manifest
   const forgeModules = [
     'forge-graph', 'forge-config', 'forge-session', 'forge-verify',
-    'forge-assess', 'forge-agents', 'forge-containers'
+    'forge-agents'
   ];
   for (const mod of forgeModules) {
     const modDir = path.join(configDir, mod);
@@ -1731,7 +1731,7 @@ function install(isGlobal, runtime = 'claude') {
   // These are Node.js modules required by forge-tools.cjs at runtime
   const forgeModules = [
     'forge-graph', 'forge-config', 'forge-session', 'forge-verify',
-    'forge-assess', 'forge-agents', 'forge-containers', 'forge-system', 'forge-analyze'
+    'forge-agents', 'forge-system', 'forge-analyze'
   ];
   for (const mod of forgeModules) {
     const modSrc = path.join(src, mod);
