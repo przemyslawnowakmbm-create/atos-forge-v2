@@ -91,6 +91,32 @@ const DEFAULTS = {
     type_check_command: null,
     test_timeout: 300,
   },
+  repeated_error_detection: {
+    enabled: true,
+    max_identical_errors: 3,
+  },
+  context_monitoring: {
+    enabled: true,
+    log_to_ledger: true,
+    kill_at_percentage: 85,
+  },
+  constitution: {
+    enabled: true,
+    path: '.forge/constitution.md',
+    enforcement: 'strict',
+  },
+  hash_lock: {
+    enabled: false,
+    lock_test_files: true,
+    lock_must_haves: true,
+    lock_verification_steps: true,
+  },
+  guard: {
+    enabled: true,
+    block_env_writes: true,
+    block_locked_test_writes: true,
+    block_secrets: true,
+  },
   knowledge: {
     enabled: true,
     auto_promote: true,

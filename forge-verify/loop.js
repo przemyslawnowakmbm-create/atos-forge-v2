@@ -700,6 +700,7 @@ async function verifyLoop(opts) {
 
   const loopStart = Date.now();
   const patchHashes = new Set(); // For loop detection
+  const errorHashHistory = [];
   const sessionWarnings = getSessionWarnings(cwd);
 
   if (!opts.silent) {
@@ -783,6 +784,38 @@ async function verifyLoop(opts) {
       const failedNames = getFailedLayers(verifyResult).join(', ');
       log(chalk.dim(`  [${loop}] `) + chalk.red(`\u274C Failed: ${failedNames}`));
       log(chalk.dim(`        `) + `${fixability.total_auto_fixable} auto-fixable, ${fixability.total_human} need human`);
+    }
+
+    // Repeated-error detection (Feature 5)
+    const failedLayerNames = (verifyResult.layers || [])
+      .filter(l => !l.passed && !l.skipped)
+      .map(l => l.name)
+      .sort()
+      .join('|');
+    if (failedLayerNames) {
+      const errorHash = require('crypto').createHash('sha256').update(failedLayerNames).digest('hex').slice(0, 16);
+      errorHashHistory.push(errorHash);
+
+      // Load config for max threshold
+      let maxIdentical = 3;
+      try {
+        const { config: cfg } = require('../forge-config/config').loadConfig(cwd);
+        if (cfg.repeated_error_detection && typeof cfg.repeated_error_detection.max_identical_errors === 'number') {
+          maxIdentical = cfg.repeated_error_detection.max_identical_errors;
+        }
+      } catch {}
+
+      if (errorHashHistory.length >= maxIdentical) {
+        const tail = errorHashHistory.slice(-maxIdentical);
+        if (tail.every(h => h === tail[0])) {
+          loopEntry.duration_ms = Date.now() - iterStart;
+          loopResult.loops.push(loopEntry);
+          loopResult.overall = 'ESCALATE';
+          loopResult.escalated = true;
+          loopResult.escalation_reason = `Agent stuck: same error layers (${failedLayerNames}) for ${maxIdentical} consecutive iterations`;
+          break;
+        }
+      }
     }
 
     // ── STEP 4: Check for escalation conditions ──

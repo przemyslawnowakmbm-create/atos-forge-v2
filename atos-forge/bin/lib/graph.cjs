@@ -94,6 +94,17 @@ function cmdGraphInit(cwd, args, raw) {
     } catch { /* non-fatal */ }
   }
 
+  // Create .forge/constitution.md from template if missing
+  const constitutionPath = path.join(forgeDir, 'constitution.md');
+  if (!fs.existsSync(constitutionPath)) {
+    try {
+      const constitutionTemplate = path.join(path.dirname(path.dirname(path.dirname(__filename))), 'templates', 'constitution.md');
+      if (fs.existsSync(constitutionTemplate)) {
+        fs.copyFileSync(constitutionTemplate, constitutionPath);
+      }
+    } catch { /* non-fatal */ }
+  }
+
   // Create .forge/session/ directory
   const sessionDir = path.join(forgeDir, 'session');
   if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });

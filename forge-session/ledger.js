@@ -693,6 +693,18 @@ if (require.main === module) {
 }
 
 // ============================================================
+// Context Usage Logging
+// ============================================================
+
+function logContextUsage(cwd, entry) {
+  const p = ledgerPath(cwd);
+  if (!fs.existsSync(p)) return;
+  const action = entry.action ? ` [${entry.action.toUpperCase()}]` : '';
+  const line = `[${new Date().toISOString().replace('T', ' ').substring(0, 19)}] Agent ${entry.agent_id}: ctx ${entry.used_percentage}% used, ${entry.remaining_percentage}% remaining${action}`;
+  appendToSection(cwd, 'Completed Work', line);
+}
+
+// ============================================================
 // Module Exports
 // ============================================================
 
@@ -709,6 +721,7 @@ module.exports = {
   logError,
   logRejected,
   logEvent,
+  logContextUsage,
 
   // Read
   read,

@@ -325,6 +325,22 @@ function loadAgentDirectives() {
   return _agentDirectives;
 }
 
+/**
+ * Load project constitution (non-negotiable rules) from .forge/constitution.md.
+ */
+function loadConstitution(analysis) {
+  try {
+    const cwd = analysis.plan?.path ? path.dirname(path.dirname(analysis.plan.path)) : process.cwd();
+    const { config } = require('../forge-config/config').loadConfig(cwd);
+    if (config.constitution && config.constitution.enabled === false) return null;
+    const constitutionPath = path.resolve(cwd, config.constitution?.path || '.forge/constitution.md');
+    if (fs.existsSync(constitutionPath)) {
+      return fs.readFileSync(constitutionPath, 'utf8').trim();
+    }
+  } catch { /* constitution not available */ }
+  return null;
+}
+
 const CHARS_PER_TOKEN = 4;
 
 // Context window budgets (tokens)
@@ -623,6 +639,15 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
         }
       }
     }
+  }
+
+  // Constitution — non-negotiable hard rules (loaded from .forge/constitution.md)
+  const constitutionContent = loadConstitution(analysis);
+  if (constitutionContent) {
+    parts.push('\n## CONSTITUTION — Non-Negotiable Rules');
+    parts.push('These rules MUST be followed. Violation is equivalent to a verification failure.');
+    parts.push('If a rule conflicts with a plan instruction, the CONSTITUTION takes precedence.\n');
+    parts.push(constitutionContent);
   }
 
   // Base execution rules
@@ -1616,6 +1641,7 @@ module.exports = {
   selectAgents,
   matchCatalogAgents,
   loadCatalog,
+  loadConstitution,
   extractPlanSignals,
   pruneAgentBody,
   determineArchetype,
