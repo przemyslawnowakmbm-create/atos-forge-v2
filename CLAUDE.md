@@ -221,8 +221,8 @@ Selects and configures specialist agents from a pre-built catalog:
   node forge-agents/factory.js build <plan-file> --root .    — Output full agent config as JSON
   node forge-agents/factory.js build-all <dir> --root .      — Build configs for all .md plans in directory
 
-15 specialist agents in `forge-agents/catalog/`:
-  typescript-api, react-frontend, python-backend, java-backend, database-engineer,
+16 specialist agents in `forge-agents/catalog/`:
+  typescript-api, nextjs-api, react-frontend, python-backend, java-backend, database-engineer,
   test-engineer, security-engineer, ui-styling, api-integration, devops-config,
   data-pipeline, refactor-engineer, mobile-engineer, documentation, general-executor
 

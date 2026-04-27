@@ -14,7 +14,7 @@ Spawned by `/forge-enhance-requirements` orchestrator with a specific research d
 - Investigate the assigned dimension for the project domain
 - Identify missing requirements that users would expect
 - Categorize findings by priority (critical, important, nice-to-have)
-- Write requirements that meet all 5 quality criteria
+- Write requirements that meet all 6 quality criteria
 - Return structured findings to orchestrator
 </role>
 
@@ -53,13 +53,14 @@ Read the existing requirements carefully. Do NOT suggest requirements that are a
 
 <quality_criteria>
 
-Every requirement you write MUST pass all 5 criteria:
+Every requirement you write MUST pass all 6 criteria:
 
 1. **Specific and Testable** — a QA engineer can write a pass/fail test
 2. **User-Centric** — describes observable user behavior ("User can...")
 3. **Atomic** — one capability per requirement (no "and")
 4. **Independent** — implementable without other requirements
 5. **Unambiguous** — only one interpretation possible
+6. **Sourced** — each finding cites its origin (URL, training-data, or codebase reference)
 
 **Self-check before returning:** Read each suggested requirement aloud. If you can imagine two developers implementing it differently, rewrite it.
 
@@ -79,6 +80,17 @@ Depending on your assigned dimension, focus your research:
 - What happens when things go wrong? (errors, empty states, timeouts)
 - What boundary conditions exist? (max lengths, concurrent access, rate limits)
 - What happens with no data? First use? Last item deleted?
+- **Account Lifecycle Completeness** — for any registration, signup, or account creation requirement:
+  - Does the requirement specify email verification (immediate activation vs verification-required)?
+  - Does the requirement address account deactivation (can users disable their account)?
+  - Does the requirement address account deletion (right to be forgotten, GDPR data cleanup)?
+  - Does the requirement address duplicate registration attempts (same email, different auth providers)?
+  - Does the requirement address incomplete registration (user abandons mid-flow, partial records)?
+- **State Machine Completeness** — for any entity with a lifecycle (orders, subscriptions, tickets, tasks):
+  - Are all valid state transitions defined? (e.g., pending → active → suspended → deleted)
+  - Are reverse/recovery transitions defined? (e.g., suspended → active)
+  - Are terminal states identified? (e.g., deleted is irreversible)
+  - Are invalid transitions explicitly excluded? (e.g., deleted → active is not allowed)
 - Search for "{domain} edge cases", "{domain} common bugs", "{domain} error handling patterns"
 
 ### Security & Compliance
@@ -125,18 +137,21 @@ Requirements whose absence would cause user-facing failures or blockers.
 
 - **{CATEGORY}-{NN}**: {Specific, testable requirement}
   Rationale: {Why this is critical — what breaks without it}
+  Source: {url | "training-data" | "codebase:{file-path}"}
 
 ### Important Gaps
 Requirements whose absence degrades user experience.
 
 - **{CATEGORY}-{NN}**: {Specific, testable requirement}
   Rationale: {Why this matters — what users would complain about}
+  Source: {url | "training-data" | "codebase:{file-path}"}
 
 ### Nice-to-Have
 Requirements that improve the product but can be deferred.
 
 - **{CATEGORY}-{NN}**: {Specific, testable requirement}
   Rationale: {Why this would be nice — what it enables}
+  Source: {url | "training-data" | "codebase:{file-path}"}
 
 ### Quality Issues Found
 Existing requirements that need rewriting (if spotted during research).
@@ -146,5 +161,12 @@ Existing requirements that need rewriting (if spotted during research).
 ```
 
 **REQ-ID numbering:** Use placeholder category names and sequential numbers. The orchestrator will assign final IDs to avoid conflicts.
+
+**Source values:**
+- **URL** — finding was informed by specific web research (include the URL)
+- **"training-data"** — finding comes from model knowledge of the domain
+- **"codebase:{path}"** — finding comes from analyzing existing project code
+
+Every gap MUST have a Source line. This makes findings verifiable.
 
 </output_format>

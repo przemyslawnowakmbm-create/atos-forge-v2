@@ -219,6 +219,87 @@ function matchCatalogAgents(analysis) {
   return scored;
 }
 
+/**
+ * Extract technology signals from the plan for prompt pruning.
+ * Uses the union of all catalog agents' keywords + frameworks as the dictionary.
+ */
+function extractPlanSignals(analysis) {
+  const catalog = loadCatalog();
+  const techTerms = new Set();
+  for (const agent of catalog) {
+    const m = agent.matches || {};
+    if (m.keywords) m.keywords.forEach(k => techTerms.add(k.toLowerCase()));
+    if (m.frameworks) m.frameworks.forEach(f => techTerms.add(f.toLowerCase()));
+  }
+
+  const signals = new Set();
+  const rawLower = (analysis.plan?.raw || '').toLowerCase();
+  const objectiveLower = (analysis.plan?.objective || '').toLowerCase();
+
+  for (const term of techTerms) {
+    if (rawLower.includes(term) || objectiveLower.includes(term)) {
+      signals.add(term);
+    }
+  }
+
+  for (const f of (analysis.plan?.all_files || [])) {
+    const fLower = f.toLowerCase();
+    for (const term of techTerms) {
+      if (fLower.includes(term)) signals.add(term);
+    }
+  }
+
+  return signals;
+}
+
+/**
+ * Prune irrelevant H3 subsections from an agent body.
+ * Only prunes under ## Expertise and ## Patterns — preserves Constraints, Anti-Patterns, Verification.
+ * Keeps an H3 subsection if any plan signal appears in its title or first 200 chars.
+ * If no signals provided, returns body unchanged (safe fallback).
+ */
+function pruneAgentBody(body, planSignals) {
+  if (!planSignals || planSignals.size === 0) return body;
+
+  const h2Sections = body.split(/(?=^## )/m);
+  const pruned = [];
+
+  for (const section of h2Sections) {
+    const h2Match = section.match(/^## (.+)/m);
+    if (!h2Match) { pruned.push(section); continue; }
+
+    const sectionName = h2Match[1].trim().toLowerCase();
+
+    if (sectionName !== 'expertise' && sectionName !== 'patterns') {
+      pruned.push(section);
+      continue;
+    }
+
+    const parts = section.split(/(?=^### )/m);
+    const keptParts = [parts[0]];
+
+    for (let i = 1; i < parts.length; i++) {
+      const h3Match = parts[i].match(/^### (.+)/m);
+      if (!h3Match) { keptParts.push(parts[i]); continue; }
+
+      const h3Title = h3Match[1].toLowerCase();
+      const preview = parts[i].substring(0, 300).toLowerCase();
+      let relevant = false;
+      for (const signal of planSignals) {
+        if (h3Title.includes(signal) || preview.includes(signal)) {
+          relevant = true;
+          break;
+        }
+      }
+      if (relevant) keptParts.push(parts[i]);
+    }
+
+    pruned.push(keptParts.join(''));
+  }
+
+  return pruned.join('');
+}
+
 // ============================================================
 // Constants
 // ============================================================
@@ -519,17 +600,20 @@ function buildGroundingSection(cwd, planFiles) {
 function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
   const parts = [];
 
-  // Load the primary catalog agent's expertise
+  // Load the primary catalog agent's expertise (pruned to plan-relevant sections)
   const selection = selectAgents(analysis);
+  const planSignals = extractPlanSignals(analysis);
+
   if (selection.primary && selection.primary.body) {
-    parts.push(selection.primary.body);
+    parts.push(pruneAgentBody(selection.primary.body, planSignals));
   }
 
-  // If secondary agents matched, include their expertise (with renamed headings to avoid collision)
+  // If secondary agents matched, include their pruned expertise (renamed headings)
   if (selection.agents.length > 1) {
     for (const agent of selection.agents.slice(1)) {
       if (agent.body) {
-        const expertiseMatch = agent.body.match(/## Expertise[\s\S]*?(?=## Constraints|## Anti-Patterns|$)/);
+        const prunedBody = pruneAgentBody(agent.body, planSignals);
+        const expertiseMatch = prunedBody.match(/## Expertise[\s\S]*?(?=## Constraints|## Anti-Patterns|$)/);
         if (expertiseMatch) {
           const renamed = expertiseMatch[0]
             .replace(/^## Expertise/m, `### ${agent.name} — Expertise`)
@@ -1532,6 +1616,8 @@ module.exports = {
   selectAgents,
   matchCatalogAgents,
   loadCatalog,
+  extractPlanSignals,
+  pruneAgentBody,
   determineArchetype,
   composeSystemPrompt,
   composeContextPackage,
