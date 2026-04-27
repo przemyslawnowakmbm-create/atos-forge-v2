@@ -102,6 +102,65 @@ function parsePlan(planPath) {
     plan.frontmatter.depends_on = depsMatch ? depsMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [];
     plan.frontmatter.autonomous = autoMatch ? autoMatch[1] === 'true' : true;
 
+    // Requirements list
+    const reqMatch = fm.match(/^requirements:\s*\[(.*?)\]/m);
+    if (reqMatch) {
+      plan.frontmatter.requirements = reqMatch[1].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean);
+    }
+
+    // Plan metadata
+    const phaseMatch = fm.match(/^phase:\s*(.+)/m);
+    const planNumMatch = fm.match(/^plan:\s*(.+)/m);
+    const typeMatch = fm.match(/^type:\s*(.+)/m);
+    const hasTestsMatch = fm.match(/^has_tests:\s*(true|false)/m);
+    if (phaseMatch) plan.frontmatter.phase = phaseMatch[1].trim();
+    if (planNumMatch) plan.frontmatter.plan = planNumMatch[1].trim();
+    if (typeMatch) plan.frontmatter.type = typeMatch[1].trim();
+    if (hasTestsMatch) plan.frontmatter.has_tests = hasTestsMatch[1] === 'true';
+
+    // Locked decisions
+    const lockedMatch = fm.match(/^locked_decisions:\s*\n((?:\s+-\s+.+\n?)*)/m);
+    if (lockedMatch) {
+      plan.frontmatter.locked_decisions = lockedMatch[1].match(/^\s+-\s+(.+)/gm)
+        ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
+    }
+
+    // Must-haves (truths, artifacts, key_links)
+    const mustSection = fm.match(/^must_haves:\s*\n((?:\s+.+\n?)*)/m);
+    if (mustSection) {
+      const mh = mustSection[1];
+      plan.frontmatter.must_haves = {};
+
+      const truthsMatch = mh.match(/truths:\s*\n((?:\s+-\s+.+\n?)*)/);
+      if (truthsMatch) {
+        plan.frontmatter.must_haves.truths = truthsMatch[1].match(/^\s+-\s+(.+)/gm)
+          ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
+      }
+
+      const artifactsMatch = mh.match(/artifacts:\s*\n((?:\s+-\s+.+\n?)*)/);
+      if (artifactsMatch) {
+        plan.frontmatter.must_haves.artifacts = artifactsMatch[1].match(/^\s+-\s+(.+)/gm)
+          ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
+      }
+
+      const linksMatch = mh.match(/key_links:\s*\n((?:\s+-.+\n?|\s+\w+:.+\n?)*)/);
+      if (linksMatch) {
+        plan.frontmatter.must_haves.key_links = [];
+        const linkBlocks = linksMatch[1].split(/\n\s+-\s+(?=source:)/);
+        for (const block of linkBlocks) {
+          if (!block.trim()) continue;
+          const src = block.match(/source:\s*(.+)/);
+          const tgt = block.match(/target:\s*(.+)/);
+          const pat = block.match(/pattern:\s*(.+)/);
+          if (src && tgt) {
+            plan.frontmatter.must_haves.key_links.push({
+              source: src[1].trim(), target: tgt[1].trim(), pattern: pat ? pat[1].trim() : null,
+            });
+          }
+        }
+      }
+    }
+
     // Multi-repo plan fields
     const serviceMatch = fm.match(/^service:\s*(.+)/m);
     const repoMatch = fm.match(/^repo:\s*(.+)/m);
@@ -123,21 +182,30 @@ function parsePlan(planPath) {
     }
   }
 
-  // Parse task blocks
-  const taskRegex = /<task>([\s\S]*?)<\/task>/g;
+  // Parse task blocks (supports <task>, <task id="1">, <task id="1" type="auto">, etc.)
+  const taskRegex = /<task\b[^>]*>([\s\S]*?)<\/task>/g;
   let taskMatch;
   while ((taskMatch = taskRegex.exec(raw)) !== null) {
+    const fullMatch = taskMatch[0];
     const block = taskMatch[1];
+
+    // Extract task attributes
+    const idMatch = fullMatch.match(/id=["']?(\d+)["']?/);
+    const typeMatch = fullMatch.match(/type=["']([^"']+)["']/);
+
     const filesMatch = block.match(/<files>([\s\S]*?)<\/files>/);
     const actionMatch = block.match(/<action>([\s\S]*?)<\/action>/);
     const verifyMatch = block.match(/<verify>([\s\S]*?)<\/verify>/);
     const doneMatch = block.match(/<done>([\s\S]*?)<\/done>/);
 
-    const files = filesMatch
-      ? filesMatch[1].trim().split('\n').map(l => l.trim()).filter(Boolean)
-      : [];
+    const fileText = filesMatch ? filesMatch[1].trim() : '';
+    const files = fileText.includes(',')
+      ? fileText.split(',').map(f => f.trim()).filter(Boolean)
+      : fileText.split('\n').map(l => l.trim()).filter(Boolean);
 
     plan.tasks.push({
+      id: idMatch ? idMatch[1] : String(plan.tasks.length + 1),
+      type: typeMatch ? typeMatch[1] : 'auto',
       files,
       action: actionMatch ? actionMatch[1].trim() : '',
       verify: verifyMatch ? verifyMatch[1].trim() : '',
