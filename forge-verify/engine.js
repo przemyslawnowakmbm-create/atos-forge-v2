@@ -2,10 +2,11 @@
 'use strict';
 
 /**
- * 7-Layer Verification Engine — graph-aware, fail-fast verification pipeline.
+ * Multi-Layer Verification Engine — graph-aware, fail-fast verification pipeline.
  *
  * Layers (run in order, fail-fast):
- *   1. STRUCTURAL   (<5s)    — syntax errors, stray console.log/debugger
+ *   0. HASH_LOCK     (<1s)    — tamper detection for test files and must_haves
+ *   1. STRUCTURAL    (<5s)    — syntax errors, stray console.log/debugger
  *   2. TYPE/COMPILE  (10-30s) — tsc --noEmit, mypy, go build as applicable
  *   3. INTERFACE     (5-15s)  — graph contract hashes → detect breaks → verify consumers
  *   4. DEPENDENCY    (<5s)    — new circular deps, orphaned imports
@@ -13,12 +14,15 @@
  *   6. BEHAVIORAL    (varies) — plan's custom verify steps (curl, CLI, etc.)
  *   7. CONTRACT      (5-30s)  — cross-repo contract verification (code↔YAML drift,
  *                                backward compat, consumer ripple via system-graph.db)
+ *   8. SEMANTIC      (30-60s) — agent-based spec compliance (plan must_haves vs diff)
+ *   9. ARCHITECTURAL (30-60s) — agent-based architectural fitness review
+ *  10. BROWSER       (varies) — Playwright e2e tests
  *
  * Output: { overall, layers[], fix_suggestions[], auto_fixable, graph_diff }
  *
  * Usage:
  *   node forge-verify/engine.js --root . [--files f1,f2] [--plan plan.md]
- *       [--db path] [--layer 1-7] [--fail-fast] [--json] [--baseline db]
+ *       [--db path] [--layer 1-10] [--fail-fast] [--json] [--baseline db]
  *   Programmatic:
  *     const { verify } = require('./engine');
  *     const result = await verify({ cwd, files, plan, dbPath, ... });
@@ -966,13 +970,203 @@ function contractLayer() {
 }
 
 // ============================================================
-// Layer 9 — BROWSER (lazy-loaded, optional)
+// Layer 10 — BROWSER (lazy-loaded, optional)
 // ============================================================
 
 let layerBrowserMod; try { layerBrowserMod = require('./browser-layer'); } catch {}
 
 // ============================================================
-// Layer 8 — ARCHITECTURAL (optional, agent-based)
+// Layer 8 — SEMANTIC (optional, agent-based, off by default)
+// ============================================================
+
+/**
+ * Semantic verification layer.
+ * Reads the semantic-verifier catalog agent, the plan file, and a git diff,
+ * then uses a Claude agent to judge whether the implementation satisfies
+ * the plan's stated acceptance criteria.
+ *
+ * This layer is optional (off by default) and expensive (LLM call).
+ * Enable via config: verification.layers.semantic = true
+ *
+ * @param {object} opts
+ * @param {string} opts.cwd
+ * @param {string[]} opts.files - Changed files
+ * @param {string} [opts.planPath] - Path to the plan file
+ * @returns {{ passed: boolean, skipped: boolean, issues: Array, confidence: number, duration_ms: number }}
+ */
+function layerSemantic(opts) {
+  const start = Date.now();
+  const { cwd, files } = opts;
+  const planPath = opts.planPath;
+
+  // Require a plan file — semantic verification is meaningless without one
+  if (!planPath || !fs.existsSync(planPath)) {
+    return {
+      passed: true,
+      skipped: true,
+      reason: 'No plan file provided (--plan required for semantic verification)',
+      issues: [],
+      confidence: 0,
+      duration_ms: Date.now() - start,
+    };
+  }
+
+  // Load the semantic-verifier catalog agent
+  const verifierPath = path.join(__dirname, '..', 'forge-agents', 'catalog', 'semantic-verifier.md');
+  if (!fs.existsSync(verifierPath)) {
+    return {
+      passed: true,
+      skipped: true,
+      reason: 'semantic-verifier.md catalog agent not found',
+      issues: [],
+      confidence: 0,
+      duration_ms: Date.now() - start,
+    };
+  }
+
+  const verifierContent = fs.readFileSync(verifierPath, 'utf-8');
+  // Strip frontmatter to get the agent body (system prompt)
+  const bodyMatch = verifierContent.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
+  const systemPrompt = bodyMatch ? bodyMatch[1].trim() : verifierContent;
+
+  // Read the plan file
+  const planContent = fs.readFileSync(planPath, 'utf-8');
+
+  // Get git diff
+  let diff = '';
+  try {
+    diff = execSync('git diff HEAD~1', {
+      cwd,
+      encoding: 'utf-8',
+      timeout: 15000,
+      maxBuffer: 5 * 1024 * 1024,
+    });
+  } catch {
+    try {
+      diff = execSync('git diff --cached', {
+        cwd,
+        encoding: 'utf-8',
+        timeout: 15000,
+        maxBuffer: 5 * 1024 * 1024,
+      });
+    } catch {
+      return {
+        passed: true,
+        skipped: true,
+        reason: 'Could not obtain git diff',
+        issues: [],
+        confidence: 0,
+        duration_ms: Date.now() - start,
+      };
+    }
+  }
+
+  if (!diff || diff.trim().length === 0) {
+    return {
+      passed: false,
+      skipped: false,
+      issues: [{ criterion: 'git diff', verdict: 'NOT_SATISFIED', explanation: 'Git diff is empty — no changes detected' }],
+      confidence: 0.95,
+      duration_ms: Date.now() - start,
+    };
+  }
+
+  // Truncate diff if too large (keep under ~40k chars to fit context)
+  const MAX_DIFF = 40000;
+  const truncatedDiff = diff.length > MAX_DIFF
+    ? diff.substring(0, MAX_DIFF) + '\n\n[... diff truncated at 40000 chars ...]'
+    : diff;
+
+  // Build the task prompt
+  const taskPrompt = `## Original Plan\n\n${planContent}\n\n## Git Diff\n\n\`\`\`diff\n${truncatedDiff}\n\`\`\`\n\nAnalyze the diff against the plan's acceptance criteria and return your JSON verdict.`;
+
+  // Invoke provider CLI (same pattern as layerArchitectural)
+  try {
+    const provider = resolveProvider(cwd);
+    if (!provider.available) {
+      return {
+        passed: true,
+        skipped: true,
+        reason: 'No supported agent CLI available',
+        issues: [],
+        confidence: 0,
+        duration_ms: Date.now() - start,
+      };
+    }
+
+    const fullPrompt = systemPrompt + '\n\n---\n\n' + taskPrompt;
+    const outputPath = path.join(cwd, '.forge', 'semantic-last-message.txt');
+    const invocation = buildInvocation(provider.name, fullPrompt, {
+      outputFile: provider.name === 'codex' ? outputPath : null,
+    });
+    const result = spawnSync(provider.path, invocation.args, {
+      cwd,
+      timeout: 180000,
+      input: invocation.stdin || undefined,
+      encoding: 'utf-8',
+      env: invocation.env,
+    });
+    const stdout = provider.name === 'codex' && fs.existsSync(outputPath)
+      ? fs.readFileSync(outputPath, 'utf8')
+      : result.stdout;
+    try { fs.unlinkSync(outputPath); } catch { /* ignore */ }
+
+    if (result.status !== 0 || !stdout) {
+      return {
+        passed: true,
+        skipped: true,
+        reason: `${provider.label} CLI not available or failed`,
+        issues: [],
+        confidence: 0,
+        duration_ms: Date.now() - start,
+      };
+    }
+
+    // Parse JSON response
+    const parsed = parseSemanticResponse(stdout);
+    return {
+      passed: parsed.passed,
+      skipped: false,
+      issues: parsed.issues || [],
+      confidence: parsed.confidence || 0,
+      summary: parsed.summary || '',
+      truths: parsed.truths || [],
+      artifacts: parsed.artifacts || [],
+      key_links: parsed.key_links || [],
+      duration_ms: Date.now() - start,
+    };
+  } catch {
+    return {
+      passed: true,
+      skipped: true,
+      reason: 'Semantic verification agent failed',
+      issues: [],
+      confidence: 0,
+      duration_ms: Date.now() - start,
+    };
+  }
+}
+
+/**
+ * Parse the semantic verifier agent's JSON response.
+ */
+function parseSemanticResponse(output) {
+  try {
+    // Try to extract JSON object from response (may have markdown wrapping)
+    const jsonMatch = output.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (typeof parsed.passed === 'boolean') {
+        return parsed;
+      }
+    }
+  } catch { /* parse failure */ }
+  // If we can't parse, treat as skip
+  return { passed: true, skipped: true, issues: [], confidence: 0, summary: 'Failed to parse agent response' };
+}
+
+// ============================================================
+// Layer 9 — ARCHITECTURAL (optional, agent-based, off by default)
 // ============================================================
 
 /**
@@ -1845,21 +2039,30 @@ async function verify(opts) {
     }
   }
 
-  // Layer 8 — ARCHITECTURAL (optional, agent-based, off by default)
-  if (maxLayer >= 8 && verifyConfig.layers && verifyConfig.layers.ARCHITECTURAL === true) {
-    const cached8 = cache ? cache.get('ARCHITECTURAL', files, cwd) : null;
-    const result = cached8 || layerArchitectural({ cwd, files });
-    if (!cached8 && cache) cache.set('ARCHITECTURAL', files, cwd, result);
-    layers.push({ index: 8, name: 'ARCHITECTURAL', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+  // Layer 8 — SEMANTIC (optional, agent-based, off by default)
+  if (maxLayer >= 8 && verifyConfig.layers && verifyConfig.layers.SEMANTIC === true) {
+    const result = layerSemantic({ cwd, files, planPath: opts.planPath });
+    layers.push({ index: 8, name: 'SEMANTIC', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+    if (failFast && !result.passed) {
+      return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
+    }
+  }
+
+  // Layer 9 — ARCHITECTURAL (optional, agent-based, off by default)
+  if (maxLayer >= 9 && verifyConfig.layers && verifyConfig.layers.ARCHITECTURAL === true) {
+    const cached9 = cache ? cache.get('ARCHITECTURAL', files, cwd) : null;
+    const result = cached9 || layerArchitectural({ cwd, files });
+    if (!cached9 && cache) cache.set('ARCHITECTURAL', files, cwd, result);
+    layers.push({ index: 9, name: 'ARCHITECTURAL', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
     // Architectural issues are suggestions, don't fail-fast
   }
 
-  // Layer 9 — BROWSER (optional, Playwright e2e, off by default)
-  if (maxLayer >= 9 && verifyConfig.layers && verifyConfig.layers.BROWSER === true && layerBrowserMod) {
-    const cached9 = cache ? cache.get('BROWSER', files, cwd) : null;
-    const result = cached9 || await layerBrowserMod.layerBrowser({ cwd, files });
-    if (!cached9 && cache) cache.set('BROWSER', files, cwd, result);
-    layers.push({ index: 9, name: 'BROWSER', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration || 0 });
+  // Layer 10 — BROWSER (optional, Playwright e2e, off by default)
+  if (maxLayer >= 10 && verifyConfig.layers && verifyConfig.layers.BROWSER === true && layerBrowserMod) {
+    const cached10 = cache ? cache.get('BROWSER', files, cwd) : null;
+    const result = cached10 || await layerBrowserMod.layerBrowser({ cwd, files });
+    if (!cached10 && cache) cache.set('BROWSER', files, cwd, result);
+    layers.push({ index: 10, name: 'BROWSER', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration || 0 });
     if (!result.passed && !result.skipped && opts.failFast) {
       return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
     }
@@ -1946,6 +2149,7 @@ module.exports = {
   layerTests,
   layerBehavioral,
   get layerContract() { const cl = contractLayer(); return cl ? cl.layerContract : null; },
+  layerSemantic,
   layerArchitectural,
   get layerBrowser() { return layerBrowserMod ? layerBrowserMod.layerBrowser : null; },
   parsePlanVerifySteps,

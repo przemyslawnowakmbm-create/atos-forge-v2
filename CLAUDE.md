@@ -221,10 +221,11 @@ Selects and configures specialist agents from a pre-built catalog:
   node forge-agents/factory.js build <plan-file> --root .    — Output full agent config as JSON
   node forge-agents/factory.js build-all <dir> --root .      — Build configs for all .md plans in directory
 
-16 specialist agents in `forge-agents/catalog/`:
+17 agents in `forge-agents/catalog/`:
   typescript-api, nextjs-api, react-frontend, python-backend, java-backend, database-engineer,
   test-engineer, security-engineer, ui-styling, api-integration, devops-config,
-  data-pipeline, refactor-engineer, mobile-engineer, documentation, general-executor
+  data-pipeline, refactor-engineer, mobile-engineer, documentation, general-executor,
+  semantic-verifier (verifier, not executor — judges plan compliance from diff)
 
 Priority system: specialists=10, docs=8, refactor=5, general=1.
 If no catalog agent matches, creates a new agent definition and saves it to catalog.
@@ -269,11 +270,17 @@ The execute-phase workflow runs plans sequentially with verification between eac
 5. **Full verification** — TypeScript, tests, lint, build, phase goal check
 6. **Log completion** — ledger update, archive on phase complete
 
-## 8-Layer Verification Engine
-Graph-aware, fail-fast verification pipeline:
-  node forge-verify/engine.js --root . [--files f1,f2] [--plan plan.md] [--layer 1-8] [--json]
+## Multi-Layer Verification Engine
+Graph-aware, fail-fast verification pipeline with two-stage model:
+  node forge-verify/engine.js --root . [--files f1,f2] [--plan plan.md] [--layer 1-10] [--json]
+
+**Two-stage verification model:**
+- Stage 1 (Mechanical quality, Layers 0-7): code compiles, tests pass, no regressions.
+- Stage 2 (Spec compliance, Layer 8): implementation satisfies the plan's stated acceptance criteria.
+  Stage 1 runs first. Only if Stage 1 passes does Stage 2 run.
 
 Layers (fail-fast order, each toggleable via config):
+0. HASH_LOCK (<1s) — tamper detection for test files and must_haves (off by default)
 1. STRUCTURAL (<5s) — syntax errors, stray console.log/debugger, merge conflict markers, bracket balance
 2. TYPE/COMPILE (10-30s) — tsc --noEmit, mypy, go build (auto-detected from file extensions + graph capabilities)
    - Broad tsconfig.json discovery: cwd → parent dirs → src/ → packages/* (monorepo)
@@ -290,10 +297,17 @@ Layers (fail-fast order, each toggleable via config):
    - Cross-repo ripple: consumer risk from breaking changes, high-fan-in warnings, team coordination
    - Requires: .forge/interfaces.yaml (skip if absent), system-graph.db (optional for ripple)
    - Baseline comparison: .forge/interfaces.yaml.baseline or git show HEAD:.forge/interfaces.yaml
-8. ARCHITECTURAL (optional, off by default) — agent-based architectural fitness review
+8. SEMANTIC (30-60s, optional, off by default) — agent-based spec compliance verification
+   - Uses semantic-verifier catalog agent to judge plan must_haves vs git diff
+   - Returns per-criterion verdicts (truths, artifacts, key_links) with evidence
+   - Requires: --plan flag (plan file path)
+   - Enable via: verification.layers.semantic = true
+9. ARCHITECTURAL (30-60s, optional, off by default) — agent-based architectural fitness review
    - Reads .planning/codebase/ARCHITECTURE.md and CONVENTIONS.md
    - Spawns Claude CLI to review changed files against documented conventions
    - Enable via: verification.layers.architectural = true
+10. BROWSER (varies, optional, off by default) — Playwright e2e tests
+   - Enable via: verification.layers.browser = true
 
 Output: { overall, layers[], fix_suggestions[], auto_fixable, graph_diff }
 Rich terminal display with pass/fail/skip per layer, duration, specific error details.
@@ -302,11 +316,12 @@ Fix suggestions with auto_fixable flags for debugger/console.log removal.
 Ledger integration: logError() for each failure, updateState({ verification: "passed" }) on full pass.
 
 Configuration in .forge/config.json or .planning/config.json (verification section):
-  layers (per-layer boolean toggles including `contract`, `architectural`), auto_fix (true/false), max_fix_loops,
-  type_check_command (override tsc), test_command (override test runner), test_timeout.
+  layers (per-layer boolean toggles including `contract`, `semantic`, `architectural`, `browser`),
+  auto_fix (true/false), max_fix_loops, type_check_command (override tsc),
+  test_command (override test runner), test_timeout.
 
 Programmatic: require('forge-verify/engine').verify({ cwd, files, planPath, dbPath, ... })
-Additional exports: findTsConfig(cwd), loadVerificationConfig(cwd), layerContract (lazy), layerArchitectural
+Additional exports: findTsConfig(cwd), loadVerificationConfig(cwd), layerContract (lazy), layerSemantic, layerArchitectural
 CLI flags: --root, --files, --plan, --db, --baseline, --system-db, --layer, --fail-fast, --json, --silent, --no-ledger
 
 Contract layer module: require('forge-verify/contract-layer')

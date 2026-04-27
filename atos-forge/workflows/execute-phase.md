@@ -235,7 +235,13 @@ FULL_RESULT=$(node "$VERIFY_ENGINE" --root "$(pwd)" --json 2>/dev/null)
 FULL_OK=$(echo "$FULL_RESULT" | jq -r '.overall')
 ```
 
-Layers: 1-STRUCTURAL, 2-TYPE/COMPILE, 3-INTERFACE CONTRACTS, 4-DEPENDENCY, 5-TESTS, 6-BEHAVIORAL, 7-CONTRACT, 8-ARCHITECTURAL.
+Layers: 0-HASH_LOCK, 1-STRUCTURAL, 2-TYPE/COMPILE, 3-INTERFACE CONTRACTS, 4-DEPENDENCY, 5-TESTS, 6-BEHAVIORAL, 7-CONTRACT, 8-SEMANTIC, 9-ARCHITECTURAL, 10-BROWSER.
+
+**Two-stage verification model:**
+1. **Stage 1 — Mechanical quality:** Hash-lock integrity (Layer 0), structural checks, type compilation, interface contracts, dependency analysis, tests, behavioral checks, cross-repo contracts (Layers 1-7). These verify code compiles, tests pass, and no regressions exist.
+2. **Stage 2 — Spec compliance:** Semantic verification (Layer 8, optional) checks whether the implementation satisfies the plan's stated objectives, must_haves, and acceptance criteria. Catches implementations that compile but miss the spec's intent.
+
+Stage 1 runs first. Only if Stage 1 passes does Stage 2 run.
 
 **If fails -> fix loop:**
 

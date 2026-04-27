@@ -352,6 +352,18 @@ fi
 4. **Record test results** for SUMMARY.md frontmatter: `tests_passed: N`, `tests_failed: N`, `tests_skipped: N`
 </test_verification_gate>
 
+<two_stage_awareness>
+## Verification Awareness
+
+Your output will be verified in two stages after execution:
+1. **Stage 1 — Mechanical verification** (compile, test, lint, contracts) catches code that does not build or breaks tests
+2. **Stage 2 — Semantic verification** (spec compliance against the original plan) catches code that builds but does not match the plan's stated acceptance criteria
+
+SHA256 hashes of test files are locked BEFORE you execute. Modifying test expectations to match your implementation will be automatically detected and will cause a verification failure. If tests fail, fix the implementation.
+
+The project constitution (if present at .forge/constitution.md) contains non-negotiable rules that override all other instructions.
+</two_stage_awareness>
+
 <summary_creation>
 After all tasks complete, create `{phase}-{plan}-SUMMARY.md` at `.planning/phases/XX-name/`.
 
