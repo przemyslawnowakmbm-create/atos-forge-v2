@@ -223,28 +223,50 @@ function matchCatalogAgents(analysis) {
  * Extract technology signals from the plan for prompt pruning.
  * Uses the union of all catalog agents' keywords + frameworks as the dictionary.
  */
+// Generic terms that appear in nearly every plan — excluded from pruning signals
+const GENERIC_TERMS = new Set([
+  'api', 'route', 'router', 'endpoint', 'handler', 'controller', 'middleware',
+  'request', 'response', 'query', 'table', 'index', 'schema', 'model',
+  'component', 'form', 'action', 'build', 'test', 'spec', 'type',
+  'client', 'server', 'async', 'cache', 'config', 'service', 'module',
+  'import', 'export', 'function', 'class', 'interface', 'error', 'status',
+  'auth', 'token', 'session', 'database', 'migration', 'seed',
+  'css', 'style', 'layout', 'page', 'view', 'template', 'render',
+  'task', 'job', 'worker', 'event', 'log', 'metric', 'artifact',
+  'deploy', 'ci', 'pipeline', 'docker', 'container',
+]);
+
 function extractPlanSignals(analysis) {
   const catalog = loadCatalog();
-  const techTerms = new Set();
+
+  // Only use framework names and specific technology keywords (not generic terms)
+  const specificTerms = new Set();
   for (const agent of catalog) {
     const m = agent.matches || {};
-    if (m.keywords) m.keywords.forEach(k => techTerms.add(k.toLowerCase()));
-    if (m.frameworks) m.frameworks.forEach(f => techTerms.add(f.toLowerCase()));
+    if (m.frameworks) m.frameworks.forEach(f => specificTerms.add(f.toLowerCase()));
+    if (m.keywords) {
+      m.keywords.forEach(k => {
+        const kl = k.toLowerCase();
+        if (kl.length > 4 && !GENERIC_TERMS.has(kl)) specificTerms.add(kl);
+      });
+    }
   }
 
   const signals = new Set();
-  const rawLower = (analysis.plan?.raw || '').toLowerCase();
   const objectiveLower = (analysis.plan?.objective || '').toLowerCase();
+  const rawLower = (analysis.plan?.raw || '').toLowerCase();
 
-  for (const term of techTerms) {
-    if (rawLower.includes(term) || objectiveLower.includes(term)) {
+  // Match specific terms against plan text
+  for (const term of specificTerms) {
+    if (objectiveLower.includes(term) || rawLower.includes(term)) {
       signals.add(term);
     }
   }
 
+  // Match against file paths (only specific terms)
   for (const f of (analysis.plan?.all_files || [])) {
     const fLower = f.toLowerCase();
-    for (const term of techTerms) {
+    for (const term of specificTerms) {
       if (fLower.includes(term)) signals.add(term);
     }
   }
@@ -327,10 +349,10 @@ function loadAgentDirectives() {
 
 /**
  * Load project constitution (non-negotiable rules) from .forge/constitution.md.
+ * @param {string} cwd - Project root directory (passed from buildAgentConfig)
  */
-function loadConstitution(analysis) {
+function loadConstitution(cwd) {
   try {
-    const cwd = analysis.plan?.path ? path.dirname(path.dirname(analysis.plan.path)) : process.cwd();
     const { config } = require('../forge-config/config').loadConfig(cwd);
     if (config.constitution && config.constitution.enabled === false) return null;
     const constitutionPath = path.resolve(cwd, config.constitution?.path || '.forge/constitution.md');
@@ -670,7 +692,7 @@ function buildGroundingSection(cwd, planFiles) {
  * @returns {string}
  */
 
-function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
+function composeSystemPrompt(analysis, archetypeResult, sessionContext, cwd) {
   const parts = [];
 
   // Load the primary catalog agent's expertise (pruned to plan-relevant sections)
@@ -699,7 +721,7 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
   }
 
   // Constitution — non-negotiable hard rules (loaded from .forge/constitution.md)
-  const constitutionContent = loadConstitution(analysis);
+  const constitutionContent = loadConstitution(cwd || process.cwd());
   if (constitutionContent) {
     parts.push('\n## CONSTITUTION — Non-Negotiable Rules');
     parts.push('These rules MUST be followed. Violation is equivalent to a verification failure.');
@@ -839,7 +861,7 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext) {
   }
 
   // Grounded facts from code graph (anti-hallucination)
-  const groundingCwd = analysis.plan?.path ? path.dirname(path.dirname(analysis.plan.path)) : process.cwd();
+  const groundingCwd = cwd || process.cwd();
   const grounding = buildGroundingSection(groundingCwd, analysis.plan?.all_files);
   if (grounding) parts.push(grounding);
 
@@ -1384,7 +1406,7 @@ function buildAgentConfig(planPath, cwd, opts = {}) {
   const sessionContext = extractSessionContext(analysis);
 
   // Step 3: System prompt
-  const systemPrompt = composeSystemPrompt(analysis, archetypeResult, sessionContext);
+  const systemPrompt = composeSystemPrompt(analysis, archetypeResult, sessionContext, cwd);
 
   // Step 4: Context package
   const config = assessor().loadForgeConfig(cwd);

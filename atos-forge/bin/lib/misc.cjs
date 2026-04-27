@@ -645,7 +645,7 @@ function cmdRequirementsValidate(cwd, raw) {
     requirements.push({ id: match[1], text: match[2].trim(), line: content.substring(0, match.index).split('\n').length });
   }
 
-  const weaselWords = ['appropriate', 'user-friendly', 'intuitive', 'fast', 'efficient', 'robust', 'scalable', 'flexible', 'seamless', 'easy', 'simple', 'good', 'nice', 'proper', 'adequate', 'reasonable', 'sufficient', 'optimal', 'performant'];
+  const weaselWords = ['appropriate', 'user-friendly', 'intuitive', 'fast', 'efficient', 'robust', 'scalable', 'flexible', 'seamless', 'easy', 'simple', 'good', 'nice', 'proper', 'adequate', 'reasonable', 'sufficient', 'optimal', 'performant', 'professional', 'modern', 'clean', 'beautiful', 'elegant', 'powerful', 'lightweight', 'comprehensive', 'high-quality', 'best practices', 'state-of-the-art', 'cutting-edge', 'responsive', 'smart', 'advanced'];
 
   for (const req of requirements) {
     const text = req.text;
