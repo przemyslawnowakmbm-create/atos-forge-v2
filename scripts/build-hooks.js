@@ -13,7 +13,8 @@ const DIST_DIR = path.join(HOOKS_DIR, 'dist');
 const HOOKS_TO_COPY = [
   'forge-check-update.js',
   'forge-statusline.js',
-  'forge-context-monitor.js'
+  'forge-context-monitor.js',
+  'forge-guard.js'
 ];
 
 function build() {

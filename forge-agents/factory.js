@@ -341,6 +341,63 @@ function loadConstitution(analysis) {
   return null;
 }
 
+/**
+ * Compute SHA256 hashes for test files, must_haves, and verification_steps.
+ * Writes to .forge/hash-locks.json keyed by plan task ID.
+ * The verification engine reads these locks post-execution to detect tampering.
+ */
+function computeHashLocks(taskId, plan, cwd) {
+  const crypto = require('crypto');
+  const entries = [];
+
+  const isTestFile = (f) => /\.(test|spec)\.[^.]+$/.test(f) || f.includes('__tests__/') || f.includes('/test/');
+
+  // Hash test files
+  for (const f of (plan.all_files || [])) {
+    if (!isTestFile(f)) continue;
+    const fullPath = path.isAbsolute(f) ? f : path.join(cwd, f);
+    if (fs.existsSync(fullPath)) {
+      const content = fs.readFileSync(fullPath, 'utf8');
+      entries.push({
+        type: 'test_file',
+        path: path.isAbsolute(f) ? path.relative(cwd, f) : f,
+        sha256: crypto.createHash('sha256').update(content).digest('hex'),
+      });
+    }
+  }
+
+  // Hash must_haves content
+  const mh = plan.frontmatter?.must_haves;
+  if (mh) {
+    entries.push({
+      type: 'must_haves',
+      sha256: crypto.createHash('sha256').update(JSON.stringify(mh)).digest('hex'),
+    });
+  }
+
+  // Hash verification_steps
+  const vs = plan.frontmatter?.verification_steps || plan.tasks?.map(t => t.verify).filter(Boolean);
+  if (vs && vs.length > 0) {
+    entries.push({
+      type: 'verification_steps',
+      sha256: crypto.createHash('sha256').update(vs.join('\n')).digest('hex'),
+    });
+  }
+
+  if (entries.length === 0) return { locked: false, entries: 0 };
+
+  // Write to .forge/hash-locks.json
+  const lockPath = path.join(cwd, '.forge', 'hash-locks.json');
+  let locks = {};
+  try { if (fs.existsSync(lockPath)) locks = JSON.parse(fs.readFileSync(lockPath, 'utf8')); } catch {}
+  locks[taskId] = entries;
+  const forgeDir = path.join(cwd, '.forge');
+  if (!fs.existsSync(forgeDir)) fs.mkdirSync(forgeDir, { recursive: true });
+  fs.writeFileSync(lockPath, JSON.stringify(locks, null, 2) + '\n');
+
+  return { locked: true, entries: entries.length };
+}
+
 const CHARS_PER_TOKEN = 4;
 
 // Context window budgets (tokens)
@@ -1337,6 +1394,14 @@ function buildAgentConfig(planPath, cwd, opts = {}) {
   // Step 5: Verification
   const verification = defineVerification(analysis);
 
+  // Step 5b: Hash locks (tamper detection for test files + verification criteria)
+  try {
+    const { config: cfgFull } = require('../forge-config/config').loadConfig(cwd);
+    if (cfgFull.hash_lock && cfgFull.hash_lock.enabled) {
+      computeHashLocks(taskId, plan, cwd);
+    }
+  } catch { /* hash lock computation is non-fatal */ }
+
   // Task prompt (the actual plan content)
   const taskPrompt = plan.raw;
 
@@ -1642,6 +1707,7 @@ module.exports = {
   matchCatalogAgents,
   loadCatalog,
   loadConstitution,
+  computeHashLocks,
   extractPlanSignals,
   pruneAgentBody,
   determineArchetype,

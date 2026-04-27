@@ -26,6 +26,16 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [{ "type": "command", "command": "node .codex/hooks/forge-guard.js", "timeoutSec": 5 }]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [{ "type": "command", "command": "node .codex/hooks/forge-guard.js", "timeoutSec": 5 }]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Bash",

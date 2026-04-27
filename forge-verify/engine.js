@@ -55,6 +55,7 @@ try {
 // ============================================================
 
 const LAYER_NAMES = [
+  'HASH_LOCK',
   'STRUCTURAL',
   'TYPE_COMPILE',
   'INTERFACE_CONTRACTS',
@@ -62,6 +63,7 @@ const LAYER_NAMES = [
   'TESTS',
   'BEHAVIORAL',
   'CONTRACT',
+  'SEMANTIC',
   'ARCHITECTURAL',
   'BROWSER',
 ];
@@ -130,6 +132,69 @@ const MAX_STRUCTURAL_ISSUES = 50; // cap per file scan
 // ============================================================
 // Layer 1 — STRUCTURAL
 // ============================================================
+
+/**
+ * Layer 0 — HASH LOCK: verifies test files and verification criteria
+ * have not been modified since the plan was locked before execution.
+ */
+function layerHashLock(opts) {
+  const start = Date.now();
+  const crypto = require('crypto');
+  const violations = [];
+  const lockPath = path.join(opts.cwd, '.forge', 'hash-locks.json');
+
+  if (!fs.existsSync(lockPath)) {
+    return { passed: true, skipped: true, violations: [], duration_ms: Date.now() - start };
+  }
+
+  let locks;
+  try { locks = JSON.parse(fs.readFileSync(lockPath, 'utf8')); } catch {
+    return { passed: true, skipped: true, violations: [], duration_ms: Date.now() - start };
+  }
+
+  // Derive task ID from planPath if available
+  const planPath = opts.planPath || '';
+  const taskId = planPath ? path.basename(planPath, path.extname(planPath)).replace(/[^a-zA-Z0-9_-]/g, '-').substring(0, 40) : null;
+
+  // Check all locked entries (for specific plan or all)
+  const entriesToCheck = taskId && locks[taskId] ? { [taskId]: locks[taskId] } : locks;
+
+  for (const [planId, entries] of Object.entries(entriesToCheck)) {
+    for (const entry of entries) {
+      if (entry.type === 'test_file') {
+        const fullPath = path.join(opts.cwd, entry.path);
+        if (!fs.existsSync(fullPath)) continue;
+        const currentHash = crypto.createHash('sha256').update(fs.readFileSync(fullPath, 'utf8')).digest('hex');
+        if (currentHash !== entry.sha256) {
+          violations.push({
+            type: 'test_file_tampered',
+            plan: planId,
+            path: entry.path,
+            expected: entry.sha256.slice(0, 12),
+            actual: currentHash.slice(0, 12),
+            message: `Test file "${entry.path}" was modified during execution. Tests define correctness — fix the implementation, not the tests.`,
+          });
+        }
+      } else if (entry.type === 'must_haves') {
+        // must_haves are in the plan frontmatter — check against plan file if available
+        if (planPath && fs.existsSync(planPath)) {
+          try {
+            const planContent = fs.readFileSync(planPath, 'utf8');
+            const fmMatch = planContent.match(/must_haves:\s*\n((?:\s+.+\n?)*)/);
+            if (fmMatch) {
+              const currentHash = crypto.createHash('sha256').update(fmMatch[0]).digest('hex');
+              if (currentHash !== entry.sha256) {
+                violations.push({ type: 'must_haves_tampered', plan: planId, message: 'Plan must_haves were modified during execution.' });
+              }
+            }
+          } catch {}
+        }
+      }
+    }
+  }
+
+  return { passed: violations.length === 0, skipped: false, violations, duration_ms: Date.now() - start };
+}
 
 /**
  * Fast syntax and hygiene checks. Reads files directly, no external tools needed.
@@ -1686,6 +1751,15 @@ async function verify(opts) {
   const layers = [];
   const totalStart = Date.now();
 
+  // Layer 0 — HASH LOCK (tamper detection, optional)
+  if (verifyConfig.layers && verifyConfig.layers.HASH_LOCK === true) {
+    const result = layerHashLock({ cwd, files, planPath: opts.planPath });
+    layers.push({ index: 0, name: 'HASH_LOCK', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+    if (failFast && !result.passed) {
+      return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
+    }
+  }
+
   // Layer 1 — STRUCTURAL
   if (maxLayer >= 1 && !(verifyConfig.layers && verifyConfig.layers.STRUCTURAL === false)) {
     const cached1 = cache ? cache.get('STRUCTURAL', files, cwd) : null;
@@ -1864,6 +1938,7 @@ async function main() {
 
 module.exports = {
   verify,
+  layerHashLock,
   layerStructural,
   layerTypeCompile,
   layerInterfaceContracts,
