@@ -1,7 +1,7 @@
 # Forge V2 — Future Improvement Reference
 
-Last updated: 2026-04-28
-Status: 4 of 18 items implemented. 14 remaining.
+Last updated: 2026-04-29
+Status: 4 of 25 items implemented. 21 remaining.
 
 ---
 
@@ -289,7 +289,149 @@ Configurable human gates at the phase level: "Plans for the auth module require 
 
 ---
 
+## Category 7: Architecture & Design
+
+### 7a. Architecture Phase Before Planning [P1]
+
+Every serious AI coding framework now includes an explicit architecture step between requirements and planning. Forge V2 currently jumps from requirements → planning, with the planner making architectural decisions implicitly. For enterprise projects, architecture should be a deliberate, reviewed, approved step.
+
+**Research sources:** Amazon Kiro (steering files + gated design phase), GitHub Spec-Kit (Specify → Plan → Tasks → Implement with validation gates), MetaGPT (dedicated Architect agent), Augment Intent (Coordinator drafts architecture before decomposition).
+
+**Implementation approach:**
+- New workflow: `/forge-architect` that produces `.planning/ARCHITECTURE.md`
+- Content: module boundaries, interface contracts, data model (ERD), technology decisions, dependency rules, security model
+- New agent: `forge-agents/catalog/architect.md` — a specialist that reads requirements + research and produces architectural design
+- Human approval gate: architecture must be approved before `/forge-plan-phase` can proceed
+- Architecture document consumed by planner (informing file structure, module ownership, patterns)
+- Integration: plan-checker Dimension 9 (Architectural Fitness) becomes meaningful — it validates plans against the approved architecture
+
+**Key tool: Archgate** — open-source CLI that turns Architecture Decision Records (ADRs) into executable TypeScript rules that block merges in CI. Each ADR gets a companion `.rules.ts` file; violations report exact file/line. Maps directly to Forge's verification engine.
+
+Research: `research/architecture-and-scale.md`
+
+---
+
+### 7b. Architecture Decision Records (ADRs) [P2]
+
+Formal, versioned decision records for every significant architectural choice. Each ADR captures context, decision, consequences, and (optionally) an executable enforcement rule.
+
+**Implementation approach:**
+- Template: `atos-forge/templates/adr.md` with MADR format (context, decision, consequences, status)
+- Storage: `.planning/adrs/NNNN-decision-title.md` (numbered sequentially)
+- Created by: architect agent during `/forge-architect` phase, or manually by user
+- Consumed by: planner (respects decisions), plan-checker (validates compliance), executor (locked decisions derived from ADRs)
+- Enforced by: optional `.rules.ts` companion files (Archgate pattern) wired into verification Layer 9
+
+Research: `research/architecture-and-scale.md`
+
+---
+
+### 7c. Architecture Fitness Functions [P2]
+
+Automated enforcement of architectural rules — layer boundaries, dependency directions, module isolation, naming conventions. These run as part of the verification engine.
+
+**Implementation approach:**
+- Integrate ArchUnitTS (TypeScript) or ts-arch for dependency/layer rule enforcement
+- Rules derived from ARCHITECTURE.md module boundaries and dependency rules
+- New verification sub-layer within Layer 9 (ARCHITECTURAL) that runs rule checks mechanically (not via LLM judgment)
+- Example rules: "no import from `features/*` into `core/*`", "all API routes must go through middleware", "database access only via repository pattern"
+- Config: `verification.architectural.rules_path` pointing to `.planning/architecture-rules/`
+
+Research: `research/architecture-and-scale.md`
+
+---
+
+## Category 8: Large Codebase Management
+
+### 8a. Code Entropy Metrics [P1]
+
+Track and measure software entropy — the increasing disorder/complexity over time. Without active countermeasures, complexity grows quadratically (Lehman's Second Law). AI-generated code accelerates this: 110,000+ surviving AI-introduced issues found in production repos by Feb 2026.
+
+**Metrics to track per phase:**
+- Cyclomatic complexity (average and max per module)
+- Coupling metrics (afferent/efferent coupling, instability index)
+- Cohesion metrics (LCOM — Lack of Cohesion of Methods)
+- File size distribution (average LOC, files >500 LOC count)
+- Dependency depth (longest import chain)
+- Duplication percentage (near-duplicate code blocks)
+
+**Implementation approach:**
+- New module: `forge-verify/entropy.js` — computes entropy metrics from AST (reuse tree-sitter from forge-graph)
+- Per-phase snapshot stored in `.forge/entropy-snapshots/phase-{N}.json`
+- Trend comparison: if entropy increases >10% phase-over-phase, warn. >25% = block.
+- Integration: sub-metric of drift report (specification drift + entropy drift)
+- CLI: `forge-tools verify entropy [--json] [--compare-baseline]`
+
+**Key reference:** Adam Wasserman, "Software Entropy: A Practical Approach" — framework for assigning entropy a concrete numerical value. Also: March 2026 arXiv paper providing formal statistical mechanics definition computable via mutation analysis.
+
+Research: `research/architecture-and-scale.md`
+
+---
+
+### 8b. Enhanced Code Graph with Semantic Search [P2]
+
+At 400K+ LOC, the structural code graph (AST-based imports/exports) isn't enough. Agents need semantic search — "find the code that handles user authentication" not just "find imports of auth.ts."
+
+**Implementation approach:**
+- Add vector embeddings alongside the existing SQLite graph (GraphRAG pattern)
+- Embed function/class descriptions using a small embedding model (local, no API call)
+- Store in `.forge/graph-embeddings.db` (separate from structural graph.db)
+- New query: `forge-graph/query.js semanticSearch(query, topK)` — returns relevant code snippets by semantic similarity
+- Integration: factory's `composeContextPackage()` uses semantic search to find relevant code beyond direct import chains
+- Fallback: if embeddings not available, use existing structural graph only
+
+**Research validation:**
+- Knowledge graphs reduce token usage by up to 90% vs loading raw files (GitNexus, Graphify research)
+- Meta's approach: pre-compute "tribal knowledge" docs about code, cutting agent tool calls by 40%
+- Stanford/Berkeley: model correctness drops at ~32K tokens regardless of claimed window — confirming targeted context loading is essential
+
+Research: `research/architecture-and-scale.md`
+
+---
+
+### 8c. Method-Level Impact Analysis [P2]
+
+Current impact analysis is file-level (`forge-graph/query.js impact`). At 400K LOC, a file may have 50 exports — changing one shouldn't flag all 50 consumers. Need method-level precision.
+
+**Implementation approach:**
+- Enhance `forge-graph/builder.js` to track symbol-level dependencies (which function calls which function, not just which file imports which file)
+- New query: `graph impact-symbol <file> <symbol>` — blast radius for a specific function/class
+- Pre-patch simulation: "if I change this function signature, which callers break?"
+- Integration: factory's `analyzeTask()` uses symbol-level impact for more precise context loading
+- Integration: plan-checker uses symbol-level impact to detect plans that modify high-consumer functions
+
+Research: `research/architecture-and-scale.md`
+
+---
+
+### 8d. Shared Language / Domain Glossary [P1]
+
+A project-wide glossary of domain terms that gets loaded into every agent's context. Eliminates ambiguity, improves code naming consistency, and makes the codebase more AI-navigable. Inspired by the mattpocock/skills `/grill-with-docs` pattern (37K stars).
+
+**Implementation approach:**
+- New file: `.forge/glossary.md` (or CONTEXT.md following the Pocock convention)
+- Format: term → definition, one per line. Example: "Order: A confirmed purchase with payment. Not to be confused with Cart (unpurchased items)."
+- Created by: `/forge-discuss-phase` or `/forge-architect` during early project setup
+- Loaded by: factory's `composeSystemPrompt()` — injected into every agent's session context
+- Enforced by: agents use glossary terms for all naming (variables, functions, files, API endpoints)
+- Updated by: when new domain concepts emerge during execution, the executor logs them as "suggested glossary additions" in SUMMARY.md
+
+**Key insight from research:** Pocock calls this "the single coolest technique" — a shared language glossary reduces token consumption (agents don't need lengthy explanations of domain concepts), improves naming consistency across generated code, and makes the codebase more navigable for both humans and AI.
+
+**Related pattern:** The `/grill-me` → `/grill-with-docs` → `/to-prd` pipeline (mattpocock/skills) maps to Forge's discuss-phase → enhance-requirements → plan-phase. The grilling approach — relentless one-question-at-a-time interviewing with recommended answers — could strengthen Forge's discuss-phase workflow.
+
+Research: `research/grill-me-skills.md`
+
+---
+
 ## Priority Summary
+
+| Priority | Items | Status |
+|----------|-------|--------|
+| P1 | 1a (Cost tracking), 4a (MCP server), **7a (Architecture phase)**, **8a (Code entropy)**, **8d (Shared language)** | Not started |
+| P2 | 1b (Model routing), 3a (Conflict detection), 3c (AC compiler), 6a (Audit trail), **7b (ADRs)**, **7c (Fitness functions)**, **8b (Semantic search)**, **8c (Method-level impact)** | Not started |
+| P3 | 2c (Tech debt), 4b (Dashboard), 4c (Notifications), 5a (Cross-project), 5b (Patterns), 5c (Anti-patterns), 6b (Multi-team), 6c (Approvals) | Not started |
+| Done | 1c (Regression), 2a (Mutation), 2b (Coverage), 3b (Req impact) | ✅ Implemented |
 
 | Priority | Items | Status |
 |----------|-------|--------|
