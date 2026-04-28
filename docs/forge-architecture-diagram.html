@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forge — Architecture Diagram</title>
+<title>Forge V2 — Architecture Diagram</title>
 <style>
 :root {
   --forge-primary: #003366;
@@ -35,6 +35,19 @@
   --c-plan-bg: #e8f2fc;
   --c-init: #003366;
   --c-init-bg: #e8f2fc;
+  /* V2 new colors */
+  --c-test: #2e7d32;
+  --c-test-bg: #e8f5e9;
+  --c-drift: #e65100;
+  --c-drift-bg: #fff3e0;
+  --c-ci: #1565c0;
+  --c-ci-bg: #e3f2fd;
+  --c-constitution: #b71c1c;
+  --c-constitution-bg: #fce4ec;
+  --c-hashlock: #7b1fa2;
+  --c-hashlock-bg: #f3e5f5;
+  --c-req: #00838f;
+  --c-req-bg: #e0f7fa;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -58,6 +71,19 @@ body {
 }
 .header h1 { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
 .header .subtitle { font-size: 12px; color: rgba(255,255,255,0.5); }
+.header .version { font-size: 10px; color: rgba(255,255,255,0.35); margin-left: 8px; }
+
+/* Nav */
+.nav {
+  display: flex; gap: 2px; padding: 8px 32px; background: var(--forge-navy);
+  border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap;
+}
+.nav a {
+  font-size: 10px; color: rgba(255,255,255,0.5); text-decoration: none;
+  padding: 4px 10px; border-radius: 4px; font-weight: 600;
+  transition: all 0.15s; white-space: nowrap;
+}
+.nav a:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
 /* Zoom controls */
 .zoom-controls {
@@ -85,7 +111,7 @@ body {
 
 /* Section */
 .section {
-  margin-bottom: 40px;
+  margin-bottom: 44px;
 }
 .section-title {
   font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
@@ -100,6 +126,7 @@ body {
   justify-content: center;
 }
 .flow-row.compact { gap: 6px; }
+.flow-row.left { justify-content: flex-start; }
 
 /* Process box */
 .box {
@@ -155,6 +182,18 @@ body {
 .box.config .title { color: var(--c-config); }
 .box.system { border-left: 4px solid var(--c-system); }
 .box.system .title { color: var(--c-system); }
+.box.req { border-left: 4px solid var(--c-req); }
+.box.req .title { color: var(--c-req); }
+.box.test-first { border-left: 4px solid var(--c-test); }
+.box.test-first .title { color: var(--c-test); }
+.box.drift { border-left: 4px solid var(--c-drift); }
+.box.drift .title { color: var(--c-drift); }
+.box.ci { border-left: 4px solid var(--c-ci); }
+.box.ci .title { color: var(--c-ci); }
+.box.constitution { border-left: 4px solid var(--c-constitution); }
+.box.constitution .title { color: var(--c-constitution); }
+.box.hashlock { border-left: 4px solid var(--c-hashlock); }
+.box.hashlock .title { color: var(--c-hashlock); }
 
 /* Decision diamond */
 .diamond {
@@ -197,12 +236,8 @@ body {
   border-color: var(--forge-secondary);
   box-shadow: 0 2px 12px rgba(41,144,234,0.12);
 }
-.db .label {
-  font-size: 11px; font-weight: 600; color: var(--text);
-}
-.db .sublabel {
-  font-size: 9px; color: var(--text-dim); margin-top: 2px;
-}
+.db .label { font-size: 11px; font-weight: 600; color: var(--text); }
+.db .sublabel { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
 .db.graph-db .cylinder { border-color: var(--c-graph); background: var(--c-graph-bg); }
 .db.system-db .cylinder { border-color: var(--c-system); background: var(--c-system-bg); }
 .db.session-db .cylinder { border-color: var(--c-session); background: var(--c-session-bg); }
@@ -222,7 +257,7 @@ body {
   white-space: nowrap;
 }
 
-/* Wave loop */
+/* Dashed loop containers */
 .wave-loop {
   border: 2px dashed var(--c-containers);
   border-radius: 14px;
@@ -236,8 +271,6 @@ body {
   font-size: 11px; font-weight: 700; color: var(--c-containers);
   text-transform: uppercase; letter-spacing: 0.5px;
 }
-
-/* Fix loop */
 .fix-loop {
   border: 2px dashed var(--c-verify);
   border-radius: 14px;
@@ -251,18 +284,45 @@ body {
   font-size: 11px; font-weight: 700; color: var(--c-verify);
   text-transform: uppercase; letter-spacing: 0.5px;
 }
+.plan-loop {
+  border: 2px dashed var(--c-plan);
+  border-radius: 14px;
+  padding: 16px;
+  position: relative;
+  background: rgba(41,144,234,0.02);
+}
+.plan-loop .loop-label {
+  position: absolute; top: -10px; left: 20px;
+  background: var(--bg); padding: 0 8px;
+  font-size: 11px; font-weight: 700; color: var(--c-plan);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.test-loop {
+  border: 2px dashed var(--c-test);
+  border-radius: 14px;
+  padding: 16px;
+  position: relative;
+  background: rgba(46,125,50,0.02);
+}
+.test-loop .loop-label {
+  position: absolute; top: -10px; left: 20px;
+  background: var(--bg); padding: 0 8px;
+  font-size: 11px; font-weight: 700; color: var(--c-test);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
 
-/* Agent factory detail */
+/* Agent factory steps */
 .factory-steps {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
   margin-top: 8px;
 }
 .factory-step {
   text-align: center; padding: 6px 4px;
   background: var(--c-agents-bg); border-radius: 6px;
   font-size: 9px; font-weight: 600; color: var(--c-agents);
-  line-height: 1.3;
+  line-height: 1.3; cursor: pointer; transition: all 0.15s;
 }
+.factory-step:hover { box-shadow: 0 2px 8px rgba(230,81,0,0.15); transform: translateY(-1px); }
 .factory-step .num {
   display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px;
 }
@@ -277,10 +337,41 @@ body {
   font-size: 9px; font-weight: 600;
   background: var(--c-verify-bg); color: var(--c-verify);
 }
+.verify-layer.opt {
+  background: transparent; border: 1px dashed var(--c-verify); opacity: 0.7;
+}
+.verify-layer.hashlock { background: var(--c-hashlock-bg); color: var(--c-hashlock); }
+.verify-layer.semantic { background: #fff3e0; color: #e65100; border: 1px dashed #e65100; opacity: 0.7; }
 
-/* Side panel (cross-cutting) */
+/* Agent catalog grid */
+.catalog-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;
+  margin-top: 8px;
+}
+.catalog-agent {
+  text-align: center; padding: 4px 3px;
+  background: var(--c-agents-bg); border-radius: 4px;
+  font-size: 8px; font-weight: 600; color: var(--c-agents);
+  line-height: 1.2;
+}
+.catalog-agent.priority-high { border-bottom: 2px solid var(--c-agents); }
+
+/* Dimension grid */
+.dim-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  margin-top: 6px;
+}
+.dim-item {
+  padding: 3px 5px; border-radius: 4px;
+  font-size: 8px; font-weight: 600;
+  background: var(--c-plan-bg); color: var(--c-plan);
+  text-align: center; line-height: 1.3;
+}
+.dim-item.blocker { background: #fce4ec; color: #c62828; }
+
+/* Cross-cutting cards */
 .cross-cutting {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
   margin-top: 20px;
 }
 .cc-card {
@@ -307,7 +398,17 @@ body {
   color: var(--text-dim); line-height: 1.6;
 }
 
-/* Detail tooltip */
+/* Drift bar */
+.drift-bar {
+  display: flex; height: 18px; border-radius: 4px; overflow: hidden;
+  margin-top: 6px; font-size: 8px; font-weight: 700; line-height: 18px;
+  text-align: center; color: #fff;
+}
+.drift-green { background: #2e7d32; flex: 3; }
+.drift-yellow { background: #f9a825; flex: 2; color: #333; }
+.drift-red { background: #c62828; flex: 1; }
+
+/* Detail overlay */
 .detail-overlay {
   display: none; position: fixed; inset: 0; z-index: 200;
   background: rgba(0,31,61,0.4); backdrop-filter: blur(2px);
@@ -316,18 +417,12 @@ body {
 .detail-card {
   background: var(--bg-card); border-radius: 12px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.15);
-  max-width: 520px; width: 90%; max-height: 80vh; overflow-y: auto;
+  max-width: 560px; width: 90%; max-height: 80vh; overflow-y: auto;
   padding: 24px;
 }
-.detail-card h2 {
-  font-size: 16px; margin-bottom: 4px;
-}
-.detail-card .detail-sub {
-  font-size: 12px; color: var(--text-dim); margin-bottom: 16px;
-}
-.detail-card .detail-section {
-  margin-bottom: 14px;
-}
+.detail-card h2 { font-size: 16px; margin-bottom: 4px; }
+.detail-card .detail-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+.detail-card .detail-section { margin-bottom: 14px; }
 .detail-card .detail-section h4 {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
   color: var(--text-dim); margin-bottom: 4px; font-weight: 600;
@@ -336,9 +431,7 @@ body {
 .detail-card .detail-section li {
   font-size: 12px; line-height: 1.5; color: var(--text);
 }
-.detail-card .detail-section ul {
-  list-style: none; padding: 0;
-}
+.detail-card .detail-section ul { list-style: none; padding: 0; }
 .detail-card .detail-section li::before {
   content: '\2022'; color: var(--forge-secondary); margin-right: 6px;
 }
@@ -355,9 +448,14 @@ body {
 .detail-close:hover { background: var(--forge-sky); }
 
 /* Responsive */
+@media (max-width: 1100px) {
+  .cross-cutting { grid-template-columns: repeat(3, 1fr); }
+  .catalog-grid { grid-template-columns: repeat(4, 1fr); }
+}
 @media (max-width: 900px) {
   .cross-cutting { grid-template-columns: repeat(2, 1fr); }
-  .factory-steps { grid-template-columns: repeat(4, 1fr); }
+  .factory-steps { grid-template-columns: repeat(3, 1fr); }
+  .dim-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Scrollbar */
@@ -369,10 +467,22 @@ body {
 
 <div class="header">
   <div>
-    <h1>Forge</h1>
-    <div class="subtitle">System Architecture &amp; Execution Pipeline</div>
+    <h1>Forge V2<span class="version">Complete Pipeline</span></h1>
+    <div class="subtitle">End-to-End Architecture &mdash; 9 Sections, 11 Verification Layers, 18 Catalog Agents</div>
   </div>
 </div>
+
+<nav class="nav">
+  <a href="#s0">0 Kickoff</a>
+  <a href="#s1">1 Requirements</a>
+  <a href="#s2">2 Planning</a>
+  <a href="#s3">3 Test-First</a>
+  <a href="#s4">4 Agent Factory</a>
+  <a href="#s5">5 Verification</a>
+  <a href="#s6">6 Drift</a>
+  <a href="#s7">7 CI/CD</a>
+  <a href="#s8">8 Cross-Cutting</a>
+</nav>
 
 <div class="zoom-controls">
   <button class="zoom-btn" onclick="zoomIn()">+</button>
@@ -383,10 +493,10 @@ body {
 <div class="canvas-wrap" id="canvas-wrap">
 <div class="canvas">
 
-<!-- ══════════════════════════════════════════════════ -->
-<!-- SECTION 0: PROJECT KICKOFF — GREENFIELD vs BROWNFIELD -->
-<!-- ══════════════════════════════════════════════════ -->
-<div class="section">
+<!-- ================================================================ -->
+<!-- SECTION 0: PROJECT KICKOFF -->
+<!-- ================================================================ -->
+<div class="section" id="s0">
   <div class="section-title"><span>0 &mdash; Project Kickoff &mdash; Greenfield vs Brownfield</span><span class="line"></span></div>
 
   <!-- Detection -->
@@ -405,18 +515,18 @@ body {
   <!-- Two paths -->
   <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:0;margin-bottom:20px">
 
-    <!-- Greenfield path -->
+    <!-- Greenfield -->
     <div style="border:2px solid var(--c-plan);border-radius:14px;padding:16px;background:rgba(41,144,234,0.02);position:relative">
       <div style="position:absolute;top:-10px;left:20px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;color:var(--c-plan);text-transform:uppercase;letter-spacing:0.5px">Greenfield &mdash; No Existing Code</div>
       <div class="flow-row" style="margin-top:8px">
         <div class="box plan" data-detail="greenfield-project">
           <div class="title">PROJECT.md</div>
-          <div class="desc">All requirements Active<br>nothing validated yet<br>"ship to validate"</div>
+          <div class="desc">All requirements Active<br>nothing validated yet</div>
         </div>
         <div class="arrow">&rarr;</div>
         <div class="box plan" data-detail="greenfield-research">
           <div class="title">Research Agents</div>
-          <div class="desc">"Build from scratch"<br>research full stack<br>for this domain</div>
+          <div class="desc">Full stack research<br>for this domain</div>
         </div>
         <div class="arrow">&rarr;</div>
         <div class="box plan" data-detail="greenfield-roadmap">
@@ -425,14 +535,14 @@ body {
         </div>
       </div>
       <div style="font-size:9px;color:var(--text-dim);margin-top:10px;padding-left:4px">
-        /forge-init runs but indexes 0 files &mdash; .forge/ infra created, graph empty. Post-commit hook auto-updates as code is added.
+        /forge-init runs but indexes 0 files &mdash; .forge/ infra created, graph empty. Post-commit hook auto-updates.
       </div>
     </div>
 
     <!-- Divider -->
     <div style="display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-dim)">OR</div>
 
-    <!-- Brownfield path -->
+    <!-- Brownfield -->
     <div style="border:2px solid var(--c-agents);border-radius:14px;padding:16px;background:rgba(230,81,0,0.02);position:relative">
       <div style="position:absolute;top:-10px;left:20px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;color:var(--c-agents);text-transform:uppercase;letter-spacing:0.5px">Brownfield &mdash; Existing Codebase</div>
       <div class="flow-row" style="margin-top:8px">
@@ -448,28 +558,25 @@ body {
         <div class="arrow">&rarr;</div>
         <div class="box plan" data-detail="brownfield-project">
           <div class="title">PROJECT.md</div>
-          <div class="desc">Existing caps = Validated<br>new work = Active<br>inferred from codebase map</div>
+          <div class="desc">Existing caps = Validated<br>new work = Active</div>
         </div>
       </div>
       <div class="arrow down">&darr;</div>
       <div class="flow-row">
         <div class="box plan" data-detail="brownfield-research">
           <div class="title">Research Agents</div>
-          <div class="desc">"Add to existing system"<br>don't re-research<br>what already exists</div>
+          <div class="desc">Skip existing patterns<br>research only new work</div>
         </div>
         <div class="arrow">&rarr;</div>
         <div class="box plan" data-detail="brownfield-roadmap">
           <div class="title">ROADMAP.md</div>
-          <div class="desc">Phases for new features<br>existing code untouched<br>unless refactored</div>
+          <div class="desc">Phases for new features<br>existing code untouched</div>
         </div>
         <div class="arrow">&rarr;</div>
         <div class="box graph" data-detail="brownfield-init">
           <div class="title">/forge-init</div>
           <div class="desc">Full index of existing code<br>modules, symbols, deps<br>capabilities, interfaces</div>
         </div>
-      </div>
-      <div style="font-size:9px;color:var(--text-dim);margin-top:10px;padding-left:4px">
-        /forge-init indexes all files immediately. Graph is fully populated. Agents use graph context to understand where to make changes.
       </div>
     </div>
   </div>
@@ -478,521 +585,546 @@ body {
   <div class="flow-row">
     <div style="flex:1"></div>
     <div class="arrow down" style="width:auto">&darr;</div>
-    <div class="box init" data-detail="converge-point" style="max-width:300px;border-left-color:var(--forge-secondary)">
+    <div class="box init" data-detail="converge-point" style="max-width:320px;border-left-color:var(--forge-secondary)">
       <div class="title" style="color:var(--forge-secondary)">Both paths converge</div>
-      <div class="desc">ROADMAP.md + .forge/ infra ready<br>Milestone lifecycle begins (Section 2)<br>/forge-init runs on every repo regardless</div>
+      <div class="desc">ROADMAP.md + .forge/ infra ready<br>.forge/ = graph.db, config.json, constitution.md, session/<br>Milestone lifecycle begins</div>
     </div>
     <div class="arrow down" style="width:auto">&darr;</div>
     <div style="flex:1"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════ -->
-<!-- SECTION 1: INITIALIZATION -->
-<!-- ══════════════════════════════════════════════════ -->
-<div class="section">
-  <div class="section-title"><span>1 &mdash; Initialization</span><span class="line"></span></div>
+<!-- ================================================================ -->
+<!-- SECTION 1: REQUIREMENTS PIPELINE -->
+<!-- ================================================================ -->
+<div class="section" id="s1">
+  <div class="section-title"><span>1 &mdash; Requirements Pipeline</span><span class="line"></span></div>
 
-  <!-- Single repo init -->
-  <div style="margin-bottom: 20px">
-    <div style="font-size:11px;font-weight:600;color:var(--c-init);margin-bottom:10px;padding-left:4px">Single Repo &mdash; /forge-init</div>
-    <div class="flow-row">
-      <div class="box init" data-detail="init-entry">
-        <div class="title">/forge-init</div>
-        <div class="desc">CLI entry point<br>forge-tools.cjs graph init</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box graph" data-detail="tree-sitter">
-        <div class="title">Parse Files</div>
-        <div class="desc">tree-sitter AST parsing<br>JS/TS/Python/Java/Go</div>
-        <div class="file-tag">builder.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box graph" data-detail="module-detect">
-        <div class="title">Detect Modules</div>
-        <div class="desc">Directory boundaries<br>package.json scopes</div>
-        <div class="file-tag">module-detector.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box graph" data-detail="cap-detect">
-        <div class="title">Detect Capabilities</div>
-        <div class="desc">Pattern matching<br>confidence scoring</div>
-        <div class="file-tag">capability-detector.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="db graph-db" data-detail="graph-db">
-        <div class="cylinder"><div class="label">graph.db</div></div>
-        <div class="sublabel">files, symbols, deps, modules</div>
-      </div>
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="box req" data-detail="req-input">
+      <div class="title">REQUIREMENTS.md</div>
+      <div class="desc">From /forge-new-project<br>or external tool<br>REQ-ID format</div>
+      <div class="file-tag">.planning/REQUIREMENTS.md</div>
     </div>
-    <div class="arrow down">&darr;</div>
-    <div class="flow-row">
-      <div class="box system" data-detail="iface-detect">
-        <div class="title">Detect Interfaces</div>
-        <div class="desc">API routes, events, DB models<br>env vars, HTTP clients</div>
-        <div class="file-tag">forge-system/detect.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box system" data-detail="iface-yaml">
-        <div class="title">interfaces.yaml</div>
-        <div class="desc">Declared exports<br>protocols &amp; metadata</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box config" data-detail="config-create">
-        <div class="title">Config &amp; Setup</div>
-        <div class="desc">.forge/config.json<br>session, snapshots, hooks</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box graph" data-detail="dashboard-gen">
-        <div class="title">Dashboard</div>
-        <div class="desc">HTML visualization<br>force graph + tables</div>
-        <div class="file-tag">dashboard-generator.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box graph" data-detail="git-hooks">
-        <div class="title">Git Hooks</div>
-        <div class="desc">post-commit updater<br>incremental graph updates</div>
-        <div class="file-tag">install-hooks.js</div>
-      </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box req" data-detail="req-validate">
+      <div class="title">Validate</div>
+      <div class="desc">34 weasel words detected<br>6 quality criteria<br>word-boundary matching</div>
+      <div class="file-tag">forge-tools requirements validate</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box req" data-detail="req-enhance">
+      <div class="title">/forge-enhance-requirements</div>
+      <div class="desc">6 dimensions with<br>source provenance</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box req" data-detail="req-deps">
+      <div class="title">Dependency Graph</div>
+      <div class="desc">depends_on links<br>prerequisite ordering</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box req" data-detail="req-output">
+      <div class="title">Enhanced Output</div>
+      <div class="desc">REQ-IDs, traceability<br>table, dependencies</div>
     </div>
   </div>
 
-  <!-- Multi repo init -->
-  <div>
-    <div style="font-size:11px;font-weight:600;color:var(--c-system);margin-bottom:10px;padding-left:4px">Multi-Repo &mdash; /forge-system-init</div>
-    <div class="flow-row">
-      <div class="box system" data-detail="sys-init">
-        <div class="title">system-init</div>
-        <div class="desc">Batch orchestrator<br>--path / --repos / --github-org</div>
-        <div class="file-tag">system-init.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box system" data-detail="discovery">
-        <div class="title">Discovery</div>
-        <div class="desc">Scan directory (2-level)<br>registry file, or GitHub API</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box system" data-detail="parallel-init">
-        <div class="title">Parallel Init</div>
-        <div class="desc">N workers run /forge-init<br>per repo concurrently</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box system" data-detail="assembly">
-        <div class="title">Assembly</div>
-        <div class="desc">Merge interfaces.yaml<br>build cross-repo edges</div>
-        <div class="file-tag">builder.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="db system-db" data-detail="system-graph-db">
-        <div class="cylinder"><div class="label">system-graph.db</div></div>
-        <div class="sublabel">services, interfaces, deps</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box system" data-detail="sys-validate">
-        <div class="title">Validate</div>
-        <div class="desc">Structural + cross-repo<br>contract validation</div>
-        <div class="file-tag">validate.js</div>
-      </div>
+  <!-- Enhancement dimensions -->
+  <div style="margin:0 auto;max-width:800px">
+    <div style="font-size:10px;font-weight:600;color:var(--c-req);margin-bottom:6px;padding-left:4px">Enhancement Dimensions (with source provenance)</div>
+    <div class="dim-grid" style="grid-template-columns:repeat(6,1fr)">
+      <div class="dim-item" style="background:var(--c-req-bg);color:var(--c-req)">Industry Standards</div>
+      <div class="dim-item" style="background:var(--c-req-bg);color:var(--c-req)">Edge Cases</div>
+      <div class="dim-item" style="background:var(--c-req-bg);color:var(--c-req)">Security</div>
+      <div class="dim-item" style="background:var(--c-req-bg);color:var(--c-req)">User Journey</div>
+      <div class="dim-item" style="background:var(--c-req-bg);color:var(--c-req)">Integration</div>
+      <div class="dim-item" style="background:var(--c-req-bg);color:var(--c-req)">Data Lifecycle</div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════ -->
-<!-- SECTION 2: MILESTONE & PLANNING -->
-<!-- ══════════════════════════════════════════════════ -->
-<div class="section">
-  <div class="section-title"><span>2 &mdash; Milestone Lifecycle &amp; Planning</span><span class="line"></span></div>
+<!-- ================================================================ -->
+<!-- SECTION 2: PLANNING & CHECKING -->
+<!-- ================================================================ -->
+<div class="section" id="s2">
+  <div class="section-title"><span>2 &mdash; Planning &amp; Checking</span><span class="line"></span></div>
 
-  <!-- Milestone lifecycle -->
-  <div class="wave-loop" style="margin-bottom:24px;border-color:var(--c-plan);background:rgba(41,144,234,0.02)">
-    <div class="loop-label" style="color:var(--c-plan)">Milestone Cycle &mdash; repeat per milestone</div>
-    <div class="flow-row" style="margin-bottom:16px">
-      <div class="box plan" data-detail="new-milestone">
-        <div class="title">/forge-new-milestone</div>
-        <div class="desc">Start milestone cycle<br>create PROJECT.md<br>gather requirements</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box plan" data-detail="roadmap">
-        <div class="title">ROADMAP.md</div>
-        <div class="desc">Numbered phases<br>progress tracking table</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box plan" data-detail="phase-mgmt">
-        <div class="title">Phase Management</div>
-        <div class="desc">/forge-add-phase<br>/forge-insert-phase (3.1)<br>/forge-remove-phase</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box plan" data-detail="plan-execute-loop" style="border-left-color:var(--c-agents)">
-        <div class="title">Plan &amp; Execute</div>
-        <div class="desc">Per phase: plan &rarr; execute<br>(sections 2b &amp; 3 below)</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box verify" data-detail="audit-milestone">
-        <div class="title">/forge-audit-milestone</div>
-        <div class="desc">Audit completion<br>identify gaps</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="diamond" data-detail="gaps-decision">
-        <div class="shape"></div>
-        <div class="label">Gaps<br>found?</div>
-      </div>
-      <div class="arrow">
-        <div class="arrow-label">yes</div>
-      </div>
-      <div class="box plan" data-detail="plan-gaps">
-        <div class="title">/forge-plan-gaps</div>
-        <div class="desc">Create phases to<br>close audit gaps</div>
-      </div>
+  <!-- Planning flow -->
+  <div class="flow-row" style="margin-bottom:20px">
+    <div class="box plan" data-detail="research-phase">
+      <div class="title">/forge-research-phase</div>
+      <div class="desc">Tech stack, patterns<br>pitfalls &rarr; RESEARCH.md</div>
     </div>
-    <div class="flow-row">
-      <div style="flex:1"></div>
-      <div class="box session" data-detail="complete-milestone">
-        <div class="title">/forge-complete-milestone</div>
-        <div class="desc">Archive milestone artifacts<br>prepare for next version</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box plan" data-detail="next-milestone">
-        <div class="title">Next Milestone</div>
-        <div class="desc">Fresh ROADMAP.md<br>new planning directory<br>clean slate</div>
-      </div>
-      <div style="flex:1"></div>
-    </div>
-  </div>
-
-  <!-- Phase planning -->
-  <div style="font-size:11px;font-weight:600;color:var(--c-plan);margin-bottom:10px;padding-left:4px">Per Phase &mdash; Planning</div>
-  <div class="flow-row">
+    <div class="arrow">&rarr;</div>
     <div class="box plan" data-detail="discuss-phase">
       <div class="title">/forge-discuss-phase</div>
-      <div class="desc">Adaptive questioning<br>gather phase context</div>
+      <div class="desc">User decisions, locked<br>constraints &rarr; CONTEXT.md</div>
     </div>
     <div class="arrow">&rarr;</div>
     <div class="box plan" data-detail="plan-phase">
       <div class="title">/forge-plan-phase</div>
-      <div class="desc">Phase planning workflow<br>context + research + plan</div>
+      <div class="desc">100% coverage protocol<br>every requirement mapped</div>
     </div>
     <div class="arrow">&rarr;</div>
-    <div class="box plan" data-detail="context-load">
-      <div class="title">Context Loading</div>
-      <div class="desc">CONTEXT.md, graph queries<br>capabilities, codebase map</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box agents" data-detail="impact-analyzer" style="border-left:4px solid #e67e22">
-      <div class="title" style="color:#e67e22">Impact Analyzer</div>
-      <div class="desc">Keywords &rarr; system-graph.db<br>SINGLE_REPO vs MULTI_REPO</div>
-      <div class="file-tag">forge-analyze/analyzer.js</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="diamond" data-detail="research-decision">
-      <div class="shape"></div>
-      <div class="label">Research<br>needed?</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box plan" data-detail="researcher">
-      <div class="title">Research Agent</div>
-      <div class="desc">Task subagent explores<br>codebase &rarr; RESEARCH.md</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box plan" data-detail="planner">
-      <div class="title">Planner Agent</div>
-      <div class="desc">Creates PLAN.md files<br>with YAML frontmatter</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box verify" data-detail="plan-checker">
-      <div class="title">Plan Checker</div>
-      <div class="desc">8 dimensions, max 3 loops<br>incl. Arch Fitness (Dim 8)</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box verify" data-detail="arch-review-gate" style="border-left:4px solid #8e44ad">
-      <div class="title" style="color:#8e44ad">Architecture Review Gate</div>
-      <div class="desc">Check plans against<br>ARCHITECTURE.md &amp; CONVENTIONS.md</div>
-      <div class="file-tag">agents/forge-plan-checker.md (Dim 8)</div>
-      <div class="verify-layers">
-        <span class="verify-layer" style="background:#8e44ad;color:#fff">Layer boundaries</span>
-        <span class="verify-layer" style="background:#8e44ad;color:#fff">Naming conventions</span>
-        <span class="verify-layer" style="background:#8e44ad;color:#fff">Endpoint patterns</span>
-        <span class="verify-layer" style="background:#8e44ad;color:#fff">Cross-cutting</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════ -->
-<!-- SECTION 3: EXECUTION PIPELINE -->
-<!-- ══════════════════════════════════════════════════ -->
-<div class="section">
-  <div class="section-title"><span>3 &mdash; Execution Pipeline</span><span class="line"></span></div>
-
-  <!-- Step 1: Load & Assess -->
-  <div class="flow-row" style="margin-bottom:20px">
-    <div class="box plan" data-detail="exec-init">
-      <div class="title">/forge-execute-phase</div>
-      <div class="desc">Load plans, detect mode<br>check Docker + resources</div>
-      <div class="file-tag">execute-phase.md</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box plan" data-detail="load-plans">
-      <div class="title">Load Plans</div>
-      <div class="desc">Filter incomplete plans<br>skip has_summary=true</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="diamond" data-detail="mode-decision">
-      <div class="shape"></div>
-      <div class="label">Docker<br>available?</div>
-    </div>
-    <div class="arrow">
-      <div class="arrow-label">yes/no</div>
-    </div>
-    <div class="box containers" data-detail="mode-select">
-      <div class="title">Mode Selection</div>
-      <div class="desc">Container (Docker)<br>or Worktree (Claude CLI)</div>
+    <div class="box plan" data-detail="plan-output">
+      <div class="title">PLAN.md Output</div>
+      <div class="desc">must_haves: truths,<br>artifacts, key_links<br>Task blocks with verify</div>
+      <div class="file-tag">.planning/phases/N/PLAN-*.md</div>
     </div>
   </div>
 
-  <!-- Step 2: Assess & Split -->
-  <div class="flow-row" style="margin-bottom:20px">
-    <div class="box agents" data-detail="assessor">
-      <div class="title">Assessor</div>
-      <div class="desc">Token estimation<br>context budget check</div>
-      <div class="file-tag">forge-assess/assessor.js</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="diamond" data-detail="split-decision">
-      <div class="shape"></div>
-      <div class="label">Fits<br>context?</div>
-    </div>
-    <div class="arrow">
-      <div class="arrow-label">overflow</div>
-    </div>
-    <div class="box agents" data-detail="splitter">
-      <div class="title">Splitter</div>
-      <div class="desc">module &rarr; concern &rarr; file<br>cascading split strategies</div>
-      <div class="file-tag">forge-assess/splitter.js</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box plan" data-detail="sub-plans">
-      <div class="title">Sub-Plans</div>
-      <div class="desc">Context-fitting chunks<br>with internal depends_on</div>
-    </div>
-  </div>
-
-  <!-- Step 3: Agent Factory -->
-  <div style="margin-bottom:20px">
-    <div class="flow-row" style="margin-bottom:8px">
-      <div class="box agents" data-detail="factory" style="max-width:100%;min-width:100%;text-align:left;padding:16px 20px">
-        <div class="title" style="font-size:14px;margin-bottom:8px">Agent Factory &mdash; 7-Step Pipeline</div>
-        <div class="desc" style="margin-bottom:10px">Per plan/sub-plan: reads the code graph, determines agent specialization, composes full execution context</div>
-        <div class="file-tag">forge-agents/factory.js</div>
-        <div class="factory-steps">
-          <div class="factory-step" data-detail="factory-1"><span class="num">1</span>Analyze Task<br><span style="font-weight:400">graph context, risk, cycles, capabilities</span></div>
-          <div class="factory-step" data-detail="factory-2"><span class="num">2</span>Archetype<br><span style="font-weight:400">specialist, integrator, careful, general</span></div>
-          <div class="factory-step" data-detail="factory-3"><span class="num">3</span>System Prompt<br><span style="font-weight:400">base + archetype + domain + cross-repo</span></div>
-          <div class="factory-step" data-detail="factory-4"><span class="num">4</span>Context Pkg<br><span style="font-weight:400">always_load + task + reference (70% budget)</span></div>
-          <div class="factory-step" data-detail="factory-5"><span class="num">5</span>Verification<br><span style="font-weight:400">capability-mapped checks</span></div>
-          <div class="factory-step" data-detail="factory-6"><span class="num">6</span>Container Spec<br><span style="font-weight:400">image, memory, CPU, timeout</span></div>
-          <div class="factory-step" data-detail="factory-7"><span class="num">7</span>Session Ctx<br><span style="font-weight:400">decisions, warnings, knowledge</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Step 4: Parallel Planner -->
-  <div class="flow-row" style="margin-bottom:20px">
-    <div class="box agents" data-detail="parallel-planner">
-      <div class="title">Parallel Planner</div>
-      <div class="desc">Build dependency DAG<br>topological sort (Kahn's)</div>
-      <div class="file-tag">parallel-planner.js</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box agents" data-detail="bin-pack">
-      <div class="title">Bin-Pack</div>
-      <div class="desc">Resource-aware grouping<br>max_concurrent, memory, CPU</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box containers" data-detail="waves">
-      <div class="title">Execution Waves</div>
-      <div class="desc">Wave 1 &rarr; Wave 2 &rarr; ... &rarr; Wave N<br>parallel within, sequential across</div>
-    </div>
-  </div>
-
-  <!-- Step 5: Wave Execution Loop -->
-  <div class="wave-loop" style="margin-bottom:20px">
-    <div class="loop-label">Wave Execution Loop &mdash; repeat per wave</div>
-    <div class="flow-row" style="margin-bottom:16px">
-      <div class="box containers" data-detail="resource-mgr">
-        <div class="title">ResourceManager</div>
-        <div class="desc">Semaphore acquire slot<br>concurrency control</div>
-        <div class="file-tag">resource-manager.js</div>
+  <!-- Plan checker loop -->
+  <div class="plan-loop" style="margin-bottom:20px">
+    <div class="loop-label" style="color:var(--c-plan)">Plan-Check Loop &mdash; max 3 iterations</div>
+    <div class="flow-row" style="margin-bottom:12px">
+      <div class="box verify" data-detail="plan-checker">
+        <div class="title">Plan Checker</div>
+        <div class="desc">12 dimensions<br>fail &rarr; back to planner<br>pass &rarr; proceed</div>
+        <div class="file-tag">agents/forge-plan-checker.md</div>
       </div>
       <div class="arrow">&rarr;</div>
-      <div class="box containers" data-detail="worktree-create">
-        <div class="title">Git Worktree</div>
-        <div class="desc">Isolated checkout<br>copy graph.db + ledger</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="diamond" data-detail="exec-mode">
+      <div class="diamond" data-detail="check-result">
         <div class="shape"></div>
-        <div class="label">Docker<br>mode?</div>
+        <div class="label">Issues?</div>
+      </div>
+      <div class="arrow">
+        <div class="arrow-label">yes</div>
+      </div>
+      <div class="box plan" data-detail="plan-fix">
+        <div class="title">Back to Planner</div>
+        <div class="desc">Fix issues, re-check<br>up to 3 loops</div>
       </div>
     </div>
-    <div class="flow-row" style="margin-bottom:16px;gap:20px">
-      <div class="box containers" data-detail="docker-agent" style="border-left-color:var(--c-containers)">
-        <div class="title">Docker Container</div>
-        <div class="desc">agent-entrypoint.js<br>isolated execution</div>
-        <div class="file-tag">orchestrator.js</div>
-      </div>
-      <div style="font-size:11px;color:var(--text-dim);padding-top:16px;font-weight:600">OR</div>
-      <div class="box containers" data-detail="worktree-agent" style="border-left-color:var(--c-containers)">
-        <div class="title">Worktree Agent</div>
-        <div class="desc">claude --print subprocess<br>--dangerously-skip-permissions</div>
-        <div class="file-tag">worktree-orchestrator.js</div>
-      </div>
-    </div>
-    <div class="arrow down">&darr;</div>
-    <div class="flow-row" style="margin-bottom:16px">
-      <div class="box agents" data-detail="agent-inside">
-        <div class="title">Agent Execution</div>
-        <div class="desc">Read graph &rarr; understand code<br>make changes &rarr; git diff</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box containers" data-detail="collect-patches">
-        <div class="title">Collect Patches</div>
-        <div class="desc">git diff &rarr; .patch files<br>git apply --3way</div>
-        <div class="file-tag">patch-collector.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="fix-loop">
-        <div class="loop-label">Quick Verify + Fix Loop (max 3)</div>
-        <div class="flow-row">
-          <div class="box verify" data-detail="quick-verify">
-            <div class="title">Quick Verify</div>
-            <div class="desc">tsc + eslint<br>layers 1-4</div>
-          </div>
-          <div class="arrow">&rarr;</div>
-          <div class="diamond" data-detail="verify-pass">
-            <div class="shape"></div>
-            <div class="label">Pass?</div>
-          </div>
-          <div class="arrow">
-            <div class="arrow-label">fail</div>
-          </div>
-          <div class="box verify" data-detail="fix-agent">
-            <div class="title">Fix Agent</div>
-            <div class="desc">Revert &rarr; analyze<br>archetype: careful</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="arrow down">&darr;</div>
-    <div class="flow-row">
-      <div class="box graph" data-detail="graph-update">
-        <div class="title">Graph Update</div>
-        <div class="desc">Incremental update<br>save snapshot</div>
-        <div class="file-tag">updater.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box session" data-detail="ledger-write">
-        <div class="title">Ledger Update</div>
-        <div class="desc">Log warnings, discoveries<br>wave completion stats</div>
-        <div class="file-tag">ledger.js</div>
-      </div>
-      <div class="arrow">&rarr;</div>
-      <div class="box agents" data-detail="knowledge-prop">
-        <div class="title">Knowledge Propagation</div>
-        <div class="desc">Rebuild remaining agents<br>with updated ledger context</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Step 6: Full Verification -->
-  <div class="flow-row" style="margin-bottom:20px">
-    <div class="box verify" data-detail="full-verify" style="max-width:320px">
-      <div class="title">Full Verification &mdash; 8 Layers</div>
-      <div class="desc">Fail-fast pipeline, each toggleable via config</div>
-      <div class="file-tag">forge-verify/engine.js</div>
-      <div class="verify-layers">
-        <span class="verify-layer">L1 Structural</span>
-        <span class="verify-layer">L2 Type/Compile</span>
-        <span class="verify-layer">L3 Contracts</span>
-        <span class="verify-layer">L4 Deps</span>
-        <span class="verify-layer">L5 Tests</span>
-        <span class="verify-layer">L6 Behavioral</span>
-        <span class="verify-layer">L7 Cross-Repo</span>
-        <span class="verify-layer">L8 Architectural</span>
-      </div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="diamond" data-detail="full-verify-decision">
-      <div class="shape"></div>
-      <div class="label">Result?</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box verify" data-detail="verify-loop">
-      <div class="title">Auto-Fix Loop</div>
-      <div class="desc">Verify &rarr; fix &rarr; re-verify<br>patch fingerprint dedup</div>
-      <div class="file-tag">forge-verify/loop.js</div>
-    </div>
-  </div>
-
-  <!-- Step 7: Commit & Cleanup -->
-  <div class="flow-row">
-    <div class="box init" data-detail="commit">
-      <div class="title">Commit</div>
-      <div class="desc">feat(phase-N): description<br>[forge:archetype] metadata</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box containers" data-detail="cleanup">
-      <div class="title">Cleanup</div>
-      <div class="desc">Remove containers/worktrees<br>temp files, final graph update</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box session" data-detail="ledger-archive">
-      <div class="title">Ledger Archive</div>
-      <div class="desc">Archive + promote knowledge<br>update ROADMAP + STATE</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div class="box plan" data-detail="phase-complete">
-      <div class="title">Phase Complete</div>
-      <div class="desc">Mark ROADMAP checkbox<br>advance to next phase</div>
+    <!-- 12 Dimensions grid -->
+    <div style="font-size:10px;font-weight:600;color:var(--c-plan);margin-bottom:6px;padding-left:4px">12 Check Dimensions</div>
+    <div class="dim-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="dim-item blocker" data-detail="dim-1">1. Requirement Coverage (BLOCKER)</div>
+      <div class="dim-item" data-detail="dim-2">2. Task Completeness</div>
+      <div class="dim-item" data-detail="dim-3">3. Dependency Correctness</div>
+      <div class="dim-item" data-detail="dim-4">4. Key Links Planned</div>
+      <div class="dim-item" data-detail="dim-5">5. Scope Sanity</div>
+      <div class="dim-item" data-detail="dim-6">6. Verification Derivation</div>
+      <div class="dim-item" data-detail="dim-7">7. Context Compliance</div>
+      <div class="dim-item" data-detail="dim-8">8. Test Coverage</div>
+      <div class="dim-item" data-detail="dim-9">9. Architectural Fitness</div>
+      <div class="dim-item" data-detail="dim-10">10. Research Alignment</div>
+      <div class="dim-item blocker" data-detail="dim-11">11. Security Anti-Patterns (BLOCKER)</div>
+      <div class="dim-item" data-detail="dim-12">12. Cross-Plan File Overlap</div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════ -->
-<!-- SECTION 4: CROSS-CUTTING SYSTEMS -->
-<!-- ══════════════════════════════════════════════════ -->
-<div class="section">
-  <div class="section-title"><span>4 &mdash; Cross-Cutting Systems</span><span class="line"></span></div>
-  <div class="cross-cutting">
-    <div class="cc-card" data-detail="cc-graph">
-      <div class="cc-title"><span class="cc-dot" style="background:var(--c-graph)"></span>Code Graph</div>
-      <div class="cc-desc">SQLite database of files, symbols, dependencies, modules, capabilities. Queried by factory (context + risk), verification (contracts + cycles), and updater (incremental). Snapshots saved before/after execution.</div>
-      <div class="cc-files">forge-graph/builder.js<br>forge-graph/query.js<br>forge-graph/updater.js<br>forge-graph/snapshot.js</div>
+<!-- ================================================================ -->
+<!-- SECTION 3: TEST-FIRST EXECUTION -->
+<!-- ================================================================ -->
+<div class="section" id="s3">
+  <div class="section-title"><span>3 &mdash; Test-First Execution</span><span class="line"></span></div>
+
+  <!-- Phase 1: Test Generation -->
+  <div class="test-loop" style="margin-bottom:20px">
+    <div class="loop-label" style="color:var(--c-test)">Phase 1 &mdash; Test Generation (before any implementation)</div>
+    <div class="flow-row" style="margin-bottom:12px">
+      <div class="box test-first" data-detail="stub-gen">
+        <div class="title">generateTestFirstStubs()</div>
+        <div class="desc">truths &rarr; failing tests<br>artifacts &rarr; existence checks<br>key_links &rarr; wiring tests</div>
+        <div class="file-tag">forge-verify/test-stub-generator.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box test-first" data-detail="test-author">
+        <div class="title">Test-Author Agent</div>
+        <div class="desc">Refines stubs into<br>meaningful failing tests</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box test-first" data-detail="commit-tests">
+        <div class="title">Commit Tests</div>
+        <div class="desc">Tests committed before<br>any implementation</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box hashlock" data-detail="hash-lock">
+        <div class="title">computeHashLocks()</div>
+        <div class="desc">SHA-256 per test file<br>.forge/hash-locks.json</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box constitution" data-detail="guard-hook">
+        <div class="title">Guard Hook</div>
+        <div class="desc">Blocks modification<br>of locked test files</div>
+      </div>
     </div>
+  </div>
+
+  <!-- Phase 2: Implementation -->
+  <div class="wave-loop" style="margin-bottom:20px;border-color:var(--c-agents);background:rgba(230,81,0,0.02)">
+    <div class="loop-label" style="color:var(--c-agents)">Phase 2 &mdash; Sequential Implementation (plan 1 &rarr; verify &rarr; commit &rarr; plan 2 &rarr; ...)</div>
+    <div class="flow-row" style="margin-bottom:12px">
+      <div class="box agents" data-detail="catalog-select">
+        <div class="title">Agent Factory</div>
+        <div class="desc">Select from 18 catalog<br>agents per plan</div>
+        <div class="file-tag">forge-agents/factory.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box constitution" data-detail="constitution-inject">
+        <div class="title">Constitution</div>
+        <div class="desc">8 non-negotiable rules<br>injected into agent</div>
+        <div class="file-tag">.forge/constitution.md</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box agents" data-detail="executor">
+        <div class="title">Executor Agent</div>
+        <div class="desc">Implements against<br>locked tests</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box verify" data-detail="per-plan-verify">
+        <div class="title">Verify</div>
+        <div class="desc">All 11 layers<br>fail-fast pipeline</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box init" data-detail="per-plan-commit">
+        <div class="title">Commit</div>
+        <div class="desc">feat(module): desc<br>[forge:specialist]</div>
+      </div>
+    </div>
+    <div class="flow-row">
+      <div class="box session" data-detail="knowledge-propagation">
+        <div class="title">Knowledge Propagation</div>
+        <div class="desc">Plan N learnings &rarr; ledger &rarr; Plan N+1 session context</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box graph" data-detail="graph-update-exec">
+        <div class="title">Graph Update</div>
+        <div class="desc">Incremental update<br>after each commit</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="diamond">
+        <div class="shape"></div>
+        <div class="label">More<br>plans?</div>
+      </div>
+      <div class="arrow">
+        <div class="arrow-label">yes &rarr; next plan</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SECTION 4: AGENT FACTORY -->
+<!-- ================================================================ -->
+<div class="section" id="s4">
+  <div class="section-title"><span>4 &mdash; Agent Factory &mdash; Catalog-Based Selection</span><span class="line"></span></div>
+
+  <!-- 5-step pipeline -->
+  <div style="margin-bottom:20px">
+    <div class="box agents" data-detail="factory-detail" style="max-width:100%;min-width:100%;text-align:left;padding:16px 20px">
+      <div class="title" style="font-size:14px;margin-bottom:8px">5-Step Pipeline</div>
+      <div class="desc" style="margin-bottom:10px">Per plan: reads graph, matches catalog agent, injects contract + constitution, prunes irrelevant sections, composes context</div>
+      <div class="file-tag">forge-agents/factory.js</div>
+      <div class="factory-steps">
+        <div class="factory-step" data-detail="factory-s1"><span class="num">1</span>Analyze Task<br><span style="font-weight:400">graph context, capabilities, risk, ledger</span></div>
+        <div class="factory-step" data-detail="factory-s2"><span class="num">2</span>Match Catalog<br><span style="font-weight:400">primary + secondary agents, priority scoring</span></div>
+        <div class="factory-step" data-detail="factory-s3"><span class="num">3</span>Load + Inject<br><span style="font-weight:400">agent body + Plan Contract + Constitution</span></div>
+        <div class="factory-step" data-detail="factory-s4"><span class="num">4</span>Prune Sections<br><span style="font-weight:400">word-boundary signals, GENERIC_TERMS filter</span></div>
+        <div class="factory-step" data-detail="factory-s5"><span class="num">5</span>Context Package<br><span style="font-weight:400">token-budgeted: always_load + task + reference</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 18-agent catalog -->
+  <div style="font-size:10px;font-weight:600;color:var(--c-agents);margin-bottom:6px;padding-left:4px">18 Catalog Agents (priority: specialists=10, docs=8, refactor=5, general=1)</div>
+  <div class="catalog-grid">
+    <div class="catalog-agent priority-high" data-detail="cat-ts-api">typescript-api</div>
+    <div class="catalog-agent priority-high" data-detail="cat-nextjs">nextjs-api</div>
+    <div class="catalog-agent priority-high" data-detail="cat-react">react-frontend</div>
+    <div class="catalog-agent priority-high" data-detail="cat-python">python-backend</div>
+    <div class="catalog-agent priority-high" data-detail="cat-java">java-backend</div>
+    <div class="catalog-agent priority-high" data-detail="cat-db">database-engineer</div>
+    <div class="catalog-agent priority-high" data-detail="cat-test">test-engineer</div>
+    <div class="catalog-agent priority-high" data-detail="cat-security">security-engineer</div>
+    <div class="catalog-agent priority-high" data-detail="cat-ui">ui-styling</div>
+    <div class="catalog-agent priority-high" data-detail="cat-api-int">api-integration</div>
+    <div class="catalog-agent priority-high" data-detail="cat-devops">devops-config</div>
+    <div class="catalog-agent priority-high" data-detail="cat-data">data-pipeline</div>
+    <div class="catalog-agent priority-high" data-detail="cat-mobile">mobile-engineer</div>
+    <div class="catalog-agent" data-detail="cat-docs">documentation (8)</div>
+    <div class="catalog-agent" data-detail="cat-refactor">refactor-engineer (5)</div>
+    <div class="catalog-agent" data-detail="cat-general">general-executor (1)</div>
+    <div class="catalog-agent" style="background:var(--c-drift-bg);color:var(--c-drift)" data-detail="cat-semantic">semantic-verifier</div>
+    <div class="catalog-agent" style="background:var(--c-drift-bg);color:var(--c-drift)" data-detail="cat-drift">drift-analyzer</div>
+  </div>
+  <div style="font-size:9px;color:var(--text-dim);margin-top:6px;padding-left:4px">
+    If no catalog agent matches, factory creates a new agent definition and saves it to catalog. semantic-verifier and drift-analyzer are verifier agents (not executors).
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SECTION 5: VERIFICATION ENGINE -->
+<!-- ================================================================ -->
+<div class="section" id="s5">
+  <div class="section-title"><span>5 &mdash; Verification Engine &mdash; 11 Layers</span><span class="line"></span></div>
+
+  <!-- All 11 layers -->
+  <div class="flow-row" style="margin-bottom:20px;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:3px;padding-bottom:8px">
+    <div class="box hashlock" data-detail="layer-0" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L0 HASH_LOCK</div>
+      <div class="desc">Tamper detection<br>test files + must_haves</div>
+      <div style="font-size:8px;color:var(--c-hashlock);margin-top:3px">opt-in, default on w/ test-first</div>
+    </div>
+    <div class="box verify" data-detail="layer-1" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L1 STRUCTURAL</div>
+      <div class="desc">Syntax, console.log<br>debugger, merge markers</div>
+      <div style="font-size:8px;color:var(--c-verify);margin-top:3px">&lt;5s</div>
+    </div>
+    <div class="box verify" data-detail="layer-2" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L2 TYPE/COMPILE</div>
+      <div class="desc">tsc --noEmit<br>mypy, go build</div>
+      <div style="font-size:8px;color:var(--c-verify);margin-top:3px">10-30s</div>
+    </div>
+    <div class="box verify" data-detail="layer-3" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L3 CONTRACTS</div>
+      <div class="desc">Graph contract hashes<br>breaking changes</div>
+      <div style="font-size:8px;color:var(--c-verify);margin-top:3px">5-15s</div>
+    </div>
+    <div class="box verify" data-detail="layer-4" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L4 DEPENDENCY</div>
+      <div class="desc">Circular deps<br>orphaned imports</div>
+      <div style="font-size:8px;color:var(--c-verify);margin-top:3px">&lt;5s</div>
+    </div>
+    <div class="box verify" data-detail="layer-5" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L5 TESTS</div>
+      <div class="desc">Graph-identified<br>test files</div>
+      <div style="font-size:8px;color:var(--c-verify);margin-top:3px">30s-5min</div>
+    </div>
+    <div class="box verify" data-detail="layer-6" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L6 BEHAVIORAL</div>
+      <div class="desc">Plan custom<br>verify steps</div>
+      <div style="font-size:8px;color:var(--c-verify);margin-top:3px">varies</div>
+    </div>
+    <div class="box system" data-detail="layer-7" style="min-width:105px;max-width:105px;padding:8px 6px">
+      <div class="title" style="font-size:10px">L7 CONTRACT</div>
+      <div class="desc">Cross-repo<br>code-YAML drift</div>
+      <div style="font-size:8px;color:var(--c-system);margin-top:3px">5-30s</div>
+    </div>
+    <div class="box drift" data-detail="layer-8" style="min-width:105px;max-width:105px;padding:8px 6px;border-left-style:dashed">
+      <div class="title" style="font-size:10px">L8 SEMANTIC</div>
+      <div class="desc">Spec compliance<br>verifier agent</div>
+      <div style="font-size:8px;color:var(--c-drift);margin-top:3px">opt-in, 30-60s</div>
+    </div>
+    <div class="box config" data-detail="layer-9" style="min-width:105px;max-width:105px;padding:8px 6px;border-left-style:dashed">
+      <div class="title" style="font-size:10px">L9 ARCH</div>
+      <div class="desc">Convention<br>review agent</div>
+      <div style="font-size:8px;color:var(--c-config);margin-top:3px">opt-in, 30-60s</div>
+    </div>
+    <div class="box ci" data-detail="layer-10" style="min-width:105px;max-width:105px;padding:8px 6px;border-left-style:dashed">
+      <div class="title" style="font-size:10px">L10 BROWSER</div>
+      <div class="desc">Playwright, a11y<br>screenshot diff</div>
+      <div style="font-size:8px;color:var(--c-ci);margin-top:3px">opt-in, varies</div>
+    </div>
+  </div>
+
+  <!-- Fix loop -->
+  <div class="fix-loop">
+    <div class="loop-label">Auto-Fix Loop &mdash; max 3 iterations, kill on repeated patch hash</div>
+    <div class="flow-row">
+      <div class="box verify" data-detail="verify-run">
+        <div class="title">Verify (all layers)</div>
+        <div class="desc">Fail-fast pipeline<br>per-layer toggle</div>
+        <div class="file-tag">forge-verify/engine.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="diamond" data-detail="verify-pass">
+        <div class="shape"></div>
+        <div class="label">Pass?</div>
+      </div>
+      <div class="arrow">
+        <div class="arrow-label">fail</div>
+      </div>
+      <div class="box agents" data-detail="fix-agent">
+        <div class="title">Build Fix Agent</div>
+        <div class="desc">Analyze fixability<br>catalog agent for fix</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box agents" data-detail="fix-exec">
+        <div class="title">Execute Fix</div>
+        <div class="desc">Claude CLI subprocess<br>targeted repair</div>
+        <div class="file-tag">forge-verify/loop.js</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="diamond" data-detail="fix-check">
+        <div class="shape"></div>
+        <div class="label">New<br>errors?</div>
+      </div>
+      <div class="arrow">
+        <div class="arrow-label">yes &rarr; revert + escalate</div>
+      </div>
+    </div>
+    <div style="font-size:9px;color:var(--text-dim);margin-top:8px;padding-left:4px">
+      Auto-fixable: type errors (L2), missing imports (L4), assertion mismatches (L5), interface breaks (L3), syntax (L1), contract drift (L7). Not auto-fixable: behavioral failures (L6) &rarr; escalate to human.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SECTION 6: DRIFT MEASUREMENT -->
+<!-- ================================================================ -->
+<div class="section" id="s6">
+  <div class="section-title"><span>6 &mdash; Drift Measurement</span><span class="line"></span></div>
+
+  <div class="flow-row" style="margin-bottom:16px">
+    <div class="box req" data-detail="drift-input-req">
+      <div class="title">REQUIREMENTS.md</div>
+      <div class="desc">Source of truth<br>all REQ-IDs</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box plan" data-detail="drift-input-plan">
+      <div class="title">PLAN.md</div>
+      <div class="desc">must_haves mapped<br>to requirements</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box verify" data-detail="drift-input-verify">
+      <div class="title">VERIFICATION.md</div>
+      <div class="desc">Satisfaction checks<br>per requirement</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box drift" data-detail="drift-compute">
+      <div class="title">Drift Analyzer</div>
+      <div class="desc">Per-requirement score:<br>1 - (verified / total)</div>
+      <div class="file-tag">forge-tools drift report</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="box drift" data-detail="drift-classify">
+      <div class="title">Classification</div>
+      <div class="desc">GREEN &le; 10%<br>YELLOW 10-25%<br>RED &gt; 25%</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="diamond" data-detail="drift-gate">
+      <div class="shape"></div>
+      <div class="label">RED +<br>block?</div>
+    </div>
+  </div>
+
+  <!-- Drift visual -->
+  <div style="max-width:600px;margin:0 auto">
+    <div style="font-size:10px;font-weight:600;color:var(--c-drift);margin-bottom:6px">Drift Score Spectrum</div>
+    <div class="drift-bar">
+      <div class="drift-green">GREEN 0-10%</div>
+      <div class="drift-yellow">YELLOW 10-25%</div>
+      <div class="drift-red">RED 25%+</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-dim);margin-top:4px">
+      <span>Continue normally</span>
+      <span>Warning in report</span>
+      <span>Blocks phase if block_on_red=true</span>
+    </div>
+    <div style="font-size:9px;color:var(--text-dim);margin-top:8px;text-align:center">
+      Output: <code>.forge/drift-report.json</code> &mdash; per-requirement drift scores, overall classification
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SECTION 7: CI/CD INTEGRATION -->
+<!-- ================================================================ -->
+<div class="section" id="s7">
+  <div class="section-title"><span>7 &mdash; CI/CD Integration</span><span class="line"></span></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+    <!-- GitHub Actions -->
+    <div style="border:1.5px solid var(--c-ci);border-radius:14px;padding:16px;background:rgba(21,101,192,0.02);position:relative">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;color:var(--c-ci);text-transform:uppercase;letter-spacing:0.5px">GitHub Actions</div>
+      <div class="flow-row" style="margin-top:8px">
+        <div class="box ci" data-detail="gh-verify">
+          <div class="title">Verify Work</div>
+          <div class="desc">--ci flag<br>GitHub annotations</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box ci" data-detail="gh-drift">
+          <div class="title">Drift Report</div>
+          <div class="desc">--ci flag<br>PR comment</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box ci" data-detail="gh-pr">
+          <div class="title">PR Creation</div>
+          <div class="desc">Auto-create with<br>results summary</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--text-dim);margin-top:8px;padding-left:4px">
+        Template: <code>atos-forge/templates/ci/forge-verify.yml</code>
+      </div>
+    </div>
+
+    <!-- GitLab CI -->
+    <div style="border:1.5px solid var(--c-ci);border-radius:14px;padding:16px;background:rgba(21,101,192,0.02);position:relative">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;color:var(--c-ci);text-transform:uppercase;letter-spacing:0.5px">GitLab CI</div>
+      <div class="flow-row" style="margin-top:8px">
+        <div class="box ci" data-detail="gl-verify">
+          <div class="title">Verify Work</div>
+          <div class="desc">--junit flag<br>JUnit XML output</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="box ci" data-detail="gl-artifacts">
+          <div class="title">Artifacts</div>
+          <div class="desc">JUnit XML<br>drift-report.json</div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--text-dim);margin-top:8px;padding-left:4px">
+        Template: <code>atos-forge/templates/ci/forge-verify-gitlab.yml</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Output formats -->
+  <div style="font-size:10px;font-weight:600;color:var(--c-ci);margin-bottom:6px;padding-left:4px">Output Formats</div>
+  <div class="flow-row" style="gap:8px">
+    <div class="box ci" style="min-width:120px;max-width:160px" data-detail="ci-json">
+      <div class="title">--json</div>
+      <div class="desc">Machine-readable<br>full result object</div>
+    </div>
+    <div class="box ci" style="min-width:120px;max-width:160px" data-detail="ci-annotations">
+      <div class="title">--ci</div>
+      <div class="desc">GitHub Actions<br>annotations format</div>
+    </div>
+    <div class="box ci" style="min-width:120px;max-width:160px" data-detail="ci-junit">
+      <div class="title">--junit</div>
+      <div class="desc">JUnit XML<br>.forge/verification-junit.xml</div>
+    </div>
+    <div class="box ci" style="min-width:120px;max-width:160px" data-detail="ci-branch">
+      <div class="title">branching_strategy</div>
+      <div class="desc">phase or milestone<br>auto-create PR</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SECTION 8: CROSS-CUTTING SYSTEMS -->
+<!-- ================================================================ -->
+<div class="section" id="s8">
+  <div class="section-title"><span>8 &mdash; Cross-Cutting Systems</span><span class="line"></span></div>
+
+  <div class="cross-cutting">
     <div class="cc-card" data-detail="cc-session">
       <div class="cc-title"><span class="cc-dot" style="background:var(--c-session)"></span>Session Ledger</div>
-      <div class="cc-desc">Markdown file tracking execution state, decisions, warnings, user preferences. Written by wave execution, read by agent factory for knowledge propagation. Auto-compacts when too large, archived on phase complete.</div>
+      <div class="cc-desc">Markdown file tracking execution state, decisions, warnings, user preferences, rejected approaches. Written by execution, read by factory for knowledge propagation. Auto-compacts when large, archived on phase complete.</div>
       <div class="cc-files">forge-session/ledger.js<br>.forge/session/ledger.md<br>.forge/session/archive/</div>
-    </div>
-    <div class="cc-card" data-detail="cc-config">
-      <div class="cc-title"><span class="cc-dot" style="background:var(--c-config)"></span>Unified Config</div>
-      <div class="cc-desc">Single source of truth. Merge order: defaults &larr; ~/.forge/config.json (global) &larr; .forge/config.json (project). 12 sections: graph, execution, containers, agents, verification, knowledge, impact_analysis, session, display, git, system, project.</div>
-      <div class="cc-files">forge-config/config.js<br>forge-config/doctor.js<br>.forge/config.json</div>
-    </div>
-    <div class="cc-card" data-detail="cc-system">
-      <div class="cc-title"><span class="cc-dot" style="background:var(--c-system)"></span>System Graph</div>
-      <div class="cc-desc">Cross-repo dependency tracking. Services, interfaces, dependencies. Provides cross-repo context to agent factory (consumer warnings), verification L7 (contract drift), and parallel planner (cross-repo DAG edges).</div>
-      <div class="cc-files">forge-system/query.js<br>forge-system/sync.js<br>forge-system/dashboard.js<br>forge-verify/contract-layer.js</div>
     </div>
     <div class="cc-card" data-detail="cc-knowledge">
       <div class="cc-title"><span class="cc-dot" style="background:#e67e22"></span>Knowledge Base</div>
-      <div class="cc-desc">Persistent learnings that survive across milestones. Auto-promoted from ledger on archive (decisions, warnings, pitfalls, preferences). Filtered by module relevance and injected into agent system prompts. CLI: knowledge list/add/prune/promote.</div>
-      <div class="cc-files">forge-session/knowledge.js<br>.forge/knowledge/learnings.json<br>forge-config/config.js (knowledge section)</div>
+      <div class="cc-desc">Persistent learnings surviving across milestones. Auto-promoted from ledger on archive (decisions, warnings, pitfalls). Jaccard dedup (&gt;80% similarity). Filtered by module relevance, injected into agent prompts.</div>
+      <div class="cc-files">forge-session/knowledge.js<br>.forge/knowledge/learnings.json</div>
     </div>
-    <div class="cc-card" data-detail="cc-archreview">
-      <div class="cc-title"><span class="cc-dot" style="background:#8e44ad"></span>Architecture Review</div>
-      <div class="cc-desc">Two-level architectural fitness checking. Plan-checker Dimension 8: validates plans against ARCHITECTURE.md &amp; CONVENTIONS.md (suggestions, non-blocking). Verification Layer 8: optional agent-based code review against documented conventions (off by default).</div>
-      <div class="cc-files">agents/forge-plan-checker.md (Dim 8)<br>forge-verify/engine.js (Layer 8)<br>.planning/codebase/ARCHITECTURE.md<br>.planning/codebase/CONVENTIONS.md</div>
+    <div class="cc-card" data-detail="cc-graph">
+      <div class="cc-title"><span class="cc-dot" style="background:var(--c-graph)"></span>Code Graph</div>
+      <div class="cc-desc">SQLite database via tree-sitter AST parsing. Files, symbols, deps, modules, capabilities. Queried by factory (context + risk), verification (contracts + cycles), updater (incremental). Snapshots saved before/after execution.</div>
+      <div class="cc-files">forge-graph/builder.js<br>forge-graph/query.js<br>forge-graph/updater.js<br>.forge/graph.db</div>
+    </div>
+    <div class="cc-card" data-detail="cc-system">
+      <div class="cc-title"><span class="cc-dot" style="background:var(--c-system)"></span>System Graph</div>
+      <div class="cc-desc">Multi-repo interface tracking. Services, interfaces, dependencies. Cross-repo context for agents (consumer warnings), verification L7 (contract drift), and impact analysis. Dashboard with D3 force graph.</div>
+      <div class="cc-files">forge-system/query.js<br>forge-system/sync.js<br>forge-system/dashboard.js<br>system-graph.db</div>
+    </div>
+    <div class="cc-card" data-detail="cc-config">
+      <div class="cc-title"><span class="cc-dot" style="background:var(--c-config)"></span>Configuration</div>
+      <div class="cc-desc">17 sections, 3-level merge: defaults &larr; ~/.forge/config.json (global) &larr; .forge/config.json (project). Includes graph, execution, agents, verification, hash_lock, knowledge, drift, ci, session, display, git, system, constitution, guard, browser, impact_analysis, project.</div>
+      <div class="cc-files">forge-config/config.js<br>forge-config/doctor.js<br>.forge/config.json</div>
     </div>
   </div>
 </div>
@@ -1009,847 +1141,436 @@ body {
 </div>
 
 <script>
-// ── Zoom ──
+// -- Zoom --
 let scale = 1;
 const wrap = document.getElementById('canvas-wrap');
 function zoomIn() { scale = Math.min(2, scale + 0.15); wrap.style.transform = 'scale(' + scale + ')'; }
 function zoomOut() { scale = Math.max(0.3, scale - 0.15); wrap.style.transform = 'scale(' + scale + ')'; }
 function zoomReset() { scale = 1; wrap.style.transform = 'scale(1)'; }
 
-// ── Detail data ──
+// -- Detail data --
 const details = {
-  'init-entry': {
-    title: '/forge-init',
-    sub: 'CLI Entry Point',
-    sections: [
-      { h: 'File', t: 'atos-forge/bin/forge-tools.cjs → cmdGraphInit()' },
-      { h: 'What it does', list: ['Creates .forge/ directory structure', 'Runs graph builder (tree-sitter parsing)', 'Detects modules and capabilities', 'Detects interfaces → interfaces.yaml', 'Installs git post-commit hooks', 'Takes initial graph snapshot', 'Generates dashboard HTML'] },
-      { h: 'Output', t: 'JSON: { success, build_time, total_files, total_symbols, module_count, dependency_count, hooks_installed, interfaces_detected }' },
-    ]
-  },
-  'tree-sitter': {
-    title: 'File Parsing',
-    sub: 'forge-graph/builder.js → GraphBuilder',
-    sections: [
-      { h: 'Input', t: 'Repository root directory' },
-      { h: 'Process', list: ['Discover source files (respects ignore_patterns)', 'ParserManager loads tree-sitter grammars', 'AST extraction: functions, classes, imports, exports', 'Regex fallback if tree-sitter unavailable', 'Resolve import paths → dependency edges'] },
-      { h: 'Output', t: 'graph.db: files, symbols, dependencies tables' },
-    ]
-  },
-  'module-detect': {
-    title: 'Module Detection',
-    sub: 'forge-graph/module-detector.js',
-    sections: [
-      { h: 'Process', list: ['Scan for package.json, __init__.py, go.mod boundaries', 'Group files by directory hierarchy', 'Calculate file_count, public_api_count, stability', 'Compute module_dependencies from file-level edges'] },
-      { h: 'Output', t: 'graph.db: modules, module_dependencies tables' },
-    ]
-  },
-  'cap-detect': {
-    title: 'Capability Detection',
-    sub: 'forge-graph/capability-detector.js',
-    sections: [
-      { h: 'Capabilities Detected', list: ['api_server — Express/FastAPI/NestJS routes', 'database_sql — ORM models, SQL queries', 'react_advanced — React components, hooks', 'authentication — JWT, OAuth, passport', 'ai_ml — model loading, inference', 'testing — test frameworks, assertions', 'docker — Dockerfiles, compose', 'logging — structured logging'] },
-      { h: 'Output', t: 'Per module: { capability, confidence (0-1) }' },
-    ]
-  },
-  'graph-db': {
-    title: 'graph.db',
-    sub: 'Per-Repository Code Graph Database',
-    sections: [
-      { h: 'Tables', list: ['files — path, language, loc, complexity_score, module', 'symbols — name, type, file, line, exported', 'dependencies — source_file, target_file, type', 'modules — name, root_path, file_count, stability', 'module_dependencies — source, target, edge_count', 'module_capabilities — module_name, capability, confidence', 'meta — key/value (last_commit, build_date)'] },
-    ]
-  },
-  'iface-detect': {
-    title: 'Interface Detection',
-    sub: 'forge-system/detect.js → detectInterfaces()',
-    sections: [
-      { h: 'Scans for', list: ['OpenAPI/Swagger spec files', 'FastAPI/Express/NestJS route decorators', '.proto files (gRPC)', 'Kafka/RabbitMQ/Celery producers & consumers', 'Redis pub/sub channels', 'npm/PyPI package exports', 'SQLAlchemy/Prisma/TypeORM models', 'Environment variables (*_API_URL)', 'HTTP client calls (axios, fetch, requests)'] },
-      { h: 'Output', t: '.forge/interfaces.yaml — declared service interfaces with metadata (endpoints[], tables[], topics, methods[])' },
-    ]
-  },
-  'sys-init': {
-    title: 'System Init',
-    sub: 'forge-system/system-init.js → systemInit()',
-    sections: [
-      { h: 'Discovery Sources', list: ['--path <dir> — 2-level filesystem scan for git repos', '--repos <file> — JSON registry of repo paths', '--github-org <org> — Clone from GitHub API'] },
-      { h: 'Pipeline', list: ['A. Discovery — find repos, apply ignore_repos filter', 'B. Parallel Init — N workers run /forge-init per repo', 'C. Assembly — builder.js merges interfaces.yaml → system-graph.db', 'D. Validation — validate.js checks cross-repo contracts'] },
-    ]
-  },
-  'system-graph-db': {
-    title: 'system-graph.db',
-    sub: 'Cross-Repository System Database',
-    sections: [
-      { h: 'Tables', list: ['services — id, repo_path, description, team', 'interfaces — service_id, name, type, protocol, metadata (JSON)', 'dependencies — consumer_id, provider_id, interface_id, deprecated', 'service_metrics — fan_in, fan_out, coupling_score, risk_level', 'teams — id, name', 'sync_log — service_id, synced_at, hash'] },
-    ]
-  },
-  'factory': {
-    title: 'Agent Factory',
-    sub: 'forge-agents/factory.js → buildAgentConfig()',
-    sections: [
-      { h: 'Input', t: 'Path to PLAN.md file + project root' },
-      { h: 'Output', t: '{ agentConfig, containerParams, analysis }' },
-      { h: 'How agents read the graph', list: ['Step 1 opens graph.db via GraphQuery', 'getContextForTask() → files, deps, consumers, test files', 'getRiskAssessment() → risk level + reasons', 'getCycles() → circular dependency warnings', 'getCapabilities() per affected module', 'If system-graph.db exists: find service, exports, consumers, imports'] },
-      { h: 'Archetype Decision', list: ['CRITICAL/HIGH risk → careful (extra validation steps)', '3+ modules affected → integrator (cross-module awareness)', '1 module + strong capability → specialist (domain expertise)', 'Default → general'] },
-    ]
-  },
-  'factory-1': {
-    title: 'Step 1: Analyze Task',
-    sub: 'Agent Factory Pipeline',
-    sections: [
-      { h: 'Actions', list: ['Parse plan frontmatter (wave, depends_on, autonomous)', 'Open graph.db → getContextForTask(files)', 'getRiskAssessment(files) → { level, score, reasons }', 'getCycles() → circular deps', 'getModuleBoundaries() → affected modules', 'getCapabilities() per module', 'Check system-graph.db for cross-repo context', 'Read session ledger for state + decisions'] },
-    ]
-  },
-  'factory-2': {
-    title: 'Step 2: Determine Archetype',
-    sub: 'Agent Factory Pipeline',
-    sections: [
-      { h: 'Decision Rules (priority order)', list: ['Risk CRITICAL or HIGH → careful archetype', 'affectedModules >= 3 → integrator archetype', 'affectedModules <= 1 AND capability confidence >= 0.6 → specialist', 'Default → general archetype'] },
-      { h: 'Time Estimates', t: 'specialist: 2-5min, integrator: 4-8min, careful: 5-10min, general: 3-6min' },
-    ]
-  },
-  'factory-3': {
-    title: 'Step 3: Compose System Prompt',
-    sub: 'Agent Factory Pipeline',
-    sections: [
-      { h: 'Prompt Layers', list: ['BASE_EXECUTOR_PROMPT — core rules (read first, minimal changes)', 'Archetype behavior block — specialist/integrator/careful/general specific', 'Domain knowledge — capability agent_context for confidence >= 0.3', 'Graph context — files, dependencies, consumers, interfaces', 'Cross-repo context — service exports, consumer warnings', 'Session context — decisions, warnings, preferences, rejected approaches', 'Persistent knowledge — learnings from prior milestones (knowledge_base[])'] },
-    ]
-  },
-  'factory-4': {
-    title: 'Step 4: Context Package',
-    sub: 'Agent Factory Pipeline',
-    sections: [
-      { h: 'Budget', t: '70% of context_budget (default: 140k of 200k tokens)' },
-      { h: 'Layers', list: ['always_load — plan file + direct task files', 'task_specific — dependencies, consumer files, test files from graph', 'reference — interface files (sorted by consumer_count), neighbor interfaces.yaml'] },
-    ]
-  },
-  'factory-5': {
-    title: 'Step 5: Define Verification',
-    sub: 'Agent Factory Pipeline',
-    sections: [
-      { h: 'Sources', list: ['Plan frontmatter verify: fields', 'Capability-mapped: react_advanced → [typescript, npm_test]', 'Baseline: typescript if any .ts/.tsx files in plan'] },
-    ]
-  },
-  'factory-6': {
-    title: 'Step 6: Container Spec',
-    sub: 'Agent Factory Pipeline',
-    sections: [
-      { h: 'Image Selection', list: ['Python files or database_sql/ai_ml caps → python template', 'Both Python + Node → full template', 'Default → node template'] },
-      { h: 'Resources', t: 'max_memory_per_container (2g), max_cpu (1), timeout (600s), network_access (false)' },
-    ]
-  },
-  'factory-7': {
-    title: 'Step 7: Session Context',
-    sub: 'Agent Factory Pipeline',
-    sections: [
-      { h: 'Extracted from Ledger', list: ['decisions[] — do not re-ask resolved questions', 'warnings[] — filtered to affected modules/files', 'user_preferences[] — respect workflow choices', 'rejected_approaches[] — do not retry failed strategies'] },
-      { h: 'Persistent Knowledge', list: ['knowledge.relevantFor(cwd, modules, files) → filtered learnings', 'Includes: decisions, warnings, pitfalls, conventions from prior milestones', 'High-relevance entries always included regardless of module match', 'Injected as knowledge_base[] in session_context', 'Rendered as "Persistent Knowledge" section in agent system prompt'] },
-    ]
-  },
-  'parallel-planner': {
-    title: 'Parallel Planner',
-    sub: 'forge-agents/parallel-planner.js',
-    sections: [
-      { h: 'Algorithm', list: ['Build DAG from depends_on frontmatter', 'Add cross-repo edges from system-graph.db (provider → consumer)', 'Topological sort via Kahn\'s algorithm → wave groups', 'Detect cycles (wave empty but nodes remain)', 'Bin-pack per wave: sort by archetype priority, respect max_concurrent + memory + CPU'] },
-    ]
-  },
-  'docker-agent': {
-    title: 'Docker Container Agent',
-    sub: 'forge-containers/orchestrator.js',
-    sections: [
-      { h: 'Container Lifecycle', list: ['ResourceManager.acquire() — semaphore slot', 'git worktree add → isolated checkout', 'container-spec.js → Docker run args', 'ensureImage() → build if missing', 'agent-entrypoint.js runs inside:', '  Copy /repo → /workspace', '  Apply previous wave patches', '  Build system prompt + task prompt', '  claude --print → make changes', '  git diff → /output/patches/', 'collectPatches() + applyPatches()', 'extractLearnings() → ledger', 'ResourceManager.release()'] },
-    ]
-  },
-  'worktree-agent': {
-    title: 'Worktree Agent',
-    sub: 'forge-containers/worktree-orchestrator.js',
-    sections: [
-      { h: 'Lifecycle', list: ['ResourceManager.acquire() — semaphore', 'git worktree add /tmp/forge-wt-*', 'prepareWorktree() — copy graph.db, ledger, system-graph.db, interfaces', 'buildPrompt() — full context assembly', 'spawn claude --print --dangerously-skip-permissions', 'Capture git diff from worktree → patch', 'applyPatches() → main repo via git apply --3way', 'extractLearnings() → ledger', 'git worktree remove --force'] },
-    ]
-  },
-  'knowledge-prop': {
-    title: 'Knowledge Propagation',
-    sub: 'Wave N → Ledger → Wave N+1 + Cross-Milestone',
-    sections: [
-      { h: 'Within Milestone (wave-to-wave)', list: ['Wave N agents log warnings + discoveries to ledger', 'Before Wave N+1: factory.build() re-reads updated ledger', 'extractSessionContext() pulls new warnings', 'New warnings injected into Wave N+1 agents\' session_context', 'Agents see: "Account for these warnings from prior agents..."'] },
-      { h: 'Across Milestones (persistent knowledge)', list: ['On archiveAndReset(): knowledge.promote() extracts key learnings', 'Decisions, HIGH warnings, rejected approaches, preferences → learnings.json', 'Deduplication via >80% Jaccard word similarity', 'Next milestone agents receive knowledge_base[] in session_context', 'High-relevance entries always included; others filtered by module match', 'Result: Milestone N pitfalls propagate to Milestone N+1 agents'] },
-    ]
-  },
-  'full-verify': {
-    title: 'Full Verification — 8 Layers',
-    sub: 'forge-verify/engine.js → verify()',
-    sections: [
-      { h: 'Layer Details', list: ['L1 STRUCTURAL (<5s) — console.log, debugger, merge markers, bracket balance', 'L2 TYPE/COMPILE (10-30s) — tsc --noEmit, mypy, go build (auto-detected)', 'L3 INTERFACE CONTRACTS (5-15s) — contract_hash diff, breaking changes, consumer risk', 'L4 DEPENDENCY (<5s) — getCycles() for new circular deps, orphaned imports', 'L5 TESTS (30s-5min) — graph-identified test files, jest/pytest/vitest', 'L6 BEHAVIORAL (varies) — plan\'s custom verify steps from frontmatter', 'L7 CONTRACT (5-30s) — code↔YAML drift, backward compat, cross-repo ripple', 'L8 ARCHITECTURAL (optional) — agent-based review against ARCHITECTURE.md + CONVENTIONS.md'] },
-      { h: 'Output', t: '{ overall: PASS|FAIL, layers[], fix_suggestions[], auto_fixable, graph_diff }' },
-      { h: 'Note', t: 'Layer 8 is off by default (verification.layers.architectural: false). Spawns Claude CLI — expensive per invocation.' },
-    ]
-  },
-  'verify-loop': {
-    title: 'Auto-Fix Loop',
-    sub: 'forge-verify/loop.js → verifyLoop()',
-    sections: [
-      { h: 'Flow', list: ['verify() → PASS? done', 'FAIL? → analyzeFixability()', 'Auto-fixable: type errors, missing imports, syntax, contract drift', 'Human-only: behavioral failures (L6) → escalate', 'Build fix agent (archetype: careful, is_fix_agent: true)', 'Run via worktree orchestrator', 'patchFingerprint() → SHA256 dedup', 'Same hash twice → stuck → escalate', 'New failures introduced → revert → escalate', 'Max 3 loops then escalate'] },
-    ]
-  },
-  'cc-graph': {
-    title: 'Code Graph (graph.db)',
-    sub: 'Cross-cutting: queried throughout pipeline',
-    sections: [
-      { h: 'Consumers', list: ['Agent Factory — getContextForTask, getRiskAssessment, getCapabilities', 'Verification Engine — getCycles, getGraphDiff, contract checks', 'Graph Updater — incremental update on post-commit hook', 'Dashboard Generator — full codebase visualization', 'Assessor — token estimation for context budget'] },
-      { h: 'Files', t: 'forge-graph/builder.js, query.js, updater.js, snapshot.js, module-detector.js, capability-detector.js' },
-    ]
-  },
-  'cc-session': {
-    title: 'Session Ledger',
-    sub: 'Knowledge propagation mechanism',
-    sections: [
-      { h: 'Written by', list: ['Wave execution — logWarning, logDiscovery, logWaveComplete', 'Verification — logError on failures', 'User decisions — logDecision'] },
-      { h: 'Read by', list: ['Agent Factory — extractSessionContext() for each agent', 'Execute-phase — updateState() for active command tracking', 'Resume-work — full context restoration', 'Knowledge promotion — archiveAndReset() extracts key learnings'] },
-      { h: 'Wave-to-Wave', t: 'Factory re-reads ledger between waves, injects updated warnings into Wave N+1 session_context.' },
-      { h: 'Cross-Milestone', t: 'On archiveAndReset(), knowledge.promote() extracts decisions/warnings/pitfalls/preferences → learnings.json. Next milestone agents receive these as persistent knowledge.' },
-    ]
-  },
-  'cc-knowledge': {
-    title: 'Persistent Knowledge Base',
-    sub: 'Cross-milestone learning retention',
-    sections: [
-      { h: 'Problem Solved', t: 'Session ledger is archived on milestone complete but nothing reads archives back. Milestone 2 agents have zero memory of Milestone 1 pitfalls. The knowledge base persists learnings across milestones.' },
-      { h: 'How It Works', list: [
-        'learnings.json stores structured entries: {id, type, text, modules, relevance, source_milestone}',
-        'Types: decision, warning, pitfall, convention, preference',
-        'Auto-promoted from ledger on archiveAndReset() — decisions → decision, HIGH warnings → warning, rejected approaches → pitfall, user prefs → preference',
-        'Deduplication: >80% word-similarity Jaccard check prevents duplicates',
-        'Filtered by module relevance before injection into agents',
-        'High-relevance entries included regardless of module match'
-      ]},
-      { h: 'Integration Points', list: [
-        'ledger.js archiveAndReset() → knowledge.promote()',
-        'factory.js extractSessionContext() → knowledge.relevantFor()',
-        'factory.js composeSystemPrompt() → "Persistent Knowledge" section',
-        'CLI: forge-tools knowledge list|add|prune|promote'
-      ]},
-      { h: 'Files', t: 'forge-session/knowledge.js, .forge/knowledge/learnings.json, forge-config/config.js (knowledge section)' },
-    ]
-  },
-  'cc-archreview': {
-    title: 'Architecture Review Gate',
-    sub: 'Two-level architectural fitness checking',
-    sections: [
-      { h: 'Plan-Level (Dimension 8)', list: [
-        'Added to forge-plan-checker.md agent prompt',
-        'Reads .planning/codebase/ARCHITECTURE.md and CONVENTIONS.md',
-        'Checks: layer boundaries, naming conventions, endpoint patterns, cross-cutting concerns',
-        'Severity: suggestion only (non-blocking)',
-        'Skips gracefully if no codebase map exists (greenfield)'
-      ]},
-      { h: 'Code-Level (Verification Layer 8)', list: [
-        'Added to forge-verify/engine.js as ARCHITECTURAL layer',
-        'Optional, off by default (verification.layers.architectural: false)',
-        'Agent-based: spawns Claude CLI to review changed files against conventions docs',
-        'Output: { pass, issues: [{file, issue, severity, suggestion}] }',
-        'Expensive (LLM call per verification) — enable deliberately'
-      ]},
-      { h: 'Config', t: 'verification.layers.architectural (default: false), workflow.arch_review (default: true)' },
-    ]
-  },
-  'new-milestone': {
-    title: '/forge-new-milestone',
-    sub: 'Start a new milestone cycle',
-    sections: [
-      { h: 'What it does', list: ['Creates or updates PROJECT.md with project vision', 'Routes to requirements gathering (REQUIREMENTS.md)', 'Generates ROADMAP.md with numbered phases', 'Creates .planning/ directory structure', 'Initializes STATE.md for progress tracking'] },
-      { h: 'Also available', t: '/forge-new-project — for brand-new projects (deeper context gathering)' },
-    ]
-  },
-  'roadmap': {
-    title: 'ROADMAP.md',
-    sub: 'Phase-based execution plan',
-    sections: [
-      { h: 'Structure', list: ['Milestone header with version and goal', 'Numbered phases with descriptions and tags', 'Progress table tracking status per phase', 'Checkbox completion markers'] },
-      { h: 'Managed by', list: ['/forge-add-phase — append to end', '/forge-insert-phase — insert between (e.g., 3.1)', '/forge-remove-phase — remove + renumber', '/forge-progress — check status + route to next action'] },
-    ]
-  },
-  'phase-mgmt': {
-    title: 'Phase Management',
-    sub: 'Modify roadmap mid-flight',
-    sections: [
-      { h: 'Commands', list: ['/forge-add-phase — append a new phase to end of current milestone', '/forge-insert-phase — insert urgent work as decimal phase (e.g., 3.1 between 3 and 4)', '/forge-remove-phase — remove a future phase and renumber subsequent ones'] },
-      { h: 'Key Point', t: 'You can always extend or modify the roadmap. Start with whatever scope you have, add more phases later as needs evolve.' },
-    ]
-  },
-  'plan-execute-loop': {
-    title: 'Plan & Execute Per Phase',
-    sub: 'Core phase lifecycle',
-    sections: [
-      { h: 'Flow', list: ['1. /forge-discuss-phase — gather context through questions', '2. /forge-plan-phase — create PLAN.md files with research + planning agents', '3. /forge-execute-phase — run the full execution pipeline (Section 3)', '4. /forge-verify-work — UAT validation with user'] },
-      { h: 'Shortcuts', list: ['/forge-quick — execute simple tasks with forge guarantees but skip optional agents', '/forge-progress — auto-detect next action and route appropriately'] },
-    ]
-  },
-  'audit-milestone': {
-    title: '/forge-audit-milestone',
-    sub: 'Verify milestone completeness',
-    sections: [
-      { h: 'What it does', list: ['Checks all phases against original milestone intent', 'Identifies gaps between planned and actual implementation', 'Flags incomplete features, missing tests, partial work', 'Produces audit report with gap list'] },
-      { h: 'Follow-up', t: 'If gaps found → /forge-plan-milestone-gaps creates new phases to close them' },
-    ]
-  },
-  'plan-gaps': {
-    title: '/forge-plan-milestone-gaps',
-    sub: 'Close gaps from audit',
-    sections: [
-      { h: 'Process', list: ['Reads audit report for identified gaps', 'Creates new phases targeting each gap', 'Adds phases to ROADMAP.md', 'Each gap phase goes through normal plan → execute cycle'] },
-    ]
-  },
-  'complete-milestone': {
-    title: '/forge-complete-milestone',
-    sub: 'Archive and transition',
-    sections: [
-      { h: 'What it does', list: ['Archives all milestone planning artifacts', 'Moves .planning/ to archive directory', 'Archives session ledger', 'Updates PROJECT.md with completed milestone', 'Cleans up temporary files'] },
-      { h: 'Next', t: 'Run /forge-new-milestone to start the next cycle with a fresh ROADMAP.md and planning directory' },
-    ]
-  },
-  'next-milestone': {
-    title: 'Next Milestone',
-    sub: 'Fresh start for new scope',
-    sections: [
-      { h: 'What you get', list: ['New ROADMAP.md with new phases', 'Clean .planning/ directory', 'Fresh session ledger', 'Previous milestone archived for reference', 'Code graph and system graph carry forward (not reset)'] },
-    ]
-  },
-  'discuss-phase': {
-    title: '/forge-discuss-phase',
-    sub: 'Pre-planning context gathering',
-    sections: [
-      { h: 'Process', list: ['Adaptive questioning about the phase scope', 'Gathers constraints, preferences, priorities', 'Builds CONTEXT.md for the planning agent', 'Helps avoid wrong assumptions in the plan'] },
-    ]
-  },
+  // Section 0: Project Kickoff
   'new-project': {
     title: '/forge-new-project',
-    sub: 'Project initialization with brownfield detection',
+    sub: 'Project Initialization',
     sections: [
-      { h: 'Detection Heuristic', list: ['Scans for *.ts, *.js, *.py, *.go, *.rs, *.java (3 levels deep)', 'Checks for package.json, requirements.txt, Cargo.toml, go.mod', 'Sets is_brownfield=true if code or package files found', 'Sets needs_codebase_map=true if code exists but no .planning/codebase/'] },
-      { h: 'Output', t: '{ has_existing_code, has_package_file, is_brownfield, needs_codebase_map, has_git }' },
-      { h: 'Routing', list: ['Brownfield detected → offers /forge-map-codebase first', 'No code → proceeds directly to PROJECT.md creation', 'Creates git repo if none exists'] },
+      { h: 'What it does', list: ['Deep context gathering via adaptive questions', 'Detects existing code (package.json, source files)', 'Routes to Greenfield or Brownfield path', 'Creates PROJECT.md with requirements'] },
     ]
   },
   'brownfield-detect': {
     title: 'Brownfield Detection',
-    sub: 'Automatic heuristic',
+    sub: 'Code Existence Check',
     sections: [
-      { h: 'Checks', list: ['Source files (*.ts, *.js, *.py, etc.) up to 3 levels deep', 'Package files (package.json, requirements.txt, go.mod, etc.)', 'Excludes node_modules/ and .git/'] },
-      { h: 'Result', t: 'is_brownfield: true if any code or package file found' },
+      { h: 'Signals', list: ['package.json / requirements.txt / go.mod present', 'Source directories (src/, lib/, app/) with files', 'Git history with commits'] },
     ]
   },
   'map-codebase': {
     title: '/forge-map-codebase',
-    sub: 'Brownfield-specific: analyze existing code',
+    sub: 'Parallel Codebase Analysis',
     sections: [
-      { h: 'When to use', list: ['Brownfield projects before /forge-new-project', 'Refreshing after significant codebase changes', 'Onboarding to unfamiliar codebase', 'Before major refactoring'] },
-      { h: 'When to skip', list: ['Greenfield projects (nothing to map)', 'Trivial codebases (<5 files)'] },
-      { h: 'Process', list: ['Spawns 4 parallel mapper agents (all background)', 'Agent 1 (tech): STACK.md + INTEGRATIONS.md', 'Agent 2 (arch): ARCHITECTURE.md + STRUCTURE.md', 'Agent 3 (quality): CONVENTIONS.md + TESTING.md', 'Agent 4 (concerns): CONCERNS.md', 'Secret scan on output before committing'] },
-      { h: 'Output', t: '7 documents in .planning/codebase/' },
-    ]
-  },
-  'codebase-docs': {
-    title: 'Codebase Map Documents',
-    sub: '.planning/codebase/ — 7 files',
-    sections: [
-      { h: 'Documents', list: ['STACK.md — languages, runtime, frameworks, dependencies, config', 'INTEGRATIONS.md — external APIs, databases, auth providers, webhooks', 'ARCHITECTURE.md — patterns, layers, data flow, abstractions, entry points', 'STRUCTURE.md — directory layout, key locations, naming conventions', 'CONVENTIONS.md — code style, naming, patterns, error handling', 'TESTING.md — framework, structure, mocking, coverage', 'CONCERNS.md — tech debt, bugs, security, performance, fragile areas'] },
-      { h: 'Used by', t: 'PROJECT.md creation (infer validated capabilities) and research agents (understand existing system)' },
-    ]
-  },
-  'greenfield-project': {
-    title: 'PROJECT.md (Greenfield)',
-    sub: 'All requirements start as hypotheses',
-    sections: [
-      { h: 'Requirements Structure', list: ['Validated: (None yet — ship to validate)', 'Active: all requirements listed as unchecked', 'Everything is a hypothesis until built and tested'] },
-    ]
-  },
-  'brownfield-project': {
-    title: 'PROJECT.md (Brownfield)',
-    sub: 'Existing capabilities pre-validated',
-    sections: [
-      { h: 'Requirements Structure', list: ['Validated: existing capabilities inferred from codebase map, marked with "existing"', 'Active: only NEW work listed as unchecked', 'Avoids re-building or re-researching what already works'] },
-      { h: 'Source', t: 'Reads .planning/codebase/ARCHITECTURE.md and STACK.md to infer existing capabilities' },
-    ]
-  },
-  'greenfield-research': {
-    title: 'Research (Greenfield)',
-    sub: 'Full stack research from scratch',
-    sections: [
-      { h: 'Agent Framing', t: '"Research the standard stack for building [domain] from scratch"' },
-      { h: 'Scope', list: ['Full technology selection', 'Architecture patterns for the domain', 'Best practices for new projects', 'No existing constraints to work around'] },
-    ]
-  },
-  'brownfield-research': {
-    title: 'Research (Brownfield)',
-    sub: 'Scoped to new features only',
-    sections: [
-      { h: 'Agent Framing', t: '"Research what\'s needed to add [target features] to an existing [domain] app. Don\'t re-research the existing system."' },
-      { h: 'Scope', list: ['Only research NEW capabilities needed', 'Respect existing stack and patterns', 'Focus on integration with existing code', 'Agents receive codebase map as context'] },
-    ]
-  },
-  'greenfield-roadmap': {
-    title: 'ROADMAP.md (Greenfield)',
-    sub: 'Phases from zero',
-    sections: [
-      { h: 'Typical Phase Pattern', list: ['Phase 1: Project scaffold + configuration', 'Phase 2: Core data models + database', 'Phase 3: Authentication + authorization', 'Phase 4+: Feature implementation', 'Starts from empty repo, builds up'] },
-    ]
-  },
-  'brownfield-roadmap': {
-    title: 'ROADMAP.md (Brownfield)',
-    sub: 'Phases for new work only',
-    sections: [
-      { h: 'Typical Phase Pattern', list: ['Phases target only NEW features/changes', 'Existing code is not re-implemented', 'May include refactoring phases if needed', 'Graph context helps agents understand existing code'] },
-    ]
-  },
-  'brownfield-init': {
-    title: '/forge-init (Brownfield)',
-    sub: 'Full index of existing codebase',
-    sections: [
-      { h: 'What happens', list: ['tree-sitter parses ALL existing source files', 'Detects all modules, symbols, dependencies', 'Capability detection with confidence scores', 'Interface detection → interfaces.yaml', 'Graph is fully populated from day one', 'Agents use this graph to understand where to make changes'] },
-    ]
-  },
-  'planner': {
-    title: 'Planner Agent',
-    sub: 'Creates PLAN.md with YAML frontmatter',
-    sections: [
-      { h: 'Input', t: 'RESEARCH.md + CONTEXT.md + REQUIREMENTS.md for the phase' },
-      { h: 'Output', list: ['PLAN.md files with YAML frontmatter (wave, depends_on, autonomous, verify)', 'Task descriptions with affected files list', 'Verification steps per task'] },
-      { h: 'Frontmatter Fields', list: ['wave — execution ordering (lower = earlier)', 'depends_on — task IDs that must complete first', 'autonomous — whether agent can run without user input', 'verify — custom verification commands'] },
-    ]
-  },
-  'plan-checker': {
-    title: 'Plan Checker Agent',
-    sub: 'agents/forge-plan-checker.md — 8 Dimensions',
-    sections: [
-      { h: 'Validation Dimensions', list: ['Dim 1: Structural — valid frontmatter, required fields', 'Dim 2: Scope — task size within context budget', 'Dim 3: Dependencies — depends_on references valid task IDs, no cycles', 'Dim 4: Files — affected files exist, no overlap between tasks', 'Dim 5: Verification — verify steps present and executable', 'Dim 6: Completeness — all requirements covered by at least one task', 'Dim 7: Risk — high-risk tasks flagged for careful archetype', 'Dim 8: Architectural Fitness — plans respect ARCHITECTURE.md + CONVENTIONS.md (suggestion severity)'] },
-      { h: 'Process', list: ['Max 3 revision loops with planner agent', 'Each loop: check all dimensions → feedback → planner revises', 'Dim 8 skips gracefully if no codebase map exists (greenfield)'] },
-      { h: 'Scoring', t: 'Per-dimension pass/warn/fail + overall score. Dim 8 is non-blocking (suggestion only).' },
-    ]
-  },
-  'ledger-archive': {
-    title: 'Ledger Archive',
-    sub: 'forge-session/ledger.js → archiveAndReset()',
-    sections: [
-      { h: 'Archive Process', list: ['Capture ledger content before reset', 'Move to .forge/session/archive/ with timestamp', 'Create fresh ledger with carried-forward user preferences'] },
-      { h: 'Knowledge Promotion', list: ['Calls knowledge.promote(cwd, archivedContent)', 'Extracts: Decisions → decision, HIGH warnings → warning', 'Extracts: Rejected approaches → pitfall, User preferences → preference', 'Deduplication via >80% Jaccard word similarity', 'Result: key learnings survive into next milestone'] },
-      { h: 'State Updates', t: 'Updates ROADMAP.md checkbox, STATE.md phase status, triggers /forge-complete-milestone flow' },
-    ]
-  },
-  'iface-yaml': {
-    title: 'interfaces.yaml',
-    sub: '.forge/interfaces.yaml — Declared Service Interfaces',
-    sections: [
-      { h: 'Generated by', t: 'forge-system/detect.js → detectInterfaces()' },
-      { h: 'Contents', list: ['Service name and description', 'Exported interfaces: REST endpoints, gRPC services, event topics', 'Consumed interfaces: HTTP clients, event subscribers', 'Database tables and schemas', 'Package exports'] },
-      { h: 'Used by', list: ['System graph builder — assembly into system-graph.db', 'Verification L7 — contract drift detection (code vs YAML)', 'Agent factory — neighbor interfaces as reference context'] },
-    ]
-  },
-  'config-create': {
-    title: 'Config Creation',
-    sub: '.forge/config.json — Project Configuration',
-    sections: [
-      { h: 'Created during', t: '/forge-init creates default project config' },
-      { h: 'Sections', list: ['graph — graph build settings, languages, ignore patterns', 'execution — context budget, mode, auto-split', 'containers — concurrency, memory, timeout', 'agents — factory, archetypes, model profiles', 'verification — per-layer toggles, test/type commands', 'knowledge — auto-promote, max entries, severity threshold', 'impact_analysis — auto-detect, max depth, scope threshold', 'session — ledger settings, auto-compact, archive', 'display — rich output, graph diff, agent learnings', 'git — atomic commits, prefix, branching', 'system — interface detection, workers, sync', 'project — name, description'] },
-    ]
-  },
-  'dashboard-gen': {
-    title: 'Dashboard Generation',
-    sub: 'forge-graph/dashboard.js',
-    sections: [
-      { h: 'What it creates', t: 'Self-contained HTML file with D3.js force-directed graph of codebase modules, dependencies, and risk hotspots' },
-      { h: 'Features', list: ['Module nodes sized by file count, colored by risk', 'Dependency edges with thickness by connection count', 'Click to drill into module details', 'Forge theme (navy/blue palette)', 'Auto-regenerate on graph update if configured'] },
-      { h: 'Output', t: '.forge/dashboard.html' },
-    ]
-  },
-  'git-hooks': {
-    title: 'Git Hooks',
-    sub: 'Post-commit graph updater',
-    sections: [
-      { h: 'Hook installed', t: '.git/hooks/post-commit — runs forge-graph/updater.js after each commit' },
-      { h: 'What it does', list: ['Detects changed files from latest commit', 'Incremental graph update (only re-parse changed files)', 'Updates dependency edges, symbols, module boundaries', 'Saves graph snapshot if configured', 'Regenerates dashboard if dashboard_auto_regenerate: true'] },
-    ]
-  },
-  'discovery': {
-    title: 'Repo Discovery',
-    sub: 'System Init — Step A',
-    sections: [
-      { h: 'Sources', list: ['--path <dir> — 2-level filesystem scan for git repos', '--repos <file> — JSON registry with explicit repo paths', '--github-org <org> — GitHub API, optionally with --workspace'] },
-      { h: 'Filters', t: 'Respects system.ignore_repos config list' },
-      { h: 'Output', t: 'Array of { path, name } objects for each discovered repo' },
-    ]
-  },
-  'parallel-init': {
-    title: 'Parallel Init',
-    sub: 'System Init — Step B',
-    sections: [
-      { h: 'Process', list: ['N workers (system.workers or auto-detect from CPU cores)', 'Each worker runs full /forge-init on one repo', 'Includes graph build, interface detection, config creation', 'Progress reporting per repo'] },
-      { h: 'Output', t: 'Each repo gets .forge/ with graph.db + interfaces.yaml' },
-    ]
-  },
-  'assembly': {
-    title: 'System Graph Assembly',
-    sub: 'System Init — Step C',
-    sections: [
-      { h: 'Process', list: ['forge-system/builder.js reads all interfaces.yaml files', 'Creates services, interfaces, dependencies tables', 'Calculates service_metrics: fan_in, fan_out, coupling_score, risk_level', 'Assigns teams from interfaces.yaml metadata'] },
-      { h: 'Output', t: 'system-graph.db — cross-repo SQLite database' },
-    ]
-  },
-  'sys-validate': {
-    title: 'System Validation',
-    sub: 'System Init — Step D',
-    sections: [
-      { h: 'Checks', list: ['Structural: valid YAML, required fields, known protocols', 'Cross-repo: referenced providers exist, no dangling dependencies', 'Contract consistency: endpoints match between provider and consumer', 'Deprecation warnings: deprecated interfaces still consumed'] },
-      { h: 'Output', t: 'Validation report: { valid, errors[], warnings[] }' },
-    ]
-  },
-  'gaps-decision': {
-    title: 'Gaps Found?',
-    sub: 'Decision after milestone audit',
-    sections: [
-      { h: 'Flow', list: ['Audit finds gaps → /forge-plan-milestone-gaps creates new phases', 'No gaps → /forge-complete-milestone archives and transitions', 'Partial gaps → user decides which to address now vs later'] },
-    ]
-  },
-  'plan-phase': {
-    title: '/forge-plan-phase',
-    sub: 'Create PLAN.md files for a phase',
-    sections: [
-      { h: 'Pipeline', list: ['Load phase context (CONTEXT.md, REQUIREMENTS.md, codebase docs)', 'Optionally run research agent for unknown technologies', 'Planner agent creates PLAN.md with tasks + frontmatter', 'Plan-checker validates across 8 dimensions', 'Max 3 revision loops between planner and checker', 'Output: verified PLAN.md ready for /forge-execute-phase'] },
-    ]
-  },
-  'context-load': {
-    title: 'Context Loading',
-    sub: 'Prepare planning context',
-    sections: [
-      { h: 'Sources', list: ['CONTEXT.md from /forge-discuss-phase', 'REQUIREMENTS.md / PROJECT.md scope', '.planning/codebase/ documents (brownfield)', 'Session ledger — decisions, preferences, warnings', 'Code graph — affected modules, capabilities', 'Knowledge base — persistent learnings from prior milestones'] },
-    ]
-  },
-  'research-decision': {
-    title: 'Need Research?',
-    sub: 'Decision point in planning pipeline',
-    sections: [
-      { h: 'When YES', list: ['Phase involves unfamiliar technology', 'New integrations not in existing stack', 'Architecture decisions without clear precedent', 'Greenfield: most phases need research'] },
-      { h: 'When NO', list: ['Well-understood feature additions', 'Brownfield: extending existing patterns', 'Bug fixes with clear root cause'] },
-    ]
-  },
-  'researcher': {
-    title: 'Research Agent',
-    sub: 'Task subagent for codebase exploration',
-    sections: [
-      { h: 'Greenfield framing', t: '"Research the standard stack for building [domain] from scratch"' },
-      { h: 'Brownfield framing', t: '"Research what\'s needed to add [features] to existing [domain] app"' },
-      { h: 'Output', t: 'RESEARCH.md — technology recommendations, patterns, trade-offs' },
-      { h: 'Context', t: 'Receives codebase map documents (brownfield) or project requirements (greenfield)' },
-    ]
-  },
-  'exec-init': {
-    title: '/forge-execute-phase',
-    sub: 'Execution Pipeline Entry Point',
-    sections: [
-      { h: 'What it does', list: ['Load all PLAN.md files for the phase', 'Auto-detect execution mode (Docker / worktree / sequential)', 'Check system resources (CPU, RAM, disk)', 'Initialize session ledger state tracking'] },
-      { h: 'File', t: 'atos-forge/workflows/execute-phase.md — 16 steps, 15 modules consumed' },
-    ]
-  },
-  'load-plans': {
-    title: 'Load Plans',
-    sub: 'Filter and prioritize phase plans',
-    sections: [
-      { h: 'Process', list: ['Discover all .md files in .planning/phases/N/', 'Filter: skip if has_summary=true in frontmatter (already executed)', 'Sort by wave number from frontmatter', 'Identify gaps (missing wave numbers) and dependencies'] },
-    ]
-  },
-  'mode-decision': {
-    title: 'Docker Available?',
-    sub: 'Execution mode auto-detection',
-    sections: [
-      { h: 'Detection', list: ['orchestrator.js check-docker → { available, version, running }', 'If Docker + execution.container_backend="docker" → container mode', 'If no Docker → worktree mode (Claude CLI subprocesses)', 'If no Claude CLI → sequential mode (single-threaded)'] },
-      { h: 'Override', t: 'forge-tools settings set execution.container_backend docker|worktree' },
-    ]
-  },
-  'mode-select': {
-    title: 'Execution Mode',
-    sub: 'Container vs Worktree vs Sequential',
-    sections: [
-      { h: 'Container Mode', t: 'Docker: isolated filesystem, reproducible, resource limits enforced. Best for CI/CD.' },
-      { h: 'Worktree Mode', t: 'Git worktrees + Claude CLI: lighter weight, uses host tools. Default for development.' },
-      { h: 'Sequential Mode', t: 'Fallback: one task at a time, no parallelism. For resource-constrained machines.' },
-    ]
-  },
-  'assessor': {
-    title: 'Context Assessor',
-    sub: 'forge-assess/assessor.js',
-    sections: [
-      { h: 'What it does', list: ['Estimate token count for plan + graph context + session context', 'Compare against context_budget (default 200k)', 'If estimate > budget × assessment_threshold (80%) → recommend split', 'Suggest strategy: module, concern, or file-based splitting'] },
-      { h: 'Output', t: '{ fits: bool, estimate_tokens, budget, recommendation, suggested_strategy }' },
-    ]
-  },
-  'split-decision': {
-    title: 'Needs Split?',
-    sub: 'Decision based on assessor output',
-    sections: [
-      { h: 'Flow', list: ['fits=true → proceed directly to factory', 'fits=false + auto_split=true → automatic splitting', 'fits=false + auto_split=false → warn user, suggest manual split'] },
-    ]
-  },
-  'splitter': {
-    title: 'Plan Splitter',
-    sub: 'forge-assess/splitter.js',
-    sections: [
-      { h: 'Strategies', list: ['module — split by module boundaries from code graph', 'concern — split by concern: schema → impl → test → config', 'file — split by individual files/symbols (last resort)'] },
-      { h: 'Cascade', t: 'If a group still exceeds budget after primary split, subdivides further (concern → file → symbol)' },
-      { h: 'Output', list: ['Multiple sub-plan .md files in .planning/phases/N/sub/', 'Each includes graph_context and session_context instructions', 'Dependency edges preserved across sub-plans'] },
-    ]
-  },
-  'sub-plans': {
-    title: 'Sub-Plans',
-    sub: 'Context-fitting plan fragments',
-    sections: [
-      { h: 'Each sub-plan contains', list: ['Subset of tasks from original plan', 'YAML frontmatter with wave, depends_on', 'graph_context: specific files to load', 'session_context: relevant ledger sections', 'Token budget: fits within context_budget × safety_margin'] },
-    ]
-  },
-  'bin-pack': {
-    title: 'Bin Packing',
-    sub: 'Resource-aware wave optimization',
-    sections: [
-      { h: 'Algorithm', list: ['Sort agents by archetype priority (careful first, then integrator)', 'Per wave: assign agents until max_concurrent reached', 'Check memory: sum of agent memory ≤ max_total_memory', 'Check CPU: sum of agent CPU ≤ max_total_cpu', 'Overflow → create new sub-wave'] },
-    ]
-  },
-  'waves': {
-    title: 'Wave Execution',
-    sub: 'Parallel batch of independent agents',
-    sections: [
-      { h: 'Per Wave', list: ['Launch all agents in parallel (Docker or worktree)', 'Wait for completion with timeout', 'Collect patches from each agent', 'Apply patches to main repo (git apply --3way)', 'Quick verify (L1-L4)', 'Update graph incrementally', 'Write learnings to ledger', 'Re-build remaining agents with updated context'] },
-    ]
-  },
-  'resource-mgr': {
-    title: 'Resource Manager',
-    sub: 'Concurrency semaphore',
-    sections: [
-      { h: 'Controls', list: ['max_concurrent slots (auto-detected from CPU/RAM)', 'acquire() blocks until slot available', 'release() frees slot for next agent', 'Hard cap: 8 concurrent agents'] },
-      { h: 'Auto-detection', t: 'max_concurrent = min(floor((cores-2)/cpu_per), floor((ram×0.7)/mem_per))' },
-    ]
-  },
-  'worktree-create': {
-    title: 'Worktree Creation',
-    sub: 'Isolated checkout for agent work',
-    sections: [
-      { h: 'Process', list: ['git worktree add /tmp/forge-wt-<taskId>', 'Copy graph.db, ledger.md to worktree', 'Copy system-graph.db and neighbor interfaces (if available)', 'Agent config written as agent.json in worktree root'] },
-    ]
-  },
-  'exec-mode': {
-    title: 'Agent Execution',
-    sub: 'Container or worktree subprocess',
-    sections: [
-      { h: 'Docker Path', list: ['docker run with resource limits', 'agent-entrypoint.js inside container', 'Copies /repo → /workspace, applies prior patches', 'Runs claude --print with system prompt'] },
-      { h: 'Worktree Path', list: ['Spawns claude --print --dangerously-skip-permissions', 'Works directly in git worktree', 'Same prompt and context as Docker variant'] },
-    ]
-  },
-  'agent-inside': {
-    title: 'Agent Internals',
-    sub: 'What runs inside each agent',
-    sections: [
-      { h: 'Execution Flow', list: ['Read agent.json config (archetype, prompt, context, verification)', 'Build full system prompt: base + archetype + domain + graph + session + knowledge', 'Load context files within token budget', 'claude --print processes the prompt → generates code changes', 'git diff captures all modifications as patch'] },
-    ]
-  },
-  'collect-patches': {
-    title: 'Patch Collection',
-    sub: 'Gather and apply agent outputs',
-    sections: [
-      { h: 'Process', list: ['Docker: patches from /output/patches/ directory', 'Worktree: git diff from worktree checkout', 'Apply via git apply --3way to main repo', 'Extract agent learnings (warnings, discoveries) → ledger'] },
-    ]
-  },
-  'quick-verify': {
-    title: 'Quick Verify',
-    sub: 'Lightweight check after each wave',
-    sections: [
-      { h: 'Layers', t: 'L1 (Structural) + L2 (Type) + L3 (Contracts) + L4 (Deps) — fast checks only' },
-      { h: 'Max loops', t: '2 fix attempts via fix-agent before escalating' },
-      { h: 'On failure', t: 'Revert wave patches, spawn fix-agent, re-verify' },
-    ]
-  },
-  'verify-pass': {
-    title: 'Quick Verify Pass?',
-    sub: 'Decision after wave verification',
-    sections: [
-      { h: 'PASS', t: 'Proceed to graph update + ledger write + next wave' },
-      { h: 'FAIL (fixable)', t: 'Spawn fix-agent with error details, re-verify (max 2 loops)' },
-      { h: 'FAIL (stuck)', t: 'Same patch hash twice or new failures introduced → escalate to user' },
-    ]
-  },
-  'fix-agent': {
-    title: 'Fix Agent',
-    sub: 'Auto-repair failed verification',
-    sections: [
-      { h: 'How it works', list: ['Archetype: careful (extra validation)', 'Receives: error details, failed layer, fix_suggestions from engine', 'Has full session_context (warnings, decisions, rejected approaches)', 'Runs in worktree, produces fix patch', 'patchFingerprint() SHA256 prevents infinite loops'] },
-      { h: 'Auto-fixable', list: ['Type errors (L2)', 'Missing imports (L4)', 'Syntax issues (L1)', 'Contract drift (L7)', 'Assertion mismatches (L5)'] },
-      { h: 'Not auto-fixable', t: 'Behavioral failures (L6) → escalate to user' },
-    ]
-  },
-  'graph-update': {
-    title: 'Incremental Graph Update',
-    sub: 'forge-graph/updater.js',
-    sections: [
-      { h: 'Process', list: ['Detect changed files from applied patches', 'Re-parse only changed files (tree-sitter or regex)', 'Update symbols, dependencies, module boundaries', 'Recalculate risk scores and module stability', 'Save snapshot (before/after) if configured'] },
-    ]
-  },
-  'ledger-write': {
-    title: 'Ledger Write',
-    sub: 'Agent learnings → session ledger',
-    sections: [
-      { h: 'Written per wave', list: ['logWarning() — issues discovered by agents', 'logDiscovery() — patterns or facts found', 'logWaveComplete() — wave N done, agents used, time taken', 'logError() — verification failures with fix details'] },
-      { h: 'Propagation', t: 'These entries are read by factory.extractSessionContext() when building Wave N+1 agents → knowledge propagation' },
-    ]
-  },
-  'full-verify-decision': {
-    title: 'Full Verification Result?',
-    sub: 'Decision after 8-layer verification',
-    sections: [
-      { h: 'PASS', t: 'All enabled layers pass → proceed to commit' },
-      { h: 'FAIL (auto-fixable)', t: 'Enter auto-fix loop: max 3 iterations, fix-agent per attempt' },
-      { h: 'FAIL (escalate)', t: 'Behavioral failures, stuck loops, or max retries → escalate to user' },
-    ]
-  },
-  'commit': {
-    title: 'Git Commit',
-    sub: 'Atomic commit with forge metadata',
-    sections: [
-      { h: 'Format', t: 'feat(module): description [forge:archetype]' },
-      { h: 'Details', list: ['Atomic: all phase changes in one commit', 'Includes archetype tag for traceability', 'Triggers post-commit hook → graph update', 'git.commit_prefix configurable, sign_commits optional'] },
-    ]
-  },
-  'cleanup': {
-    title: 'Cleanup',
-    sub: 'Remove execution artifacts',
-    sections: [
-      { h: 'What is cleaned', list: ['Docker containers (stopped forge-agent-*)', 'Git worktrees (/tmp/forge-wt-*)', 'Temporary files and agent configs', 'Final graph update to capture committed state'] },
-    ]
-  },
-  'phase-complete': {
-    title: 'Phase Complete',
-    sub: 'Advance to next phase',
-    sections: [
-      { h: 'Actions', list: ['Mark ROADMAP.md phase checkbox as complete', 'Update STATE.md with phase completion status', 'Archive phase ledger entries', 'Promote key learnings to knowledge base (if enabled)', 'Report summary: files changed, tests passed, agents used'] },
-    ]
-  },
-  'impact-analyzer': {
-    title: 'Requirement Impact Analyzer',
-    sub: 'forge-analyze/analyzer.js — Automatic multi-repo detection before planning',
-    sections: [
-      { h: 'Problem Solved', t: 'The AI plans within a single repo by default. If a phase touches interfaces consumed by other repos, the planner doesn\'t know until execution — resulting in incomplete plans and missing cross-service coordination.' },
-      { h: 'Pipeline', list: [
-        '1. Auto-read phase goal from ROADMAP.md (##-heading + first 5 body lines) or --goal flag',
-        '2. Auto-read requirements from REQUIREMENTS.md',
-        '3. Extract domain keywords (stop-word filtering removes HTTP verbs, generic API/architecture terms)',
-        '4. Identify current service via findServiceByRepoPath(cwd)',
-        '5. Search interfaceRegistry({search: keyword}) across all services in system-graph.db',
-        '6. Run impact() on matched services — resolves repo_path from service records',
-        '7. Add transitive consumers (with dependency usage reasons)',
-        '8. Classify roles: provider (has consumers) vs consumer (imports from matched set)',
-        '9. Determine scope: SINGLE_REPO (0-1 services) vs MULTI_REPO (2+ services)',
-        '10. Build execution order: providers in Wave 1, consumers in Wave 2+ (topological)',
-        '11. Write IMPACT.md + IMPACT.json to .planning/phases/{N}/'
-      ]},
-      { h: 'Keyword Extraction', list: [
-        'Strips markdown (code blocks, inline code, links, formatting)',
-        'Removes stop words: English, planning terms, HTTP verbs (POST/GET/PUT/DELETE)',
-        'Filters generic terms: service, status, user, account, request, response, endpoint, route, api',
-        'Extracts compound terms (adjacent word pairs): "jwt authentication", "refresh tokens"',
-        'Sorts by frequency, uses top 20 keywords for interface search'
-      ]},
-      { h: 'Output', list: [
-        'scope: SINGLE_REPO | MULTI_REPO',
-        'confidence: high (2+ direct matches) | medium (1 match or consumers only) | low (indirect)',
-        'affected_services[]: id, repo_path (filesystem), role, risk, fan_in, interfaces, team, reasons',
-        'execution_order: [[wave1_services], [wave2_services]] — providers before consumers',
-        'team_coordination: teams that need to coordinate',
-        'keyword_matches: { keyword: interface_count } for transparency'
-      ]},
-      { h: 'Integration', list: [
-        'plan-phase.md Step 7.6 — runs before spawning planner, asks user about multi-repo scope',
-        'forge-planner.md — if MULTI_REPO, creates per-service PLAN.md with cross-plan dependencies',
-        'factory.js — injects impact_analysis into agent session_context + "Cross-Repo Impact" prompt section',
-        'CLI: forge-tools impact analyze [--phase N] [--goal text] [--json|--raw] [--write]',
-        'CLI: forge-tools impact show --phase N'
-      ]},
-      { h: 'Config', t: 'impact_analysis: { enabled, auto_detect, max_depth (default 2), scope_threshold (default 1) }' },
-    ]
-  },
-  'arch-review-gate': {
-    title: 'Architecture Review Gate',
-    sub: 'Plan-level fitness check (Dimension 8)',
-    sections: [
-      { h: 'When it runs', t: 'After plan-checker validates structural dimensions (1-7), Dimension 8 checks architectural fitness' },
-      { h: 'Inputs', list: ['.planning/codebase/ARCHITECTURE.md — layer boundaries, patterns, data flow', '.planning/codebase/CONVENTIONS.md — naming, error handling, code style', 'PLAN.md task list — files to create/modify, endpoints, services'] },
-      { h: 'Checks', list: ['Layer boundary violations — UI code importing from database layer directly', 'Naming convention compliance — file names, function names, endpoints', 'Pattern consistency — new code follows established patterns from ARCHITECTURE.md', 'Cross-cutting concerns — error handling, logging, auth handled consistently'] },
-      { h: 'Severity', t: 'Suggestion only (non-blocking). Plans are flagged but not rejected. Agents receive warnings in session_context.' },
-      { h: 'Greenfield', t: 'Skips gracefully if no codebase map exists — nothing to check against' },
-      { h: 'Code-Level Counterpart', t: 'Verification Layer 8 (ARCHITECTURAL) performs the same review on actual code after execution. Optional, off by default.' },
-    ]
-  },
-  'cc-config': {
-    title: 'Unified Configuration',
-    sub: 'forge-config/config.js — Single source of truth',
-    sections: [
-      { h: 'Merge Order', t: 'defaults ← ~/.forge/config.json (global) ← .forge/config.json (project)' },
-      { h: '12 Sections', list: ['project — name, description', 'graph — build settings, languages, ignore patterns', 'execution — context budget, mode, container backend, auto-split', 'containers — concurrency, memory, CPU, timeout', 'agents — factory, archetypes, model profiles (quality/balanced/budget)', 'verification — per-layer toggles (8 layers), test/type commands', 'knowledge — auto-promote, max entries, severity threshold', 'impact_analysis — auto-detect, max depth, scope threshold', 'session — ledger settings, auto-compact, archive', 'display — rich output, graph diff, agent learnings', 'git — atomic commits, prefix, branching, signing', 'system — interface detection, workers, sync, registry'] },
-      { h: 'API', list: ['loadConfig(cwd) → { config, sources }', 'resolveEffective(cwd) → config + system info', 'validate(config) → { valid, errors[] }', 'Section accessors: getVerification, getContainers, getExecution, getKnowledge, getImpactAnalysis, getSystem'] },
-    ]
-  },
-  'cc-system': {
-    title: 'System Graph',
-    sub: 'Cross-repo dependency tracking',
-    sections: [
-      { h: 'What it provides', list: ['Service registry with team ownership', 'Cross-repo dependency graph (who calls whom)', 'Interface contracts between services', 'Risk analysis: fan-in, coupling score, deprecated deps'] },
-      { h: 'Consumers', list: ['Agent Factory — cross-repo context, consumer warnings', 'Verification L7 — contract drift detection', 'Parallel Planner — cross-repo DAG edges', 'System Dashboard — D3 visualization with 5 tabs'] },
-      { h: 'Files', t: 'forge-system/query.js, builder.js, sync.js, dashboard.js, detect.js, validate.js' },
+      { h: 'Process', list: ['4 parallel mapper agents analyze the codebase', 'Each agent produces specialized documents', 'Outputs 7 documents to .planning/codebase/'] },
+      { h: 'Documents', list: ['STACK.md - Technology stack analysis', 'ARCHITECTURE.md - System architecture', 'STRUCTURE.md - Directory and file structure', 'CONVENTIONS.md - Code conventions and patterns', 'TESTING.md - Test infrastructure', 'INTEGRATIONS.md - External integrations', 'CONCERNS.md - Issues and tech debt'] },
     ]
   },
   'converge-point': {
     title: 'Convergence Point',
-    sub: 'Both paths produce the same artifacts',
+    sub: 'Both Paths Merge',
     sections: [
-      { h: 'Common Artifacts', list: ['ROADMAP.md — phased execution plan', '.forge/config.json — unified configuration', '.forge/graph.db — code graph (empty or populated)', '.forge/session/ — session management', 'PROJECT.md — requirements + vision', 'Git hooks — post-commit graph updates'] },
-      { h: 'Key Insight', t: '/forge-init always runs regardless of greenfield/brownfield. On greenfield it creates empty graph infrastructure. On brownfield it indexes everything. Both paths feed into the same milestone lifecycle.' },
+      { h: 'Outputs', list: ['ROADMAP.md with numbered phases', '.forge/ directory with full infrastructure', 'graph.db (empty for greenfield, populated for brownfield)', 'config.json with project settings', 'constitution.md with 8 non-negotiable rules', 'session/ directory for ledger and archive'] },
+    ]
+  },
+
+  // Section 1: Requirements
+  'req-input': {
+    title: 'REQUIREMENTS.md',
+    sub: 'Single Source of Truth',
+    sections: [
+      { h: 'Location', t: '.planning/REQUIREMENTS.md' },
+      { h: 'Format', list: ['REQ-ID format (REQ-001, REQ-002, etc.)', 'Each requirement: description, acceptance criteria, priority', 'depends_on field for prerequisite ordering', 'Template: atos-forge/templates/requirements.md'] },
+      { h: 'Consumed by', list: ['Planner (100% coverage protocol)', 'Plan-checker (Dimension 1: Coverage)', 'Verifier (satisfaction checks)', 'Drift analyzer (per-requirement scoring)', 'Auditor (milestone completion check)'] },
+    ]
+  },
+  'req-validate': {
+    title: 'Requirements Validation',
+    sub: 'Deterministic Quality Checker',
+    sections: [
+      { h: 'Command', t: 'forge-tools requirements validate' },
+      { h: 'Checks', list: ['34 weasel words detected (e.g., "fast", "user-friendly", "scalable")', '6 quality criteria: specific, testable, user-centric, atomic, unambiguous, complete', 'Word-boundary matching (avoids false positives)', 'Reports per-requirement scores and overall quality'] },
+    ]
+  },
+  'req-enhance': {
+    title: '/forge-enhance-requirements',
+    sub: 'AI-Powered Enhancement',
+    sections: [
+      { h: '6 Dimensions', list: ['Industry Standards - domain-specific norms and regulations', 'Edge Cases - failure modes, boundary conditions', 'Security - authentication, authorization, data protection', 'User Journey - UX flows, error recovery, accessibility', 'Integration - APIs, third-party services, data formats', 'Data Lifecycle - creation, storage, migration, deletion'] },
+      { h: 'Source Provenance', t: 'Every finding includes its source (research, domain knowledge, pattern matching) for traceability.' },
+      { h: 'Modes', list: ['full - complete enhancement pass', 'quality - audit existing requirements', 'gaps - detect missing requirements via research agents', 'add - interactively write new requirements'] },
+    ]
+  },
+  'req-deps': {
+    title: 'Requirement Dependencies',
+    sub: 'Prerequisites and Ordering',
+    sections: [
+      { h: 'depends_on Field', t: 'Each requirement can declare depends_on: [REQ-xxx] to establish prerequisite ordering.' },
+      { h: 'Impact', list: ['Planner respects dependency order when creating phases', 'Plan-checker validates dependency correctness (Dim 3)', 'Roadmap maps phases to requirement groups'] },
+    ]
+  },
+
+  // Section 2: Planning
+  'research-phase': {
+    title: '/forge-research-phase',
+    sub: 'Technical Research',
+    sections: [
+      { h: 'Process', list: ['Spawns research agent as Task subagent', 'Agent explores codebase, package ecosystem, patterns', 'Outputs RESEARCH.md with tech stack, patterns, pitfalls'] },
+    ]
+  },
+  'discuss-phase': {
+    title: '/forge-discuss-phase',
+    sub: 'Adaptive Context Gathering',
+    sections: [
+      { h: 'Process', list: ['Asks adaptive questions based on phase scope', 'User decisions become locked constraints', 'Outputs CONTEXT.md consumed by planner'] },
+    ]
+  },
+  'plan-phase': {
+    title: '/forge-plan-phase',
+    sub: 'Mandatory 100% Coverage Protocol',
+    sections: [
+      { h: 'Process', list: ['Loads CONTEXT.md + RESEARCH.md + graph context', 'Runs impact analyzer for multi-repo detection', 'Spawns planner agent with coverage mandate', 'Every requirement must be mapped to a task', 'Plan-checker validates (up to 3 loops)'] },
+      { h: 'Output', list: ['PLAN.md files with YAML frontmatter', 'must_haves: truths (behavioral invariants), artifacts (files that must exist), key_links (wiring between components)', 'Task blocks with files, action, verify, done fields'] },
+    ]
+  },
+  'plan-checker': {
+    title: 'Plan Checker',
+    sub: '12-Dimension Validation',
+    sections: [
+      { h: 'Blockers', list: ['Dim 1: Requirement Coverage - every REQ-ID must be in a plan', 'Dim 11: Security Anti-Patterns - SHA-256 for passwords, JWT in localStorage, SQL concatenation'] },
+      { h: 'Checks', list: ['Dim 2: Task Completeness - all fields present', 'Dim 3: Dependency Correctness - depends_on resolves', 'Dim 4: Key Links Planned - wiring between components', 'Dim 5: Scope Sanity - plan size vs complexity', 'Dim 6: Verification Derivation - verify fields trace to must_haves', 'Dim 7: Context Compliance - respects CONTEXT.md constraints', 'Dim 8: Test Coverage - tests planned for critical paths', 'Dim 9: Architectural Fitness - matches ARCHITECTURE.md', 'Dim 10: Research Alignment - uses RESEARCH.md findings', 'Dim 12: Cross-Plan File Overlap - no two plans edit same file'] },
+    ]
+  },
+  'dim-11': {
+    title: 'Dim 11: Security Anti-Patterns',
+    sub: 'BLOCKER - Cannot Proceed',
+    sections: [
+      { h: 'Blocks on', list: ['SHA-256 used for password hashing (must use bcrypt/argon2)', 'JWT stored in localStorage (must use httpOnly cookies)', 'SQL string concatenation (must use parameterized queries)', 'Secrets in source code (must use environment variables)', 'Missing CORS configuration', 'Disabled CSRF protection'] },
+    ]
+  },
+
+  // Section 3: Test-First Execution
+  'stub-gen': {
+    title: 'Test Stub Generation',
+    sub: 'forge-verify/test-stub-generator.js',
+    sections: [
+      { h: 'Input', t: 'Plan must_haves: truths, artifacts, key_links' },
+      { h: 'Output', list: ['truths -> failing behavioral tests (expect X to equal Y)', 'artifacts -> file existence checks (expect file to exist)', 'key_links -> wiring tests (expect A to call B)'] },
+      { h: 'Function', t: 'generateTestFirstStubs(planPath, cwd) -> categorized failing test stubs' },
+    ]
+  },
+  'hash-lock': {
+    title: 'Hash Lock System',
+    sub: 'Tamper Prevention',
+    sections: [
+      { h: 'Process', list: ['computeHashLocks() generates SHA-256 per test file', 'Hashes stored in .forge/hash-locks.json', 'Guard hook reads hash-locks on pre-commit', 'Any modification to locked files is blocked'] },
+      { h: 'Config', t: 'hash_lock.enabled (default true), lock_test_files, lock_must_haves, lock_verification_steps' },
+    ]
+  },
+  'guard-hook': {
+    title: 'Guard Hook',
+    sub: 'Pre-Commit Protection',
+    sections: [
+      { h: 'Protections', list: ['block_locked_test_writes - prevents modifying hash-locked test files', 'block_env_writes - prevents committing .env files', 'block_secrets - detects API keys and passwords in staged files'] },
+      { h: 'Config', t: 'guard.enabled, guard.block_env_writes, guard.block_locked_test_writes, guard.block_secrets' },
+    ]
+  },
+  'constitution-inject': {
+    title: 'Constitution',
+    sub: '8 Non-Negotiable Rules',
+    sections: [
+      { h: 'Purpose', t: 'Injected into every executor agent. Rules that cannot be overridden by plan content or user preferences.' },
+      { h: 'Config', t: 'constitution.enabled (default true), constitution.path, constitution.enforcement' },
+      { h: 'File', t: '.forge/constitution.md' },
+    ]
+  },
+  'knowledge-propagation': {
+    title: 'Knowledge Propagation',
+    sub: 'Inter-Plan Learning',
+    sections: [
+      { h: 'Flow', list: ['Plan N execution writes warnings/discoveries to ledger', 'Ledger is read by factory when building Plan N+1 agent', 'Session context includes decisions, warnings, rejected approaches', 'Prevents repeated mistakes across sequential plans'] },
+    ]
+  },
+
+  // Section 4: Agent Factory
+  'factory-detail': {
+    title: 'Agent Factory',
+    sub: 'forge-agents/factory.js',
+    sections: [
+      { h: 'Input', t: 'Path to PLAN.md file + project root' },
+      { h: 'Output', t: '{ agentConfig, analysis, _fromCache? }' },
+      { h: 'Cache', t: 'SHA-256 key from plan content + graph.db mtime + system-graph.db mtime + knowledge hash + ledger mtime. Stored in .forge/agents/{task-id}/' },
+    ]
+  },
+  'factory-s1': {
+    title: 'Step 1: Analyze Task',
+    sub: 'Graph Context + Risk Assessment',
+    sections: [
+      { h: 'Actions', list: ['Parse plan frontmatter', 'getContextForTask(files) from graph.db', 'getRiskAssessment(files) -> { level, score, reasons }', 'getCycles() for circular deps', 'getCapabilities() per module', 'Check system-graph.db for cross-repo context', 'Read ledger for state + decisions'] },
+    ]
+  },
+  'factory-s2': {
+    title: 'Step 2: Match Catalog',
+    sub: 'Priority-Based Agent Selection',
+    sections: [
+      { h: 'Process', list: ['Word-boundary matching against plan content', 'Score each of 18 catalog agents', 'Select primary (highest score) + secondary agents', 'Priority: specialists=10, docs=8, refactor=5, general=1', 'If no match: create new agent, save to catalog'] },
+    ]
+  },
+  'factory-s3': {
+    title: 'Step 3: Load + Inject',
+    sub: 'Agent Body + Plan Contract + Constitution',
+    sections: [
+      { h: 'Injection', list: ['Load catalog agent markdown body', 'Inject Plan Contract (must_haves, verify criteria)', 'Inject Constitution (8 non-negotiable rules)', 'Add session context (decisions, warnings, knowledge)'] },
+    ]
+  },
+  'factory-s4': {
+    title: 'Step 4: Prune Sections',
+    sub: 'Dynamic Section Removal',
+    sections: [
+      { h: 'Process', list: ['Word-boundary signals from plan content', 'GENERIC_TERMS filter removes overly broad matches', 'Irrelevant agent sections pruned to save tokens', 'Keeps only sections relevant to this specific plan'] },
+    ]
+  },
+  'factory-s5': {
+    title: 'Step 5: Context Package',
+    sub: 'Token-Budgeted File Selection',
+    sections: [
+      { h: 'Categories', list: ['always_load: plan file + task files (mandatory)', 'task_specific: deps, consumers, test files from graph', 'reference: interfaces, architecture docs'] },
+      { h: 'Budget', t: '70% of context window allocated to context files. Prioritized by relevance.' },
+    ]
+  },
+  'cat-semantic': {
+    title: 'semantic-verifier',
+    sub: 'Verifier Agent (not executor)',
+    sections: [
+      { h: 'Purpose', t: 'Judges plan compliance from git diff. Returns per-criterion verdicts (truths, artifacts, key_links) with evidence.' },
+      { h: 'Used by', t: 'Verification Layer 8 (SEMANTIC) when enabled.' },
+    ]
+  },
+  'cat-drift': {
+    title: 'drift-analyzer',
+    sub: 'Verifier Agent (not executor)',
+    sections: [
+      { h: 'Purpose', t: 'Measures spec-to-implementation drift per requirement. Computes drift_score = 1 - (verified/total).' },
+      { h: 'Used by', t: 'Drift measurement pipeline (Section 6).' },
+    ]
+  },
+
+  // Section 5: Verification Engine
+  'layer-0': {
+    title: 'Layer 0: HASH_LOCK',
+    sub: 'Tamper Detection (<1s)',
+    sections: [
+      { h: 'Checks', list: ['Recomputes SHA-256 of locked files', 'Compares against .forge/hash-locks.json', 'Fails if any locked file was modified'] },
+      { h: 'Scope', t: 'Test files and must_haves. Opt-in, but enabled by default when test-first is active.' },
+    ]
+  },
+  'layer-1': {
+    title: 'Layer 1: STRUCTURAL',
+    sub: 'Syntax Checks (<5s)',
+    sections: [
+      { h: 'Checks', list: ['Syntax errors', 'Stray console.log statements', 'debugger statements', 'Merge conflict markers (<<<<<<)', 'Bracket balance'] },
+    ]
+  },
+  'layer-2': {
+    title: 'Layer 2: TYPE/COMPILE',
+    sub: 'Type Checking (10-30s)',
+    sections: [
+      { h: 'Auto-detected', list: ['TypeScript: tsc --noEmit (broad tsconfig discovery)', 'Python: mypy', 'Go: go build'] },
+      { h: 'Override', t: 'verification.type_check_command in config' },
+    ]
+  },
+  'layer-3': {
+    title: 'Layer 3: INTERFACE CONTRACTS',
+    sub: 'Breaking Change Detection (5-15s)',
+    sections: [
+      { h: 'Checks', list: ['Graph contract_hash comparison', 'Breaking changes in exported interfaces', 'Consumer risk assessment'] },
+    ]
+  },
+  'layer-5': {
+    title: 'Layer 5: TESTS',
+    sub: 'Graph-Identified Tests (30s-5min)',
+    sections: [
+      { h: 'Process', list: ['getContextForTask() identifies test files for changed code', 'Runs identified test files', 'Override: verification.test_command in config'] },
+    ]
+  },
+  'layer-7': {
+    title: 'Layer 7: CONTRACT',
+    sub: 'Cross-Repo Verification (5-30s)',
+    sections: [
+      { h: 'Checks', list: ['Code-to-YAML drift (phantom exports, undeclared exports, stale endpoints)', 'Backward compatibility (removed interfaces, protocol changes)', 'Cross-repo ripple (consumer risk, high-fan-in warnings, team coordination)'] },
+      { h: 'Requires', t: '.forge/interfaces.yaml; optional: system-graph.db for ripple checks' },
+    ]
+  },
+  'layer-8': {
+    title: 'Layer 8: SEMANTIC',
+    sub: 'Spec Compliance (30-60s, opt-in)',
+    sections: [
+      { h: 'Process', list: ['Uses semantic-verifier catalog agent', 'Judges plan must_haves vs git diff', 'Per-criterion verdicts: truths, artifacts, key_links', 'Each verdict includes evidence from the diff'] },
+      { h: 'Enable', t: 'verification.layers.semantic = true' },
+    ]
+  },
+  'layer-9': {
+    title: 'Layer 9: ARCHITECTURAL',
+    sub: 'Convention Review (30-60s, opt-in)',
+    sections: [
+      { h: 'Process', list: ['Reads ARCHITECTURE.md and CONVENTIONS.md', 'Spawns Claude CLI to review changed files', 'Checks against documented conventions'] },
+      { h: 'Enable', t: 'verification.layers.architectural = true' },
+    ]
+  },
+  'layer-10': {
+    title: 'Layer 10: BROWSER',
+    sub: 'Playwright Testing (opt-in)',
+    sections: [
+      { h: 'Capabilities', list: ['Dev server auto-detection and lifecycle management', 'Multi-viewport screenshots (375/768/1024/1440px)', 'Baseline comparison with configurable diff threshold', 'Accessibility audit via axe-core (critical/serious=FAIL)', 'Console error tracking', 'Existing Playwright e2e test execution'] },
+      { h: 'Enable', t: 'verification.layers.browser = true' },
+    ]
+  },
+  'fix-agent': {
+    title: 'Fix Agent',
+    sub: 'Automated Error Repair',
+    sections: [
+      { h: 'Auto-fixable', list: ['Type errors (L2)', 'Missing imports (L4)', 'Assertion mismatches (L5)', 'Interface breaks (L3)', 'Syntax issues (L1)', 'Contract drift (L7)'] },
+      { h: 'Not auto-fixable', t: 'Behavioral failures (L6) -> escalate to human' },
+      { h: 'Loop Prevention', list: ['Same patch hash twice -> stuck, escalate', 'Fix introduces NEW failures -> revert, escalate', 'Max 3 loops exceeded -> escalate'] },
+    ]
+  },
+
+  // Section 6: Drift
+  'drift-compute': {
+    title: 'Drift Analyzer',
+    sub: 'Per-Requirement Drift Scoring',
+    sections: [
+      { h: 'Formula', t: 'drift_score = 1 - (verified_items / total_items)' },
+      { h: 'Input', list: ['REQUIREMENTS.md (all REQ-IDs)', 'PLAN.md (must_haves mapped to requirements)', 'VERIFICATION.md (satisfaction checks)'] },
+      { h: 'Output', t: '.forge/drift-report.json with per-requirement scores' },
+    ]
+  },
+  'drift-classify': {
+    title: 'Drift Classification',
+    sub: 'Threshold-Based Scoring',
+    sections: [
+      { h: 'Thresholds', list: ['GREEN: 0-10% drift (drift.thresholds.green_max = 0.10)', 'YELLOW: 10-25% drift (drift.thresholds.yellow_max = 0.25)', 'RED: 25%+ drift'] },
+      { h: 'Blocking', t: 'RED + drift.block_on_red = true -> blocks phase completion' },
+    ]
+  },
+
+  // Section 7: CI/CD
+  'gh-verify': {
+    title: 'GitHub Actions: Verify',
+    sub: 'CI Verification Pipeline',
+    sections: [
+      { h: 'Command', t: 'forge-tools verify work --ci' },
+      { h: 'Output', t: 'GitHub Actions annotations (::error, ::warning) on specific files and lines' },
+    ]
+  },
+  'gh-drift': {
+    title: 'GitHub Actions: Drift',
+    sub: 'PR Drift Reporting',
+    sections: [
+      { h: 'Command', t: 'forge-tools drift report --ci' },
+      { h: 'Output', t: 'Drift annotations + PR comment with drift summary table' },
+    ]
+  },
+  'ci-branch': {
+    title: 'Branching Strategy',
+    sub: 'Automatic PR Creation',
+    sections: [
+      { h: 'Strategies', list: ['phase: create branch + PR per phase', 'milestone: create branch + PR per milestone'] },
+      { h: 'PR Content', t: 'Verification summary, drift score, agent metadata, changed files' },
+      { h: 'Config', t: 'git.branching_strategy in .forge/config.json' },
+    ]
+  },
+
+  // Section 8: Cross-Cutting
+  'cc-session': {
+    title: 'Session Ledger',
+    sub: 'Execution State Tracking',
+    sections: [
+      { h: 'Contains', list: ['Current phase and wave', 'Decisions made and rationale', 'Warnings from agents', 'User preferences', 'Rejected approaches (never retry)'] },
+      { h: 'Lifecycle', t: 'Written during execution, read by factory, auto-compacted when large, archived on phase complete, knowledge promoted on archive.' },
+    ]
+  },
+  'cc-knowledge': {
+    title: 'Knowledge Base',
+    sub: 'Cross-Milestone Learning',
+    sections: [
+      { h: 'Types', list: ['warning - things that went wrong', 'decision - architectural choices', 'pitfall - traps to avoid', 'convention - coding standards', 'preference - user preferences'] },
+      { h: 'Auto-promotion', t: 'archiveAndReset() -> knowledge.promote() extracts from ledger. Dedup via >80% word-similarity Jaccard.' },
+      { h: 'Injection', t: 'knowledge.relevantFor(cwd, modules, files) -> filtered learnings in agent system prompts.' },
+    ]
+  },
+  'cc-graph': {
+    title: 'Code Graph',
+    sub: 'SQLite AST Database',
+    sections: [
+      { h: 'Tables', list: ['files - path, language, loc, complexity, module', 'symbols - name, type, file, line, exported', 'dependencies - source, target, type', 'modules - name, root_path, file_count, stability', 'module_capabilities - module, capability, confidence'] },
+      { h: 'Consumers', list: ['Factory: getContextForTask(), getRiskAssessment()', 'Verification: getCycles(), contract hashes', 'Updater: incremental post-commit updates'] },
+    ]
+  },
+  'cc-system': {
+    title: 'System Graph',
+    sub: 'Multi-Repo Interface Tracking',
+    sections: [
+      { h: 'Tables', list: ['services - id, repo_path, description, team', 'interfaces - service_id, name, type, protocol, metadata', 'dependencies - consumer_id, provider_id, interface_id', 'service_metrics - fan_in, fan_out, coupling_score, risk_level'] },
+      { h: 'Consumers', list: ['Agent factory: cross-repo context in system prompt', 'Verification L7: contract drift detection', 'Impact analyzer: multi-repo scope detection'] },
+    ]
+  },
+  'cc-config': {
+    title: 'Unified Configuration',
+    sub: '17 Sections, 3-Level Merge',
+    sections: [
+      { h: 'Merge Order', t: 'defaults <- ~/.forge/config.json (global) <- .forge/config.json (project)' },
+      { h: 'Key Sections', list: ['graph, execution, agents, verification', 'hash_lock, knowledge, drift, ci', 'session, display, git, system', 'constitution, guard, browser', 'impact_analysis, project'] },
+      { h: 'CLI', t: 'forge-tools settings [show|recommend|validate|get|set]' },
     ]
   },
 };
 
-// ── Detail panel ──
+// -- Overlay logic --
 const overlay = document.getElementById('detail-overlay');
 const body = document.getElementById('detail-body');
-document.getElementById('detail-close').addEventListener('click', () => {
-  overlay.classList.remove('open');
-  document.querySelectorAll('.box.active').forEach(b => b.classList.remove('active'));
-});
-overlay.addEventListener('click', (e) => {
-  if (e.target === overlay) {
-    overlay.classList.remove('open');
-    document.querySelectorAll('.box.active').forEach(b => b.classList.remove('active'));
-  }
-});
+const closeBtn = document.getElementById('detail-close');
 
-function showDetail(key) {
+function openDetail(key) {
   const d = details[key];
   if (!d) return;
   let html = '<h2>' + d.title + '</h2>';
-  html += '<div class="detail-sub">' + d.sub + '</div>';
-  for (const s of d.sections) {
+  if (d.sub) html += '<div class="detail-sub">' + d.sub + '</div>';
+  d.sections.forEach(function(s) {
     html += '<div class="detail-section"><h4>' + s.h + '</h4>';
-    if (s.t) html += '<p><code>' + s.t + '</code></p>';
+    if (s.t) html += '<p>' + s.t + '</p>';
     if (s.list) {
       html += '<ul>';
-      for (const item of s.list) html += '<li>' + item + '</li>';
+      s.list.forEach(function(li) { html += '<li>' + li + '</li>'; });
       html += '</ul>';
     }
     html += '</div>';
-  }
+  });
   body.innerHTML = html;
   overlay.classList.add('open');
 }
 
-// Wire up all clickable elements
-document.querySelectorAll('[data-detail]').forEach(el => {
-  el.addEventListener('click', (e) => {
+closeBtn.addEventListener('click', function() { overlay.classList.remove('open'); });
+overlay.addEventListener('click', function(e) {
+  if (e.target === overlay) overlay.classList.remove('open');
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') overlay.classList.remove('open');
+});
+
+// Attach click handlers to all elements with data-detail
+document.querySelectorAll('[data-detail]').forEach(function(el) {
+  el.addEventListener('click', function(e) {
     e.stopPropagation();
-    document.querySelectorAll('.box.active').forEach(b => b.classList.remove('active'));
-    if (el.classList.contains('box')) el.classList.add('active');
-    showDetail(el.getAttribute('data-detail'));
+    var key = el.getAttribute('data-detail');
+    openDetail(key);
   });
 });
 </script>
