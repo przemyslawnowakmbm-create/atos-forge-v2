@@ -11,7 +11,8 @@
     "module_detection": true,
     "capability_detection": true,
     "dashboard_auto_regenerate": true,
-    "snapshot_retention": 20
+    "snapshot_retention": 20,
+    "auto_watch": false
   },
   "execution": {
     "mode": "interactive",
@@ -23,7 +24,10 @@
     "max_fix_loops": 3,
     "overhead_per_subtask": 5000,
     "min_action_budget": 15000,
-    "chars_per_token": 4
+    "chars_per_token": 4,
+    "budget_ceiling_usd": null,
+    "test_first": true,
+    "test_first_skip_types": ["config", "docs", "devops"]
   },
   "containers": {
     "max_concurrent": "auto",
@@ -62,13 +66,88 @@
       "interface_contracts": true,
       "dependency_analysis": true,
       "tests": true,
-      "behavioral": true
+      "behavioral": true,
+      "contract": true,
+      "semantic": false,
+      "architectural": false,
+      "browser": false
     },
     "auto_fix": true,
     "max_fix_loops": 3,
     "type_check_command": null,
     "test_command": null,
     "test_timeout": 300
+  },
+  "repeated_error_detection": {
+    "enabled": true,
+    "max_identical_errors": 3
+  },
+  "context_monitoring": {
+    "enabled": true,
+    "log_to_ledger": true,
+    "kill_at_percentage": 85
+  },
+  "constitution": {
+    "enabled": true,
+    "path": ".forge/constitution.md",
+    "enforcement": "strict"
+  },
+  "hash_lock": {
+    "enabled": true,
+    "lock_test_files": true,
+    "lock_must_haves": true,
+    "lock_verification_steps": true
+  },
+  "guard": {
+    "enabled": true,
+    "block_env_writes": true,
+    "block_locked_test_writes": true,
+    "block_secrets": true
+  },
+  "drift": {
+    "enabled": true,
+    "thresholds": {
+      "green_max": 0.10,
+      "yellow_max": 0.25
+    },
+    "block_on_red": true,
+    "report_path": ".forge/drift-report.json"
+  },
+  "browser": {
+    "ports": [3000, 5173, 4200, 8080, 8000],
+    "viewports": [
+      { "name": "mobile", "width": 375, "height": 812 },
+      { "name": "tablet", "width": 768, "height": 1024 },
+      { "name": "desktop", "width": 1024, "height": 768 },
+      { "name": "wide", "width": 1440, "height": 900 }
+    ],
+    "diff_threshold": 0.05,
+    "fail_diff_threshold": 0.15,
+    "screenshots": true,
+    "accessibility": true
+  },
+  "ci": {
+    "provider": "github",
+    "pr_creation": true,
+    "comment_results": true,
+    "junit_output": false,
+    "annotations": true
+  },
+  "knowledge": {
+    "enabled": true,
+    "auto_promote": true,
+    "max_entries": 200,
+    "promote_severity_threshold": "medium"
+  },
+  "decisions": {
+    "enabled": true,
+    "dedup_threshold": 0.80
+  },
+  "impact_analysis": {
+    "enabled": true,
+    "auto_detect": true,
+    "max_depth": 2,
+    "scope_threshold": 1
   },
   "session": {
     "ledger_enabled": true,
@@ -86,7 +165,20 @@
     "atomic_commits": true,
     "commit_prefix": "",
     "branching_strategy": "none",
-    "sign_commits": false
+    "sign_commits": false,
+    "phase_branch_template": "forge/phase-{phase}-{slug}",
+    "milestone_branch_template": "forge/{milestone}-{slug}"
+  },
+  "system": {
+    "enabled": true,
+    "auto_detect_interfaces": true,
+    "workers": "auto",
+    "discovery_depth": 2,
+    "default_delivery": "local",
+    "sync_on_commit": false,
+    "graph_path": null,
+    "registry_path": null,
+    "ignore_repos": []
   },
   "workflow": {
     "research": true,

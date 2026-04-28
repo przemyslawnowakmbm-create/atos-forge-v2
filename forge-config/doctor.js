@@ -360,6 +360,67 @@ function checkInterfaces(cwd) {
   }
 }
 
+function checkPlaywright(cwd) {
+  // Check for playwright in common locations
+  const candidates = [
+    path.join(cwd, 'node_modules', 'playwright'),
+    path.join(cwd, 'node_modules', 'playwright-core'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      return { name: 'Playwright', status: 'ok', detail: 'available' };
+    }
+  }
+  // Try require.resolve from cwd context
+  try {
+    require.resolve('playwright', { paths: [cwd] });
+    return { name: 'Playwright', status: 'ok', detail: 'available' };
+  } catch { /* not found */ }
+  return { name: 'Playwright', status: 'info', detail: 'not installed (optional — needed for browser verification layer)' };
+}
+
+function checkDriftReportFreshness(cwd) {
+  const driftPath = path.join(cwd, '.forge', 'drift-report.json');
+  if (!fs.existsSync(driftPath)) {
+    return { name: 'Drift Report', status: 'skip', detail: 'no drift report found' };
+  }
+
+  try {
+    const driftStat = fs.statSync(driftPath);
+
+    // Find latest VERIFICATION.md across phase directories
+    let latestVerMtime = 0;
+    const phasesDir = path.join(cwd, '.planning', 'phases');
+    if (fs.existsSync(phasesDir)) {
+      const entries = fs.readdirSync(phasesDir);
+      for (const entry of entries) {
+        const verPath = path.join(phasesDir, entry, 'VERIFICATION.md');
+        if (fs.existsSync(verPath)) {
+          const verStat = fs.statSync(verPath);
+          if (verStat.mtimeMs > latestVerMtime) latestVerMtime = verStat.mtimeMs;
+        }
+      }
+    }
+    // Also check project-root VERIFICATION.md
+    const rootVerPath = path.join(cwd, '.planning', 'VERIFICATION.md');
+    if (fs.existsSync(rootVerPath)) {
+      const verStat = fs.statSync(rootVerPath);
+      if (verStat.mtimeMs > latestVerMtime) latestVerMtime = verStat.mtimeMs;
+    }
+
+    if (latestVerMtime > 0 && driftStat.mtimeMs < latestVerMtime) {
+      return { name: 'Drift Report', status: 'warn', detail: 'drift report may be stale (older than latest VERIFICATION.md)' };
+    }
+
+    const ageMs = Date.now() - driftStat.mtimeMs;
+    const ageH = Math.floor(ageMs / 3600000);
+    const freshness = ageH < 1 ? 'fresh' : ageH < 24 ? `${ageH}h ago` : `${Math.floor(ageH / 24)}d ago`;
+    return { name: 'Drift Report', status: 'ok', detail: `up to date (${freshness})` };
+  } catch (e) {
+    return { name: 'Drift Report', status: 'warn', detail: `error: ${e.message.slice(0, 60)}` };
+  }
+}
+
 // ============================================================
 // Main Doctor
 // ============================================================
@@ -386,6 +447,8 @@ function doctor(cwd, opts = {}) {
   checks.push(checkGitHooks(root));
   checks.push(checkSystemGraph(root));
   checks.push(checkInterfaces(root));
+  checks.push(checkPlaywright(root));
+  checks.push(checkDriftReportFreshness(root));
 
   // Crash lock check
   try {
@@ -401,8 +464,11 @@ function doctor(cwd, opts = {}) {
   // Section 3: System (last index)
   checks.push(checkSystem(root));
 
-  const summary = { ok: 0, warn: 0, fail: 0, skip: 0 };
-  for (const c of checks) summary[c.status]++;
+  const summary = { ok: 0, warn: 0, fail: 0, skip: 0, info: 0 };
+  for (const c of checks) {
+    if (summary[c.status] !== undefined) summary[c.status]++;
+    else summary[c.status] = 1;
+  }
 
   if (!opts.json) {
     displayDoctor(checks, summary);
@@ -421,6 +487,7 @@ function displayDoctor(checks, summary) {
     warn: chalk.yellow('\u26A0\uFE0F '),
     fail: chalk.red('\u274C'),
     skip: chalk.dim('\u23ED\uFE0F '),
+    info: chalk.blue('\u2139\uFE0F '),
   };
 
   console.log('');
@@ -459,6 +526,7 @@ function displayDoctor(checks, summary) {
   const total = checks.length;
   const parts = [];
   if (summary.ok > 0) parts.push(chalk.green(`${summary.ok} passed`));
+  if (summary.info > 0) parts.push(chalk.blue(`${summary.info} info`));
   if (summary.warn > 0) parts.push(chalk.yellow(`${summary.warn} warnings`));
   if (summary.fail > 0) parts.push(chalk.red(`${summary.fail} failed`));
   if (summary.skip > 0) parts.push(chalk.dim(`${summary.skip} skipped`));
@@ -508,5 +576,7 @@ module.exports = {
   checkGitHooks,
   checkSystemGraph,
   checkInterfaces,
+  checkPlaywright,
+  checkDriftReportFreshness,
   checkSystem,
 };

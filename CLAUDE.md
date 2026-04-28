@@ -221,11 +221,12 @@ Selects and configures specialist agents from a pre-built catalog:
   node forge-agents/factory.js build <plan-file> --root .    — Output full agent config as JSON
   node forge-agents/factory.js build-all <dir> --root .      — Build configs for all .md plans in directory
 
-17 agents in `forge-agents/catalog/`:
+18 agents in `forge-agents/catalog/`:
   typescript-api, nextjs-api, react-frontend, python-backend, java-backend, database-engineer,
   test-engineer, security-engineer, ui-styling, api-integration, devops-config,
   data-pipeline, refactor-engineer, mobile-engineer, documentation, general-executor,
-  semantic-verifier (verifier, not executor — judges plan compliance from diff)
+  semantic-verifier (verifier, not executor — judges plan compliance from diff),
+  drift-analyzer (measures spec-to-implementation drift per requirement)
 
 Priority system: specialists=10, docs=8, refactor=5, general=1.
 If no catalog agent matches, creates a new agent definition and saves it to catalog.
@@ -270,6 +271,21 @@ The execute-phase workflow runs plans sequentially with verification between eac
 5. **Full verification** — TypeScript, tests, lint, build, phase goal check
 6. **Log completion** — ledger update, archive on phase complete
 
+## Test-First Execution
+Forge V2 enforces test-first development by default. Before any plan executes:
+1. Test stubs are generated from the plan's `must_haves` (truths, artifacts, key_links)
+2. A test-author agent refines stubs into meaningful failing tests
+3. Tests are committed and hash-locked (`.forge/hash-locks.json`)
+4. The guard hook blocks any modification to locked test files
+5. The executor implements code to make the locked tests pass
+
+Configuration: `execution.test_first` (default: true). Skip for config-only plans via `execution.test_first_skip_types`.
+Hash locks are enabled by default (`hash_lock.enabled: true`).
+
+CLI: Test stubs generated via `forge-verify/test-stub-generator.js`:
+  generateTestFirstStubs(planPath, cwd) — produces categorized failing tests
+  parsePlanFullCriteria(planPath, cwd) — reads truths + artifacts + key_links
+
 ## Multi-Layer Verification Engine
 Graph-aware, fail-fast verification pipeline with two-stage model:
   node forge-verify/engine.js --root . [--files f1,f2] [--plan plan.md] [--layer 1-10] [--json]
@@ -306,7 +322,9 @@ Layers (fail-fast order, each toggleable via config):
    - Reads .planning/codebase/ARCHITECTURE.md and CONVENTIONS.md
    - Spawns Claude CLI to review changed files against documented conventions
    - Enable via: verification.layers.architectural = true
-10. BROWSER (varies, optional, off by default) — Playwright e2e + accessibility + screenshots
+10. BROWSER (varies, optional, off by default) — Playwright browser testing with dev server management,
+   screenshot capture at 4 viewports (375/768/1024/1440px), baseline comparison,
+   accessibility audit via axe-core, console error tracking.
    - Dev server auto-detection (package.json dev/start/serve) and lifecycle management
    - Multi-viewport screenshot capture (mobile/tablet/desktop/wide) with baseline comparison
    - Accessibility audit via axe-core injection (critical/serious=FAIL, moderate=WARNING, minor=INFO)
@@ -359,6 +377,42 @@ Each fix attempt logged: ledger.logError({ error, fix_applied, auto_fixed: true,
 Programmatic: require('forge-verify/loop').verifyLoop({ cwd, files, maxLoops, commit, ... })
 Returns: { overall, loops[], fix_summary[], graph_diff, learnings[], escalated, escalation_reason }
 
+## AI Drift Measurement
+Tracks accumulated deviation between specification and implementation across phases.
+
+CLI commands:
+  node atos-forge/bin/forge-tools.cjs drift report [--phase N] [--json] [--ci]
+
+Drift score per requirement: `1 - (verified_items / total_items)`
+Thresholds: GREEN (0-10%), YELLOW (10-25%), RED (25%+)
+RED drift with `drift.block_on_red: true` blocks phase completion.
+
+Report written to `.forge/drift-report.json` with per-requirement scores.
+
+Configuration in .forge/config.json (drift section):
+  thresholds.green_max (default 0.10), thresholds.yellow_max (default 0.25),
+  block_on_red (default true), report_path.
+
+Programmatic: require('atos-forge/bin/lib/drift.cjs').computeDriftReport(cwd, opts)
+
+## CI/CD Integration
+Forge verification and drift reporting integrate into CI pipelines.
+
+Templates (copy to your project):
+  atos-forge/templates/ci/forge-verify.yml       — GitHub Actions workflow
+  atos-forge/templates/ci/forge-verify-gitlab.yml — GitLab CI pipeline
+
+CI output formats:
+  node atos-forge/bin/forge-tools.cjs verify work --ci     — GitHub Actions annotations
+  node atos-forge/bin/forge-tools.cjs verify work --junit  — JUnit XML to .forge/verification-junit.xml
+  node atos-forge/bin/forge-tools.cjs drift report --ci    — Drift annotations
+
+PR creation: If `git.branching_strategy` is 'phase' or 'milestone', execute-phase creates a PR
+with verification summary and drift score after phase completion.
+
+Configuration in .forge/config.json (ci section):
+  provider ('github'|'gitlab'), pr_creation, comment_results, junit_output, annotations.
+
 ## Unified Configuration System
 Single source of truth for all Forge configuration:
   node forge-config/config.js (module, no CLI)
@@ -366,18 +420,24 @@ Single source of truth for all Forge configuration:
 Merge order: defaults ← ~/.forge/config.json (global) ← .forge/config.json (project).
 Deep merge: objects merged recursively, arrays replaced, nulls preserved.
 
-Schema sections (11 primary + 4 legacy):
+Schema sections (17 primary + 4 legacy):
 - project: { name, description }
 - graph: { enabled, auto_update, languages, ignore_patterns, module_detection, capability_detection, dashboard_auto_regenerate, snapshot_retention }
-- execution: { mode, context_budget, assessment_threshold, auto_split, max_fix_loops, ... }
+- execution: { mode, context_budget, assessment_threshold, auto_split, max_fix_loops, test_first (default true), test_first_skip_types, ... }
 - agents: { factory_enabled, default_archetype, model_profiles: { quality, balanced, budget }, active_profile }
-- verification: { layers: { structural, type_check, interface_contracts, dependency_analysis, tests, behavioral, contract, architectural }, auto_fix, test_command, type_check_command }
+- verification: { layers: { structural, type_check, interface_contracts, dependency_analysis, tests, behavioral, contract, semantic, architectural, browser }, auto_fix, test_command, type_check_command }
+- hash_lock: { enabled (default true), lock_test_files, lock_must_haves, lock_verification_steps }
 - knowledge: { enabled, auto_promote, max_entries, promote_severity_threshold }
 - impact_analysis: { enabled, auto_detect, max_depth, scope_threshold }
+- drift: { thresholds: { green_max, yellow_max }, block_on_red, report_path }
+- browser: { ports, viewports, diff_threshold, screenshots, accessibility }
+- ci: { provider ('github'|'gitlab'), pr_creation, comment_results, junit_output, annotations }
 - session: { ledger_enabled, ledger_max_tokens, auto_compact, archive_on_phase_complete }
 - display: { rich_output, inline_graph_context, show_graph_diff, show_agent_learnings }
 - git: { atomic_commits, commit_prefix, branching_strategy, sign_commits }
 - system: { enabled, auto_detect_interfaces, workers, discovery_depth, default_delivery, sync_on_commit, graph_path, registry_path, ignore_repos }
+- constitution: { enabled, path, enforcement }
+- guard: { enabled, block_env_writes, block_locked_test_writes, block_secrets }
 - Legacy: workflow (incl. arch_review), parallelization, gates, safety (backward compat with .planning/config.json)
 
 Key functions:
@@ -410,9 +470,9 @@ Subcommands:
   node atos-forge/bin/forge-tools.cjs doctor [--raw for JSON]
   node forge-config/doctor.js --root . [--json]
 
-14 health checks across 3 categories:
+16 health checks across 3 categories:
 1. Dependencies (5): Node.js, Git, Claude CLI, tree-sitter, better-sqlite3
-2. Project Health (8): Configuration, Code Graph (with staleness warning >24h), Dashboard, Session Ledger, Snapshots, Git Hooks (post-commit forge updater), System Graph (existence + staleness + stats), Interfaces (existence + validation)
+2. Project Health (10): Configuration, Code Graph (with staleness warning >24h), Dashboard, Session Ledger, Snapshots, Git Hooks (post-commit forge updater), System Graph (existence + staleness + stats), Interfaces (existence + validation), Playwright (optional, info if not installed), Drift Report Freshness (warn if stale vs latest VERIFICATION.md)
 3. System (1): Resources (cores, RAM)
 
 Box-drawing terminal output with status icons. Returns { checks[], summary: { ok, warn, fail, skip } }.
