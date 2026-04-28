@@ -113,9 +113,9 @@ function parsePlan(planPath) {
     const planNumMatch = fm.match(/^plan:\s*(.+)/m);
     const typeMatch = fm.match(/^type:\s*(.+)/m);
     const hasTestsMatch = fm.match(/^has_tests:\s*(true|false)/m);
-    if (phaseMatch) plan.frontmatter.phase = phaseMatch[1].trim();
-    if (planNumMatch) plan.frontmatter.plan = planNumMatch[1].trim();
-    if (typeMatch) plan.frontmatter.type = typeMatch[1].trim();
+    if (phaseMatch) plan.frontmatter.phase = phaseMatch[1].trim().replace(/^["']|["']$/g, '');
+    if (planNumMatch) plan.frontmatter.plan = planNumMatch[1].trim().replace(/^["']|["']$/g, '');
+    if (typeMatch) plan.frontmatter.type = typeMatch[1].trim().replace(/^["']|["']$/g, '');
     if (hasTestsMatch) plan.frontmatter.has_tests = hasTestsMatch[1] === 'true';
 
     // Locked decisions

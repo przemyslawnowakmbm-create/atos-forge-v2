@@ -146,13 +146,14 @@ function matchCatalogAgents(analysis) {
       if (langHits.length > 0) { score += 15 * langHits.length; reasons.push(`lang: ${langHits.join(',')}`); }
     }
 
-    // Framework match — strong signal, 2x if found in objective
+    // Framework match — strong signal, 2x if found in objective (word-boundary)
     if (m.frameworks) {
       for (const fw of m.frameworks) {
-        const fwLower = fw.toLowerCase();
-        if (objectiveText.includes(fwLower)) {
+        const fwEsc = fw.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const fwRe = new RegExp('\\b' + fwEsc + '\\b', 'i');
+        if (fwRe.test(objectiveText)) {
           score += 40; reasons.push(`fw(obj): ${fw}`);
-        } else if (rawText.includes(fwLower)) {
+        } else if (fwRe.test(rawText)) {
           score += 20; reasons.push(`fw: ${fw}`);
         }
       }
@@ -183,17 +184,18 @@ function matchCatalogAgents(analysis) {
       if (capHits.length > 0) { score += 25 * capHits.length; reasons.push(`cap: ${capHits.join(',')}`); }
     }
 
-    // Keyword match — strongest signal, 3x weight for objective matches
+    // Keyword match — strongest signal, 3x weight for objective matches (word-boundary)
     if (m.keywords) {
       let kwScore = 0;
       const objHits = [];
       const bodyHits = [];
       for (const kw of m.keywords) {
-        const kwLower = kw.toLowerCase();
-        if (objectiveText.includes(kwLower)) {
+        const kwEsc = kw.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const kwRe = new RegExp('\\b' + kwEsc + '\\b', 'i');
+        if (kwRe.test(objectiveText)) {
           kwScore += 15;
           objHits.push(kw);
-        } else if (rawText.includes(kwLower)) {
+        } else if (kwRe.test(rawText)) {
           kwScore += 5;
           bodyHits.push(kw);
         }
@@ -256,18 +258,20 @@ function extractPlanSignals(analysis) {
   const objectiveLower = (analysis.plan?.objective || '').toLowerCase();
   const rawLower = (analysis.plan?.raw || '').toLowerCase();
 
-  // Match specific terms against plan text
+  // Match specific terms against plan text (word-boundary to avoid substring false positives)
   for (const term of specificTerms) {
-    if (objectiveLower.includes(term) || rawLower.includes(term)) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('\\b' + escaped + '\\b', 'i');
+    if (re.test(objectiveLower) || re.test(rawLower)) {
       signals.add(term);
     }
   }
 
-  // Match against file paths (only specific terms)
+  // Match against file paths — check path segments to avoid substring issues
   for (const f of (analysis.plan?.all_files || [])) {
-    const fLower = f.toLowerCase();
+    const segments = f.toLowerCase().split(/[/\\.]/).filter(Boolean);
     for (const term of specificTerms) {
-      if (fLower.includes(term)) signals.add(term);
+      if (segments.some(seg => seg === term || seg.includes(term + '.'))) signals.add(term);
     }
   }
 

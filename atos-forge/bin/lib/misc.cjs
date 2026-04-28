@@ -664,7 +664,7 @@ function cmdRequirementsValidate(cwd, raw) {
     }
 
     // Check 3: No weasel words
-    const foundWeasels = weaselWords.filter(w => textLower.includes(w));
+    const foundWeasels = weaselWords.filter(w => new RegExp('\\b' + w.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'i').test(textLower));
     if (foundWeasels.length > 0) {
       issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'unambiguous', message: `Contains ambiguous terms: ${foundWeasels.join(', ')}. Replace with measurable criteria.` });
     }

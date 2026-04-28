@@ -52,9 +52,17 @@ function loadHashLocks(cwd) {
 function isHashLocked(filePath, cwd) {
   if (!filePath || !cwd) return false;
   const locks = loadHashLocks(cwd);
-  // locks is an object keyed by relative or absolute path
-  const rel = path.relative(cwd, filePath);
-  return !!(locks[filePath] || locks[rel] || locks['./' + rel]);
+  const rel = path.isAbsolute(filePath) ? path.relative(cwd, filePath) : filePath;
+  // locks is keyed by task ID, each value is an array of { type, path, sha256 }
+  for (const entries of Object.values(locks)) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) {
+      if (entry.type === 'test_file' && (entry.path === rel || entry.path === filePath)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function containsSecret(text) {
