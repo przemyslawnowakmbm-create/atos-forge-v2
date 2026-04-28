@@ -1,0 +1,88 @@
+{
+  "step": 5,
+  "name": "Agent Selection + Prompt Composition",
+  "selected_agent": {
+    "name": "security-engineer",
+    "reason": "security-engineer(120): lang: typescript; fw: next; path: 1 hits; kw(obj): auth,login,token,jwt; kw: password,hash | database-engineer(80): lang: typescript; fw: prisma; path: 1 hits; kw(obj): database; kw: schema,postgresql,prisma | nextjs-api(65): lang: typescript; fw: next; path: 2 hits; kw: app router,prisma"
+  },
+  "catalog_matches": [
+    {
+      "agent": "security-engineer",
+      "score": 120,
+      "reason": "lang: typescript; fw: next; path: 1 hits; kw(obj): auth,login,token,jwt; kw: password,hash",
+      "priority": 10
+    },
+    {
+      "agent": "database-engineer",
+      "score": 80,
+      "reason": "lang: typescript; fw: prisma; path: 1 hits; kw(obj): database; kw: schema,postgresql,prisma",
+      "priority": 10
+    },
+    {
+      "agent": "nextjs-api",
+      "score": 65,
+      "reason": "lang: typescript; fw: next; path: 2 hits; kw: app router,prisma",
+      "priority": 10
+    },
+    {
+      "agent": "react-frontend",
+      "score": 65,
+      "reason": "lang: typescript; fw: next; path: 1 hits; kw: next,app router,action",
+      "priority": 10
+    },
+    {
+      "agent": "api-integration",
+      "score": 60,
+      "reason": "lang: typescript; fw: next; path: 1 hits; kw: api,client",
+      "priority": 10
+    }
+  ],
+  "system_prompt": {
+    "token_count": 6133,
+    "char_count": 24532,
+    "sections": [
+      "Expertise",
+      "Patterns",
+      "Constraints",
+      "Anti-Patterns",
+      "Verification",
+      "Additional Domain Knowledge (database-engineer)",
+      "Additional Domain Knowledge (nextjs-api)",
+      "CONSTITUTION — Non-Negotiable Rules",
+      "Execution Rules",
+      "Pre-Work",
+      "Code Quality",
+      "Context Management",
+      "Edit Safety",
+      "Test Coverage",
+      "Session Context",
+      "LOCKED DECISIONS (from approved plan — deviation is FAILURE)",
+      "Structured Output (optional but recommended)"
+    ]
+  },
+  "constitution": {
+    "loaded": true,
+    "rules_count": 8,
+    "enforcement": "strict"
+  },
+  "locked_decisions": [
+    "bcrypt cost 12 for password hashing (not Argon2id — bcryptjs already in stack)",
+    "jose library for JWT (RS256 algorithm, 15-min access, 7-day refresh)",
+    "Zod for all request validation at API boundary",
+    "Prisma with PostgreSQL, UUIDv7 for all primary keys"
+  ],
+  "verification_steps": [
+    "npx prisma validate && grep -q 'globalThis' src/lib/db.ts",
+    "npx tsc --noEmit src/lib/auth.ts src/lib/validation.ts 2>&1 | head -20",
+    "npx tsc --noEmit && npx vitest run --reporter=verbose 2>&1 | tail -20",
+    "typescript"
+  ],
+  "risk": {
+    "level": "LOW",
+    "score": 0,
+    "reasons": []
+  },
+  "graph_available": false,
+  "system_graph_available": false,
+  "ledger_active": false
+}

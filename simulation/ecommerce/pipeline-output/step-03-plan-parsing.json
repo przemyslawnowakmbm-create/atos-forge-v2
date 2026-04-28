@@ -1,0 +1,89 @@
+{
+  "step": 3,
+  "name": "Plan Parsing + Coverage Check",
+  "plan_file": ".planning/phases/10-foundation/10-01-PLAN.md",
+  "parsed": {
+    "objective": "Implement the complete user authentication system for ShopNova: user registration, login, JWT token management, and structured error handling. This plan covers AUTH-01 through AUTH-04 and establishes the foundational data model, database connection, and validation patterns that all subsequent phases depend on.",
+    "phase": "10-foundation",
+    "plan_number": "01",
+    "type": "execute",
+    "wave": 1,
+    "autonomous": true,
+    "requirements": [
+      "AUTH-01",
+      "AUTH-02",
+      "AUTH-03",
+      "AUTH-04"
+    ],
+    "files_modified": [
+      "prisma/schema.prisma",
+      "src/lib/db.ts",
+      "src/lib/auth.ts",
+      "src/lib/validation.ts",
+      "src/app/api/auth/register/route.ts",
+      "src/app/api/auth/login/route.ts",
+      "src/app/api/auth/refresh/route.ts"
+    ],
+    "tasks_count": 3,
+    "tasks": [
+      {
+        "id": "1",
+        "type": "auto",
+        "files": [
+          "prisma/schema.prisma",
+          "src/lib/db.ts"
+        ],
+        "has_verify": true,
+        "has_done": true
+      },
+      {
+        "id": "2",
+        "type": "auto",
+        "files": [
+          "src/lib/auth.ts",
+          "src/lib/validation.ts"
+        ],
+        "has_verify": true,
+        "has_done": true
+      },
+      {
+        "id": "3",
+        "type": "auto",
+        "files": [
+          "src/app/api/auth/register/route.ts",
+          "src/app/api/auth/login/route.ts",
+          "src/app/api/auth/refresh/route.ts"
+        ],
+        "has_verify": true,
+        "has_done": true
+      }
+    ],
+    "has_locked_decisions": true,
+    "locked_decisions_count": 4,
+    "has_must_haves": true,
+    "must_haves_summary": {
+      "truths": 6,
+      "artifacts": 6,
+      "key_links": 3
+    }
+  },
+  "coverage": {
+    "phase_10_requirements": [
+      "AUTH-01",
+      "AUTH-02",
+      "AUTH-03",
+      "AUTH-04"
+    ],
+    "plan_covers": [
+      "AUTH-01",
+      "AUTH-02",
+      "AUTH-03",
+      "AUTH-04"
+    ],
+    "uncovered_by_this_plan": [],
+    "coverage_ratio": "4/4",
+    "is_complete": true,
+    "note": "All phase 10 auth requirements covered by this plan"
+  },
+  "warnings": []
+}

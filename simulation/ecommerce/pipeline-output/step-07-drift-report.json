@@ -1,0 +1,202 @@
+{
+  "step": 7,
+  "name": "Drift Report",
+  "drift": {
+    "aggregate_score": 1,
+    "aggregate_severity": "RED",
+    "total_requirements": 18,
+    "requirements_with_plans": 4,
+    "requirements_verified": 0,
+    "requirements_drifting": 0,
+    "requirements_significant_drift": 18,
+    "thresholds": {
+      "green_max": 0.1,
+      "yellow_max": 0.25
+    },
+    "block_on_red": true,
+    "should_block": true
+  },
+  "per_requirement": [
+    {
+      "id": "AUTH-01",
+      "drift_score": 1,
+      "status": "SIGNIFICANT_DRIFT",
+      "truths_specified": 6,
+      "truths_verified": 0,
+      "details": [
+        "No VERIFICATION.md found — plan not yet verified"
+      ]
+    },
+    {
+      "id": "AUTH-02",
+      "drift_score": 1,
+      "status": "SIGNIFICANT_DRIFT",
+      "truths_specified": 6,
+      "truths_verified": 0,
+      "details": [
+        "No VERIFICATION.md found — plan not yet verified"
+      ]
+    },
+    {
+      "id": "AUTH-03",
+      "drift_score": 1,
+      "status": "SIGNIFICANT_DRIFT",
+      "truths_specified": 6,
+      "truths_verified": 0,
+      "details": [
+        "No VERIFICATION.md found — plan not yet verified"
+      ]
+    },
+    {
+      "id": "AUTH-04",
+      "drift_score": 1,
+      "status": "SIGNIFICANT_DRIFT",
+      "truths_specified": 6,
+      "truths_verified": 0,
+      "details": [
+        "No VERIFICATION.md found — plan not yet verified"
+      ]
+    },
+    {
+      "id": "PROD-01",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "PROD-02",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "PROD-03",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "PROD-04",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "PROD-05",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "PROD-06",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "PROD-07",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "CART-01",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "CART-02",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "CART-03",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "CART-04",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "CART-05",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "CHECK-01",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    },
+    {
+      "id": "CHECK-02",
+      "drift_score": 1,
+      "status": "NO_PLAN",
+      "truths_specified": 0,
+      "truths_verified": 0,
+      "details": [
+        "No plan covers this requirement"
+      ]
+    }
+  ],
+  "explanation": "Drift measures deviation between specification (REQUIREMENTS.md + plan must_haves) and implementation (VERIFICATION.md results). Pre-execution, drift is 100% because nothing is verified yet. After execution, drift should drop to GREEN (<10%)."
+}

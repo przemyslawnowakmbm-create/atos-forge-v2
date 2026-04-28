@@ -1,0 +1,78 @@
+{
+  "step": 4,
+  "name": "Test-First Stubs + Hash Locks",
+  "test_stubs": {
+    "generated": true,
+    "files": [
+      "src/plan-PLAN.test-first.test.ts"
+    ],
+    "framework": "vitest",
+    "criteria_count": 15,
+    "stub_type": "test_first"
+  },
+  "full_criteria": {
+    "truths": [
+      "User can register with valid email and password returning 201 with user object {id, email, createdAt}",
+      "User can log in with correct credentials receiving JWT access token in response",
+      "Invalid login returns 401 with {error: {code: \"INVALID_CREDENTIALS\", message: \"...\"}}",
+      "Expired token returns 401 with {error: {code: \"TOKEN_EXPIRED\", message: \"...\"}}",
+      "Passwords are stored as bcrypt hashes with cost 12, never plaintext",
+      "Registration with duplicate email returns 409 with {error: {code: \"EMAIL_EXISTS\", message: \"...\"}}"
+    ],
+    "artifacts": [
+      "prisma/schema.prisma",
+      "src/lib/db.ts",
+      "src/lib/auth.ts",
+      "src/lib/validation.ts",
+      "src/app/api/auth/register/route.ts",
+      "src/app/api/auth/login/route.ts"
+    ],
+    "key_links": [
+      {
+        "source": "src/app/api/auth/register/route.ts",
+        "target": "src/lib/auth.ts",
+        "pattern": "hashPassword"
+      },
+      {
+        "source": "src/app/api/auth/login/route.ts",
+        "target": "src/lib/auth.ts",
+        "pattern": "verifyPassword"
+      },
+      {
+        "source": "src/app/api/auth/login/route.ts",
+        "target": "src/lib/auth.ts",
+        "pattern": "signJWT"
+      }
+    ],
+    "checks": [
+      "`npx prisma validate` passes",
+      "`npx tsc --noEmit` passes with"
+    ]
+  },
+  "hash_locks": {
+    "locked": true,
+    "entries_count": 4,
+    "lock_file": ".forge/hash-locks.json",
+    "locks": [
+      {
+        "type": "test_file",
+        "path": "src/__tests__/auth.test.ts",
+        "sha256": "ad7fc8303e11f3b576c55917cc1fa9b0aca125642477d302404ba8496d906583"
+      },
+      {
+        "type": "test_file",
+        "path": "src/plan-PLAN.test-first.test.ts",
+        "sha256": "9049c382407890f45e89bc1c91b7e71226ac37748c89a0280d780e6458a8fd07"
+      },
+      {
+        "type": "must_haves",
+        "sha256": "0215b7ccdf541a27c4ba8d95eb00daefb1ef92d06fb3dda9d33bd48697f4be0c"
+      },
+      {
+        "type": "verification_steps",
+        "sha256": "90224db69859357b1239e1124c3ebbcad2c45e189976605c8f72f82712678708"
+      }
+    ]
+  },
+  "explanation": "Test-first stubs are RED (failing) tests generated from the plan must_haves. Hash locks prevent modification of test files during execution. The executor must implement code to make these tests GREEN."
+}
