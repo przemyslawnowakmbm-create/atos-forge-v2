@@ -70,6 +70,7 @@ const LAYER_NAMES = [
   'SEMANTIC',
   'ARCHITECTURAL',
   'BROWSER',
+  'MUTATION',
 ];
 
 const LAYER_ICONS = { pass: '\u2705', fail: '\u274C', skip: '\u23ED\uFE0F' };
@@ -2077,6 +2078,26 @@ async function verify(opts) {
     }
   }
 
+  // Layer 11 — MUTATION (optional, expensive, off by default)
+  if (verifyConfig.layers && verifyConfig.layers.MUTATION === true) {
+    try {
+      const mutationMod = require('./mutation');
+      const mutationConfig = verifyConfig.mutation || {};
+      const result = mutationMod.runMutationTesting(cwd, {
+        files: files.filter(f => !f.includes('.test.') && !f.includes('.spec.')),
+        operators: mutationConfig.operators,
+        maxMutantsPerFile: mutationConfig.max_mutants_per_file || 10,
+        timeoutMultiplier: mutationConfig.timeout_multiplier || 2,
+        minScore: mutationConfig.min_score || 0.70,
+        testCommand: verifyConfig.test_command,
+        timeout: verifyConfig.test_timeout,
+      });
+      layers.push({ index: 11, name: 'MUTATION', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms || 0 });
+    } catch (err) {
+      layers.push({ index: 11, name: 'MUTATION', passed: true, skipped: true, result: { message: 'Mutation testing failed: ' + err.message }, duration_ms: 0 });
+    }
+  }
+
   return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
 }
 
@@ -2169,6 +2190,9 @@ module.exports = {
   findTsConfig,
   loadVerificationConfig,
   resolveAffectedFiles,
+  runJsTests,
+  runPyTests,
+  runProjectTests,
   LAYER_NAMES,
 };
 

@@ -378,8 +378,33 @@ async function main() {
         await cmdVerifyWork(cwd, args.slice(2), raw);
       } else if (subcommand === 'uat-eval') {
         cmdUatAutoEval(cwd, args.slice(2), raw);
+      } else if (subcommand === 'regression') {
+        const { cmdVerifyRegression } = require('./lib/regression.cjs');
+        await cmdVerifyRegression(cwd, args.slice(2), raw);
+      } else if (subcommand === 'coverage') {
+        const coverageMod = require(path.join(getForgeRoot(), 'forge-verify', 'coverage'));
+        const opts = {};
+        for (let i = 2; i < args.length; i++) {
+          if (args[i] === '--tool' && args[i + 1]) opts.tool = args[++i];
+          if (args[i] === '--threshold' && args[i + 1]) opts.minLineCoverage = parseInt(args[++i], 10);
+          if (args[i] === '--fail') opts.failBelowThreshold = true;
+          if (args[i] === '--json' || args[i] === '--raw') opts.json = true;
+        }
+        const result = coverageMod.collectCoverage(cwd, opts);
+        if (raw || opts.json) { output(result, true); } else { console.log(JSON.stringify(result, null, 2)); }
+      } else if (subcommand === 'mutation') {
+        const mutationMod = require(path.join(getForgeRoot(), 'forge-verify', 'mutation'));
+        const opts = {};
+        for (let i = 2; i < args.length; i++) {
+          if (args[i] === '--files' && args[i + 1]) opts.files = args[++i].split(',');
+          if (args[i] === '--max-mutants' && args[i + 1]) opts.maxMutantsPerFile = parseInt(args[++i], 10);
+          if (args[i] === '--min-score' && args[i + 1]) opts.minScore = parseFloat(args[++i]);
+          if (args[i] === '--json' || args[i] === '--raw') opts.json = true;
+        }
+        const result = mutationMod.runMutationTesting(cwd, opts);
+        if (raw || opts.json) { output(result, true); } else { console.log(mutationMod.formatMutationReport(result)); }
       } else {
-        error('Unknown verify subcommand. Available: plan-structure, phase-completeness, references, commits, artifacts, key-links, work, uat-eval');
+        error('Unknown verify subcommand. Available: plan-structure, phase-completeness, references, commits, artifacts, key-links, work, uat-eval, regression, coverage, mutation');
       }
       break;
     }
@@ -487,8 +512,11 @@ async function main() {
         cmdRequirementsEnhance(cwd, args[2], raw);
       } else if (subcommand === 'validate') {
         cmdRequirementsValidate(cwd, raw);
+      } else if (subcommand === 'impact') {
+        const { handleRequirementsImpact } = require('./lib/req-impact.cjs');
+        handleRequirementsImpact(cwd, args.slice(2), raw);
       } else {
-        error('Unknown requirements subcommand. Available: mark-complete, enhance, validate');
+        error('Unknown requirements subcommand. Available: mark-complete, enhance, validate, impact');
       }
       break;
     }

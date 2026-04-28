@@ -78,6 +78,9 @@ CLI commands:
   node atos-forge/bin/forge-tools.cjs requirements mark-complete <ids>  — Mark REQ-IDs as complete
   node atos-forge/bin/forge-tools.cjs requirements enhance [mode]       — Analyze requirements for enhancement (full|quality|gaps|add)
   node atos-forge/bin/forge-tools.cjs requirements validate             — Deterministic quality checker
+  node atos-forge/bin/forge-tools.cjs requirements impact [--save-baseline] [--reqs IDs] [--json]
+    — Requirement change impact analysis: detects changes vs baseline, traces to affected plans/files/tests
+    Programmatic: require('atos-forge/bin/lib/req-impact.cjs').{buildTraceabilityMap, detectRequirementChanges, analyzeImpact, saveRequirementsBaseline}
 
 Enhancement workflow (`/forge-enhance-requirements`):
   Quality audit — check each requirement against 5 criteria (specific, testable, user-centric, atomic, unambiguous)
@@ -288,7 +291,7 @@ CLI: Test stubs generated via `forge-verify/test-stub-generator.js`:
 
 ## Multi-Layer Verification Engine
 Graph-aware, fail-fast verification pipeline with two-stage model:
-  node forge-verify/engine.js --root . [--files f1,f2] [--plan plan.md] [--layer 1-10] [--json]
+  node forge-verify/engine.js --root . [--files f1,f2] [--plan plan.md] [--layer 1-11] [--json]
 
 **Two-stage verification model:**
 - Stage 1 (Mechanical quality, Layers 0-7): code compiles, tests pass, no regressions.
@@ -334,6 +337,12 @@ Layers (fail-fast order, each toggleable via config):
    - Template: atos-forge/templates/playwright.config.ts
    - Enable via: verification.layers.browser = true
    - Requires: playwright (optional), axe-core (optional for a11y)
+11. MUTATION (varies, optional, expensive, off by default) — mutation testing via forge-verify/mutation.js
+   - Introduces controlled bugs (9 operators: negate equality, flip booleans, remove returns, etc.)
+   - Checks whether test suite catches each mutation (killed = good, survived = bad)
+   - Reports mutation score: killed / (killed + survived), threshold check
+   - Config: verification.mutation.{operators, max_mutants_per_file, timeout_multiplier, min_score}
+   - Enable via: verification.layers.MUTATION = true
 
 Output: { overall, layers[], fix_suggestions[], auto_fixable, graph_diff }
 Rich terminal display with pass/fail/skip per layer, duration, specific error details.
@@ -342,13 +351,26 @@ Fix suggestions with auto_fixable flags for debugger/console.log removal.
 Ledger integration: logError() for each failure, updateState({ verification: "passed" }) on full pass.
 
 Configuration in .forge/config.json or .planning/config.json (verification section):
-  layers (per-layer boolean toggles including `contract`, `semantic`, `architectural`, `browser`),
+  layers (per-layer boolean toggles including `contract`, `semantic`, `architectural`, `browser`, `MUTATION`),
   auto_fix (true/false), max_fix_loops, type_check_command (override tsc),
-  test_command (override test runner), test_timeout.
+  test_command (override test runner), test_timeout,
+  mutation.{operators, max_mutants_per_file, timeout_multiplier, min_score}
 
 Programmatic: require('forge-verify/engine').verify({ cwd, files, planPath, dbPath, ... })
-Additional exports: findTsConfig(cwd), loadVerificationConfig(cwd), layerContract (lazy), layerSemantic, layerArchitectural
+Additional exports: findTsConfig(cwd), loadVerificationConfig(cwd), layerContract (lazy), layerSemantic, layerArchitectural,
+  runJsTests, runPyTests, runProjectTests
 CLI flags: --root, --files, --plan, --db, --baseline, --system-db, --layer, --fail-fast, --json, --silent, --no-ledger
+
+Additional verification modules:
+  forge-verify/regression.js — Cross-phase regression testing (baseline comparison)
+    CLI: forge-tools verify regression [--update-baseline] [--phase N] [--json]
+    Programmatic: require('forge-verify/regression').{runRegression, saveBaseline, discoverAllTests, compareWithBaseline}
+  forge-verify/coverage.js — Code coverage collection alongside test execution
+    CLI: forge-tools verify coverage [--tool <tool>] [--threshold N] [--fail] [--json]
+    Programmatic: require('forge-verify/coverage').{collectCoverage, detectCoverageTool, buildCoverageCommand, parseCoverageReport}
+  forge-verify/mutation.js — Mutation testing (introduce bugs, check test quality)
+    CLI: forge-tools verify mutation [--files f1,f2] [--max-mutants N] [--min-score N] [--json]
+    Programmatic: require('forge-verify/mutation').{runMutationTesting, generateMutants, runMutant, computeMutationScore, formatMutationReport}
 
 Contract layer module: require('forge-verify/contract-layer')
   layerContract(opts) — full contract check (drift + compat + ripple)
