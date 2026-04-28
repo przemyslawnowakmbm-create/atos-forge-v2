@@ -1,0 +1,234 @@
+{
+  "benchmarks": [
+    {
+      "name": "SWE-bench Verified",
+      "url": "https://www.swebench.com/verified.html",
+      "category": "benchmark",
+      "what_it_measures": "GitHub issue resolution on real-world Python repositories. Tests end-to-end software engineering: understanding issue descriptions, localizing relevant code, writing patches, and passing existing test suites. 'Verified' variant uses human-validated subset of 500 instances.",
+      "dataset_size": "500 human-verified instances from 12 Python repositories",
+      "current_leaders": [
+        { "system": "Claude Mythos Preview (Anthropic)", "score": "93.9%", "date": "2026-04" },
+        { "system": "Claude Opus 4.7 Adaptive (Anthropic)", "score": "87.6%", "date": "2026-04" },
+        { "system": "GPT-5.3 Codex (OpenAI)", "score": "85.0%", "date": "2026-04" },
+        { "system": "Claude Opus 4.5 (Anthropic)", "score": "80.9%", "date": "2026-03" },
+        { "system": "Gemini 3.1 Pro (Google)", "score": "80.6%", "date": "2026-04" },
+        { "system": "MiniMax M2.5", "score": "80.2%", "date": "2026-04" },
+        { "system": "GPT-5.2 (OpenAI)", "score": "80.0%", "date": "2026-03" }
+      ],
+      "limitations": "Python-only repositories; contamination concerns as models may have trained on SWE-bench data; scores vary dramatically based on agent scaffolding (not just model capability); original SWE-bench was text-only (no visual/multimodal issues).",
+      "relevance_to_forge": "SWE-bench Verified is the most relevant benchmark for Forge's core capability: automated issue resolution and code patching. Forge's execute-phase workflow directly parallels SWE-bench's task structure.",
+      "forge_applicable": "Forge could be evaluated on SWE-bench Verified by adapting its execute-phase pipeline to process SWE-bench task instances. The factory.js agent configuration, verification engine, and patch generation (git diff) are directly applicable. Would test Forge's end-to-end pipeline quality."
+    },
+    {
+      "name": "SWE-bench Pro",
+      "url": "https://labs.scale.com/leaderboard/swe_bench_pro_public",
+      "category": "benchmark",
+      "what_it_measures": "More challenging variant of SWE-bench with 1,865 multi-language tasks. Designed to be contamination-free. Scale AI's SEAL leaderboard provides standardized scaffolding comparison (isolates model capability from agent design).",
+      "dataset_size": "1,865 multi-language task instances",
+      "current_leaders": [
+        { "system": "Claude Mythos Preview (Anthropic)", "score": "77.8%", "date": "2026-04" },
+        { "system": "Claude Opus 4.7 Adaptive (Anthropic)", "score": "64.3%", "date": "2026-04" },
+        { "system": "GPT-5.5 (OpenAI)", "score": "58.6%", "date": "2026-04" },
+        { "system": "Opus 4.6 + WarpGrep v2 (agent system)", "score": "57.5%", "date": "2026-03" },
+        { "system": "Claude Opus 4.5 (SEAL standardized)", "score": "45.9%", "date": "2026-03" },
+        { "system": "Claude Sonnet 4.5 + Live-SWE-agent", "score": "45.8%", "date": "2026-03" }
+      ],
+      "limitations": "Higher difficulty means lower absolute scores; SEAL standardized scores (45.9% top) are much lower than agent-specific scores (77.8%), revealing how much scaffolding matters versus raw model capability.",
+      "relevance_to_forge": "SWE-bench Pro's multi-language support and contamination-free design make it the most rigorous benchmark for Forge's multi-language execution capabilities.",
+      "forge_applicable": "Yes. Forge's multi-language graph capabilities and verification engine could be directly tested. The gap between SEAL standardized scores and agent system scores validates Forge's investment in sophisticated scaffolding (factory.js, parallel-planner.js, verification loop)."
+    },
+    {
+      "name": "SWE-bench Multimodal",
+      "url": "https://www.swebench.com/multimodal.html",
+      "category": "benchmark",
+      "what_it_measures": "Evaluates systems on fixing bugs in visual, user-facing JavaScript software. Every task includes at least one image (screenshots, diagrams, visual diffs, UI elements). Tests front-end, game development, and visual software domains.",
+      "dataset_size": "617 task instances from 17 JavaScript libraries; 862 total images",
+      "current_leaders": [
+        { "system": "Top systems", "score": "~12.2% resolution rate", "date": "2025" }
+      ],
+      "limitations": "73.2% performance drop when images are involved compared to text-only tasks. Resolution rates remain very low (~12.2%), indicating current AI methods struggle significantly with visual reasoning in software engineering contexts.",
+      "relevance_to_forge": "Tests a domain (visual/front-end JavaScript) that Forge's current graph and verification engine could support but doesn't specifically optimize for. The visual reasoning challenge is largely a model capability limitation rather than a scaffolding issue.",
+      "forge_applicable": "Forge could be extended to process multimodal issues by passing images through to model context. Current verification engine layers (structural, type-check) would apply to JavaScript fixes, but visual regression testing (comparing screenshots) would need to be added as a custom behavioral verification step."
+    },
+    {
+      "name": "HumanEval / HumanEval+",
+      "url": "https://github.com/openai/human-eval",
+      "category": "benchmark",
+      "what_it_measures": "Function-level code generation from docstrings. 164 hand-written programming problems testing language comprehension, algorithms, and simple mathematics. HumanEval+ adds more rigorous test cases to reduce false positives.",
+      "dataset_size": "164 problems (HumanEval); expanded test suite (HumanEval+)",
+      "current_leaders": [
+        { "system": "Grok 4 (xAI)", "score": "~98%", "date": "2026" },
+        { "system": "GPT-5.4 (OpenAI)", "score": "96.2%", "date": "2026" },
+        { "system": "Claude Opus 4.7 (Anthropic)", "score": "~95%", "date": "2026" },
+        { "system": "Gemini 3.1 Pro (Google)", "score": "94.5%", "date": "2026" },
+        { "system": "Claude 3.5 Sonnet (Anthropic)", "score": "92.0%", "date": "2025" }
+      ],
+      "limitations": "Benchmark is essentially saturated for top models (95-98% range). Tests only isolated function generation, not multi-file software engineering. Near-perfect HumanEval scores don't predict performance on real-world software tasks. Contamination is a significant concern.",
+      "relevance_to_forge": "Low direct relevance. HumanEval tests raw model coding capability, not agent orchestration or multi-file development. Forge's value-add is in orchestration, verification, and multi-agent coordination, not individual function generation.",
+      "forge_applicable": "Not directly applicable. Forge is designed for multi-file, multi-step software engineering tasks, while HumanEval tests isolated function generation. However, HumanEval scores of underlying models indicate the baseline coding quality Forge agents can leverage."
+    },
+    {
+      "name": "MBPP (Mostly Basic Python Problems)",
+      "url": "https://github.com/google-research/google-research/tree/master/mbpp",
+      "category": "benchmark",
+      "what_it_measures": "Crowd-sourced Python programming problems solvable by entry-level programmers. Tests programming fundamentals and standard library usage. Each problem has a task description, code solution, and 3 automated test cases.",
+      "dataset_size": "974 problems",
+      "current_leaders": [
+        { "system": "o4-mini (OpenAI)", "score": "94.9% pass@1", "date": "2025-12" },
+        { "system": "Sarvam-30B (Sarvam AI)", "score": "92.7%", "date": "2025" },
+        { "system": "GPT-4 (OpenAI)", "score": "~90%+ (saturated)", "date": "2025" }
+      ],
+      "limitations": "Largely saturated by leading models. Tests basic programming only. Python-exclusive. Limited to single-function tasks. Not representative of real-world software engineering complexity.",
+      "relevance_to_forge": "Minimal direct relevance. Like HumanEval, MBPP tests basic coding capability rather than the orchestration and verification that Forge provides.",
+      "forge_applicable": "Not directly applicable. MBPP's single-function scope is far below Forge's multi-file, multi-agent architecture. Useful only as a baseline indicator of model quality."
+    },
+    {
+      "name": "LiveCodeBench",
+      "url": "https://livecodebench.github.io/",
+      "category": "benchmark",
+      "what_it_measures": "Contamination-free evaluation of LLMs for code, continuously collecting new problems from LeetCode, AtCoder, and CodeForces. Tests code generation, self-repair, code execution, and test output prediction. v6 includes 1000+ problems (May 2023-April 2025).",
+      "dataset_size": "1000+ problems (v6), continuously growing",
+      "current_leaders": [
+        { "system": "Gemini 3 Pro Preview (Google)", "score": "91.7%", "date": "2026-04" },
+        { "system": "Gemini 3 Flash Preview (Google)", "score": "90.8%", "date": "2026-04" },
+        { "system": "DeepSeek V3.2 Speciale", "score": "89.6%", "date": "2026-04" }
+      ],
+      "limitations": "Focuses on competitive programming problems, which may not represent production software engineering. Tests algorithmic problem-solving more than software design and architecture.",
+      "relevance_to_forge": "Most contamination-resistant coding signal available. Useful for evaluating the raw problem-solving capability of models that Forge orchestrates, but doesn't test Forge's scaffolding value-add.",
+      "forge_applicable": "Not directly applicable to Forge's multi-agent pipeline. However, LiveCodeBench scores help select which models to use as Forge agents. Forge's model_profiles configuration (quality, balanced, budget) could use LiveCodeBench scores for model selection."
+    },
+    {
+      "name": "BigCodeBench",
+      "url": "https://bigcode-bench.github.io/",
+      "category": "benchmark",
+      "what_it_measures": "Code generation with diverse function calls and complex instructions. 1,140 software-engineering-oriented programming tasks testing realistic library usage. BigCodeBench-Hard subset (148 tasks) aligns more with real-world programming. Accepted at ICLR 2025.",
+      "dataset_size": "1,140 tasks (Full); 148 tasks (Hard)",
+      "current_leaders": [
+        { "system": "Qwen2.5-Coder 32B Instruct", "score": "49.6% (Full)", "date": "2026-04" }
+      ],
+      "limitations": "Top scores only ~50-60%, far below human performance of 97%. Tests library/API usage more than architectural decisions. Models struggle with complex instructions involving multiple function calls.",
+      "relevance_to_forge": "More relevant than HumanEval/MBPP as it tests realistic library usage and complex instructions. The 50-60% ceiling vs 97% human performance highlights why Forge's verification engine and fix loops are essential.",
+      "forge_applicable": "Partially applicable. BigCodeBench tasks could test Forge's agent code generation quality, but don't capture Forge's multi-file orchestration and verification capabilities."
+    },
+    {
+      "name": "Aider Polyglot Benchmark",
+      "url": "https://aider.chat/docs/leaderboards/",
+      "category": "benchmark",
+      "what_it_measures": "Multi-language coding ability across C++, Go, Java, JavaScript, Python, and Rust using 225 of Exercism's most challenging problems. Tests code editing capability with two attempts (second attempt includes test feedback). Evaluates diff-based editing quality.",
+      "dataset_size": "225 problems across 6 languages",
+      "current_leaders": [
+        { "system": "GPT-5 (OpenAI)", "score": "88.0%", "date": "2026" },
+        { "system": "Claude Opus 4.6 (Anthropic)", "score": "Leading position", "date": "2026" }
+      ],
+      "limitations": "Tests model capability in isolation (no agent framework). Problems are from Exercism (educational platform), not production codebases. Doesn't test multi-file editing or architectural changes.",
+      "relevance_to_forge": "Highly relevant for Forge's model selection. Since Aider Polyglot isolates raw model capability from scaffolding, it helps answer which model Forge should use as its base agent. The multi-language aspect matches Forge's language-agnostic graph capabilities.",
+      "forge_applicable": "Useful as a model selection benchmark for Forge's active_profile configuration. Not a test of Forge itself, but of the models Forge orchestrates. Forge's diff-based patch generation (git apply --3way) mirrors Aider's diff-based editing approach."
+    },
+    {
+      "name": "DevBench (Comprehensive Software Development Benchmark)",
+      "url": "https://arxiv.org/abs/2403.08604",
+      "category": "benchmark",
+      "what_it_measures": "Multi-file codebase construction from product requirement documents (PRDs). Evaluates software design, environment setup, implementation, acceptance testing, and unit testing across 22 repositories in 4 languages (Python, C/C++, Java, JavaScript).",
+      "dataset_size": "22 curated repositories in 4 languages",
+      "current_leaders": [
+        { "system": "Data not widely tracked on leaderboards", "score": "Varies by sub-task", "date": "2024-2025" }
+      ],
+      "limitations": "Relatively small dataset (22 repos). Not as widely adopted as SWE-bench. v2 (2025) shifted to telemetry-driven code completion evaluation with 1,800 instances.",
+      "relevance_to_forge": "The most architecturally relevant benchmark for Forge. DevBench evaluates the exact pipeline Forge implements: from PRD -> software design -> implementation -> testing. Forge's plan-then-execute approach maps directly to DevBench's staged evaluation.",
+      "forge_applicable": "Highly applicable. Forge's complete pipeline (requirements -> planning -> agent factory -> execution -> verification) could be evaluated end-to-end on DevBench tasks. This would be the most comprehensive benchmark for demonstrating Forge's value proposition."
+    },
+    {
+      "name": "CodeContests / AlphaCode 2",
+      "url": "https://storage.googleapis.com/deepmind-media/AlphaCode2/AlphaCode2_Tech_Report.pdf",
+      "category": "benchmark",
+      "what_it_measures": "Competitive programming benchmark with ~15,000 problems and 30 million human code samples. AlphaCode 2 (powered by Gemini) generates up to 1 million code samples per challenge with diversity via random temperature assignment.",
+      "dataset_size": "~15,000 problems; 30 million human code samples",
+      "current_leaders": [
+        { "system": "AlphaCode 2 (Google DeepMind)", "score": "Better than 85% of competition participants", "date": "2023-12" },
+        { "system": "Gemini 3 Pro Preview", "score": "91.7% on LiveCodeBench (related)", "date": "2026-04" }
+      ],
+      "limitations": "Extremely expensive to run (generates millions of samples per problem). Not practical for production use. Tests competitive programming, not software engineering. AlphaCode 2 hasn't been significantly updated since 2023.",
+      "relevance_to_forge": "Low direct relevance. CodeContests focuses on competitive programming with brute-force sampling, while Forge emphasizes structured, efficient development with verification.",
+      "forge_applicable": "Not applicable. Forge's architecture is designed for software engineering tasks, not competitive programming. The brute-force sampling approach is antithetical to Forge's resource-aware execution planning."
+    }
+  ],
+  "enterprise_adoption": [
+    {
+      "source": "GitHub Octoverse 2025",
+      "url": "https://octoverse.github.com/",
+      "date": "2025-10",
+      "key_finding": "Over 36 million new developers joined GitHub; 80% of new developers use Copilot in their first week. 1.1 million public repos use LLM SDKs (178% YoY increase). 4.3 million AI-related repos exist. TypeScript overtook Python/JavaScript as most-used language (AI-driven shift to typed languages). 986 million code pushes in 2025 (+25.1% YoY). 43.2M PRs merged per month (+23% YoY).",
+      "enterprise_relevance": "AI-assisted coding is the default entry point for new developers. The shift to TypeScript validates Forge's type-checking verification layer. The explosion of AI-related repos indicates massive demand for tools like Forge."
+    },
+    {
+      "source": "Stack Overflow Developer Survey 2025",
+      "url": "https://survey.stackoverflow.co/2025/",
+      "date": "2025-12",
+      "key_finding": "84% of developers use or plan to use AI tools; 51% use AI tools daily. ChatGPT (82%) and GitHub Copilot (68%) are market leaders. 44% use AI tools to learn coding (up from 37%). However, trust in AI accuracy fell from 40% to 29%, and positive favorability dropped from 72% to 60%. 52% don't use AI agents or stick to simpler tools; 38% have no plans to adopt agents.",
+      "enterprise_relevance": "The trust gap (high usage but declining trust) validates Forge's verification-first approach. The reluctance toward AI agents (52% non-adoption) highlights the need for reliable, verifiable agent systems. Forge's 8-layer verification engine addresses the core trust issue."
+    },
+    {
+      "source": "JetBrains State of Developer Ecosystem 2025",
+      "url": "https://devecosystem-2025.jetbrains.com/",
+      "date": "2025-10",
+      "key_finding": "85% of developers regularly use AI tools; 62% use at least one AI coding assistant/agent. ChatGPT (41%) and GitHub Copilot (30%) lead. Only 44% have AI fully or partially integrated into workflows (adoption-integration gap). Top concerns: code quality (23%), limited complex code understanding (18%), privacy/security (13%). Top benefits: productivity (74%), faster repetitive tasks (73%), less search time (72%).",
+      "enterprise_relevance": "The 85% usage vs 44% integration gap reveals an enormous opportunity for structured tools like Forge that systematically integrate AI into development workflows. Code quality concern (23%) validates Forge's verification engine. Context awareness concern (10%) validates Forge's graph-based context management."
+    },
+    {
+      "source": "Google Internal AI Coding Metrics (Sundar Pichai, April 2026)",
+      "url": "https://www.techspot.com/news/112152-google-ai-now-generates-75-new-code-up.html",
+      "date": "2026-04",
+      "key_finding": "75% of Google's new code is AI-generated (up from 25% in late 2024, 50% in late 2025). Internal agentic platform 'Antigravity' (launched with Gemini 3, November 2025) shifts developers from line-by-line coding to issuing high-level directives. Agents plan, execute across multiple files, run tests, and iterate. All AI-generated code is 'approved by engineers'.",
+      "enterprise_relevance": "Google's trajectory (25% -> 50% -> 75% in 18 months) with an internal agent platform validates Forge's agentic approach. The Antigravity description (high-level directives, multi-file execution, testing, iteration) closely mirrors Forge's architecture. Human approval requirement validates Forge's verification-first design."
+    },
+    {
+      "source": "Cloudflare AI Code Review at Scale",
+      "url": "https://blog.cloudflare.com/ai-code-review/",
+      "date": "2025",
+      "key_finding": "Built production AI code review system using OpenCode with multiple specialized AI reviewers operating in parallel. System runs across thousands of repositories. Internal AI stack processed 20 million requests through AI Gateway, 241 billion tokens, serving 3,683 internal users. Part of 'Code Orange: Fail Small' engineering resilience initiative.",
+      "enterprise_relevance": "Validates the multi-agent approach to code review at enterprise scale. Cloudflare's parallel specialized reviewers mirror Forge's wave-based parallel execution with specialized agent archetypes. The scale (thousands of repos, 241B tokens) demonstrates production viability of AI-orchestrated code workflows."
+    },
+    {
+      "source": "Amazon Q Developer / CodeWhisperer Metrics",
+      "url": "https://www.getpanto.ai/blog/amazon-q-statistics",
+      "date": "2026",
+      "key_finding": "$260 million in annual cost savings from Q Developer-led modernization. 4,500 developer years saved. 450,000+ hours recovered from technical search. BT Group generates 2M+ lines of code per year with Q Developer. 45% faster onboarding, 75% shorter review meetings, 40% less coding/testing time. Deriv reduced onboarding by 45% and recruiting tasks by 50%.",
+      "enterprise_relevance": "Demonstrates massive enterprise ROI from AI coding tools. The $260M savings and 4,500 developer years saved provide economic justification for investment in AI-assisted development. Forge could deliver similar ROI through its automated pipeline."
+    },
+    {
+      "source": "McKinsey: Unlocking the Value of AI in Software Development",
+      "url": "https://www.mckinsey.com/industries/technology-media-and-telecommunications/our-insights/unlocking-the-value-of-ai-in-software-development",
+      "date": "2025",
+      "key_finding": "Top-performing AI-driven organizations see 16-30% improvements in team productivity, customer experience, and time-to-market, plus 31-45% improvement in software quality. 57% of top performers invest in hands-on AI workshops (vs 20% of bottom performers). AI could generate up to $4.4 trillion annually in global productivity gains.",
+      "enterprise_relevance": "The 31-45% software quality improvement in top performers validates Forge's quality-first approach (8-layer verification). The training gap (57% vs 20%) suggests that tools like Forge which systematize AI integration can help bridge the adoption gap without requiring extensive team training."
+    },
+    {
+      "source": "Gartner Predictions 2026: AI in Software Engineering",
+      "url": "https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025",
+      "date": "2025-08",
+      "key_finding": "40% of enterprise apps will feature task-specific AI agents by end of 2026 (up from <5% in 2025). 70% of software organizations will use AI for project planning by 2026. Worldwide AI spending to total $2.5 trillion in 2026 (+44% YoY). Warning: by 2028, prompt-to-app approaches will increase software defects by 2500%, triggering quality crisis.",
+      "enterprise_relevance": "Gartner's 2500% defect increase warning for prompt-to-app approaches is the strongest possible validation for Forge's verification-first approach. Forge is specifically designed to prevent the quality crisis Gartner predicts by embedding verification at every stage."
+    },
+    {
+      "source": "Forrester: AI in Software Development 2025-2026",
+      "url": "https://www.forrester.com/blogs/predictions-2026-ai-agents-changing-business-models-and-workplace-culture-impact-enterprise-software/",
+      "date": "2025-2026",
+      "key_finding": "Software development will be #1 AI use case in 2026. AI-assisted code generation reduces routine coding time by 42% (study of 500 enterprise teams). Agentic coding tools save ~$44.5M in risk-adjusted employee time over 3 years. Intesa Sanpaolo saw 40% efficiency in test design, 30% in development, 15% in requirements. Adoption varies across SDLC stages.",
+      "enterprise_relevance": "The SDLC-stage adoption variance (coding ahead, planning behind) validates Forge's full-lifecycle approach covering requirements through verification. The $44.5M savings metric provides ROI justification. The efficiency variation across stages (40% testing, 30% development, 15% requirements) suggests Forge should emphasize verification and testing automation."
+    },
+    {
+      "source": "Microsoft Research: Impact of AI on Developer Productivity",
+      "url": "https://www.microsoft.com/en-us/research/publication/the-impact-of-ai-on-developer-productivity-evidence-from-github-copilot/",
+      "date": "2025",
+      "key_finding": "GitHub Copilot users complete 126% more projects per week. AI coding tools generate 41% of all code worldwide. 62% of professional developers use AI tools. Copilot Usage Report 2025 shows enterprise-wide adoption patterns. Multi-model intelligence (Critique and Council) introduced for Copilot Researcher with +7.0 point improvement.",
+      "enterprise_relevance": "126% more projects per week is a compelling productivity metric. The 41% global AI code generation rate shows mainstream adoption. Microsoft's multi-model approach (generation + review) parallels Forge's agent + verification architecture."
+    },
+    {
+      "source": "AI Code Review Industry Benchmarks 2026",
+      "url": "https://byteiota.com/ai-code-review-benchmark-2026-first-real-results/",
+      "date": "2026",
+      "key_finding": "47% of professional developers used AI-assisted code review in 2025 (up from 22% in 2024, 11% in 2023). High-performing teams see 42-48% bug detection improvement. Current tools achieve 50-60% effectiveness. 32% faster merge times and 28% fewer post-merge defects with AI review. However, PR review time increases 91% with AI development, creating a bottleneck.",
+      "enterprise_relevance": "The 91% review time increase reveals a critical bottleneck that Forge's automated verification addresses. The 50-60% effectiveness ceiling for AI code review tools validates Forge's multi-layer approach (8 layers) over single-pass review."
+    }
+  ]
+}

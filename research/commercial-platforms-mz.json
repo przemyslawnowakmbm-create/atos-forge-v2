@@ -1,0 +1,966 @@
+[
+  {
+    "name": "Mentat (by AbanteAI)",
+    "url": "https://mentat.ai/",
+    "category": "commercial",
+    "description": "Open-source AI coding agent that operates as a GitHub bot, reviewing PRs, fixing CI failures, resolving merge conflicts, and handling GitHub issues autonomously. Supports running a fleet of agents simultaneously as remote engineers.",
+    "input_format": "GitHub issues, PR comments, natural language task descriptions",
+    "output_format": "Code changes via PRs, PR review comments, CI fix commits",
+    "verification_method": "CI integration - identifies and auto-fixes CI failures; runs existing test suites",
+    "human_gates": "PR review required before merge; human can comment on PRs for feedback",
+    "agent_architecture": "GitHub-native bot with multi-file editing and project-wide context awareness. Fleet model allows multiple concurrent agents on separate tasks.",
+    "execution_model": "Autonomous agent triggered by GitHub events (issues, PRs). Plans changes, executes across files, submits PRs. SWE-bench lite score of 38%.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Go", "Rust", "Java", "C++"],
+    "pricing_model": "Free and open-source (MIT license)",
+    "funding": "No public funding disclosed for AbanteAI",
+    "target_market": "Individual developers and small teams wanting an open-source AI coding agent",
+    "notable_customers": [],
+    "differentiator": "Fully open-source with fleet-scale agent deployment; GitHub-native experience without vendor lock-in",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Fully open-source and free",
+      "Fleet model for parallel agent execution",
+      "GitHub-native integration",
+      "Auto-fixes CI failures and merge conflicts"
+    ],
+    "weaknesses": [
+      "No enterprise features (SSO, RBAC, compliance)",
+      "No structured requirements or planning capabilities",
+      "Limited verification beyond CI pass/fail",
+      "No formal knowledge management or learning across tasks",
+      "No disclosed funding raises questions about long-term sustainability"
+    ],
+    "comparison_to_forge": "Mentat is a lightweight GitHub bot for issue-to-PR automation. Forge provides a comprehensive SDLC pipeline with structured requirements, multi-phase planning, 8-layer verification, session continuity, and enterprise governance. Mentat lacks planning, knowledge propagation, and verification depth."
+  },
+  {
+    "name": "Poolside AI",
+    "url": "https://poolside.ai/",
+    "category": "commercial",
+    "description": "Enterprise AI software engineering platform offering custom-trained foundation models (Malibu for complex tasks, Point for code completion) deployed within customer infrastructure. Uses Reinforcement Learning from Code Execution Feedback (RLCEF) for training.",
+    "input_format": "Natural language prompts, code context, customer codebase for fine-tuning",
+    "output_format": "Code generation, completions, test generation, documentation, refactoring suggestions",
+    "verification_method": "RLCEF training validates code through execution; no public details on runtime verification pipeline",
+    "human_gates": "Developer reviews generated code; no structured gate system documented",
+    "agent_architecture": "Custom foundation models (Malibu and Point) fine-tuned per customer on their codebase, development history, and coding patterns. Deployed in customer VPC/on-prem.",
+    "execution_model": "Model-as-a-service deployed within customer boundaries. Focus on code generation and completion rather than end-to-end task execution. Available via AWS Bedrock, on-prem, and private VPC.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C++", "Go", "Rust", "C#"],
+    "pricing_model": "Enterprise contracts (custom pricing); includes models + professional services",
+    "funding": "$2B+ raised at $12B valuation (Oct 2025). Key rounds: $26M seed, $100M early, $500M (Bain Capital, Oct 2024), $500M-$1B from Nvidia (Oct 2025). Investors: Nvidia, Bain Capital, CapitalG, Citi Ventures, SentinelOne S Ventures.",
+    "target_market": "Large enterprises and defense organizations requiring private, customizable AI coding models",
+    "notable_customers": ["AWS (strategic partner)", "Defense sector clients"],
+    "differentiator": "Custom model training per customer with on-prem deployment; RLCEF training methodology; models fine-tuned on organization-specific patterns; license-safe training (excludes GPL/AGPL)",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 3,
+      "D6_enterprise": 5,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Massive funding ($2B+) and Nvidia partnership ensure long-term viability",
+      "True on-prem and VPC deployment with data sovereignty",
+      "Custom model fine-tuning per customer codebase",
+      "License-safe training data pipeline",
+      "RLCEF provides execution-validated training",
+      "AWS Bedrock integration for managed cloud deployment"
+    ],
+    "weaknesses": [
+      "No public product available - enterprise-only black box",
+      "No structured planning, requirements, or phased execution",
+      "Verification limited to model training; no runtime verification pipeline",
+      "No documented knowledge management across tasks",
+      "Extremely high cost - enterprise contracts only",
+      "Still pre-revenue at scale; product maturity unclear"
+    ],
+    "comparison_to_forge": "Poolside is a model provider, not a development workflow tool. It offers superior enterprise deployment (on-prem, VPC, custom models) but has zero structured SDLC pipeline. Forge provides the complete workflow (requirements through verification) that a Poolside model would sit inside. They are complementary rather than competitive."
+  },
+  {
+    "name": "Qodo (formerly CodiumAI)",
+    "url": "https://www.qodo.ai/",
+    "category": "commercial",
+    "description": "AI code quality platform focused on test generation, PR review (via Qodo Merge/PR-Agent), IDE assistance, and CLI workflows. Uses a proprietary Context Engine with RAG and code-embedding models for cross-repo reasoning.",
+    "input_format": "Code in IDE, PRs on GitHub/GitLab/Bitbucket, CLI commands, natural language queries",
+    "output_format": "Generated tests, PR review comments, code suggestions, quality reports",
+    "verification_method": "AI-generated test suites; PR-level review with automated suggestions; cross-repo dependency tracking (Enterprise). Static analysis integration.",
+    "human_gates": "PR review workflow with human approval; test generation requires developer review before merge",
+    "agent_architecture": "Context Engine combining RAG with proprietary code-embedding models. Separate products: Qodo Gen (IDE), Qodo Merge (PR review), Qodo CLI. PR-Agent is the open-source foundation.",
+    "execution_model": "Event-driven: triggers on PR creation/update for review, on-demand for test generation and IDE assistance. Not an autonomous agent - responds to developer actions.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "Go", "Ruby", "PHP", "Kotlin", "Swift", "Rust"],
+    "pricing_model": "Free (250 credits + 30 PRs/mo), Teams $30/user/mo, Enterprise custom. PR-Agent is open-source and free to self-host.",
+    "funding": "$120M total. Seed $11M (2023), Series A $40M (2024, led by Susa Ventures/Square Peg), Series B $70M (2025, led by Qumra Capital).",
+    "target_market": "Development teams focused on code quality, testing, and review automation; enterprises with compliance requirements",
+    "notable_customers": [],
+    "differentiator": "Quality-first approach with deep test generation capabilities; open-source PR-Agent foundation; multi-repo context engine; air-gapped deployment option",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 4,
+      "D4_human_gates": 3,
+      "D5_knowledge": 2,
+      "D6_enterprise": 4,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Best-in-class AI test generation",
+      "Open-source PR-Agent foundation enables self-hosting",
+      "Air-gapped deployment for regulated industries",
+      "Cross-repo dependency tracking in Enterprise",
+      "SOC 2 Type II audited; data auto-purged within 48h",
+      "Strong funding ($120M) with clear product-market fit"
+    ],
+    "weaknesses": [
+      "No requirements management or planning capabilities",
+      "Not an autonomous coding agent - reactive to developer actions",
+      "No phased execution or task decomposition",
+      "Knowledge limited to per-PR context, no cross-session learning",
+      "Focused on verification/quality; doesn't generate application code at scale"
+    ],
+    "comparison_to_forge": "Qodo excels at verification (test generation, PR review) which overlaps with Forge's Layer 5-6 verification. However, Qodo lacks the full SDLC pipeline: no requirements, no planning, no phased execution, no session continuity. Forge's 8-layer verification is broader (structural, type, interface, dependency, tests, behavioral, contract, architectural). Qodo could be a complementary tool within a Forge pipeline."
+  },
+  {
+    "name": "Replit Agent",
+    "url": "https://replit.com/",
+    "category": "commercial",
+    "description": "AI agent within the Replit cloud IDE that builds full-stack applications from natural language descriptions. Agent 3 (Sep 2025) introduced autonomous 200+ minute sessions, REPL-based self-testing, and browser automation for verification.",
+    "input_format": "Natural language app descriptions, conversational refinement, 30+ connectors (Stripe, Figma, Notion, etc.)",
+    "output_format": "Complete deployed applications with frontend, backend, database, and hosting on Replit infrastructure",
+    "verification_method": "Novel REPL-based verification combining code execution with browser automation. Agent navigates the app like a real user testing UI, functionality, APIs, and accessibility. 3x faster, 10x cheaper than Computer Use models.",
+    "human_gates": "Verifier agent frequently falls back to user confirmation; checkpoint-based approval system; user reviews deployed app",
+    "agent_architecture": "Multi-agent system with Manager (workflow oversight), Editor (coding tasks), and Verifier (testing + user interaction) roles. Orchestrates Replit primitives: workspace, runtime, DB, secrets, deployment pipeline.",
+    "execution_model": "Autonomous with periodic human checkpoints. Agent plans, edits, tests, and deploys. Effort-based pricing where cost scales with task complexity. Supports 200+ minutes of autonomous work per session.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "HTML/CSS", "React", "Node.js", "Next.js", "Flask", "Django", "Ruby", "Go", "Java", "C++", "Rust"],
+    "pricing_model": "Starter free, Core $20/mo, Pro $100/mo (up to 15 builders), Enterprise custom. Effort-based: simple changes ~$0.25, complex tasks scale up.",
+    "funding": "$922M total over 8 rounds. Series D $400M at $9B valuation (Mar 2026, led by Georgian). Series E $250M at $3B (Sep 2025, led by Prysm Capital). Investors: a16z, Khosla, Coatue, Google AI Futures Fund.",
+    "target_market": "Non-technical builders, startups, rapid prototyping teams, enterprise app development",
+    "notable_customers": ["85% of Fortune 500 have users on Replit", "50M+ total users"],
+    "differentiator": "Complete cloud-native development environment with integrated deployment; novel browser-based self-testing; multi-agent architecture with verifier role; 30+ connectors for instant integrations; mobile app development support",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 3,
+      "D3_verification": 4,
+      "D4_human_gates": 3,
+      "D5_knowledge": 2,
+      "D6_enterprise": 3,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "End-to-end: from prompt to deployed app in one platform",
+      "Innovative REPL-based self-testing with browser automation",
+      "Multi-agent architecture with specialized roles",
+      "Massive funding ($922M) and market traction (50M+ users)",
+      "SOC 2 Type II, GCP/Azure marketplace listings",
+      "30+ connectors for rapid integration",
+      "CVE detection and security agent"
+    ],
+    "weaknesses": [
+      "Cloud-only - no self-hosted option for enterprises with data sovereignty requirements",
+      "No structured requirements management",
+      "Planning is implicit in agent execution, not a formal artifact",
+      "No cross-session knowledge propagation",
+      "Tied to Replit ecosystem - limited migration path",
+      "Not designed for maintaining large existing codebases"
+    ],
+    "comparison_to_forge": "Replit Agent excels at greenfield app creation with integrated hosting, while Forge is designed for maintaining and evolving existing codebases. Replit's verification (browser testing) is innovative but narrow compared to Forge's 8-layer engine. Forge provides structured requirements, phased planning, session continuity, and knowledge propagation that Replit lacks. Replit has no self-hosted option."
+  },
+  {
+    "name": "Sourcegraph Cody / Amp",
+    "url": "https://sourcegraph.com/cody",
+    "category": "commercial",
+    "description": "Enterprise AI coding assistant built on Sourcegraph's code search infrastructure, providing deep codebase context through RAG architecture. Cody (assistant mode) handles supervised tasks; Amp (agent mode, launched 2025) handles autonomous multi-step workflows. Enterprise-only as of mid-2025.",
+    "input_format": "Natural language queries, @-mention for multi-repo context (up to 10 repos), code search queries",
+    "output_format": "Code completions, explanations, refactoring, multi-step edits (Amp), PRs, batch changes",
+    "verification_method": "Amp runs tests and debugs issues autonomously. Cody Enterprise bundles Code Insights for monitoring. No dedicated verification layer documented.",
+    "human_gates": "Cody operates under direct supervision. Amp has configurable autonomy with plan review before execution.",
+    "agent_architecture": "RAG architecture with three context layers: local file, local repo, and remote repo (via code search). Amp adds agentic layer with planning, tool use, and autonomous execution. Built on Sourcegraph's pre-indexed vector embeddings and code graph.",
+    "execution_model": "Cody: interactive assistant mode. Amp: agentic mode that accepts high-level goals, creates plans, writes code, runs tests, and debugs. Available as VS Code extension and CLI.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Go", "Java", "C#", "C++", "Ruby", "PHP", "Kotlin", "Swift", "Rust", "Scala"],
+    "pricing_model": "Enterprise only at $59/user/mo. Free and Pro plans discontinued July 2025. Amp may have separate pricing.",
+    "funding": "Sourcegraph raised $225M+ total. Series D $125M at $2.6B valuation (2021). Recent rounds undisclosed.",
+    "target_market": "Large enterprises with complex, multi-repository codebases; security-conscious engineering organizations",
+    "notable_customers": ["Uber", "Databricks", "Plaid", "Nine (media)", "Leidos"],
+    "differentiator": "Unmatched codebase context through Sourcegraph search infrastructure; multi-repo understanding; bundled Code Search, Batch Changes, and Code Insights; BYO LLM via Bedrock/Azure/Vertex",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 3,
+      "D3_verification": 2,
+      "D4_human_gates": 3,
+      "D5_knowledge": 3,
+      "D6_enterprise": 5,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Best-in-class codebase context via Sourcegraph search infrastructure",
+      "Multi-repo understanding (up to 10 repos via @-mention)",
+      "Self-hosted deployment with BYO LLM",
+      "Bundled Code Search, Batch Changes, and Insights",
+      "SOC 2 compliance with zero-retention policy",
+      "Amp adds autonomous agent capabilities atop established platform"
+    ],
+    "weaknesses": [
+      "Enterprise-only pricing ($59/user/mo) - no free tier since July 2025",
+      "No structured requirements or phased execution",
+      "Verification capabilities are basic compared to dedicated tools",
+      "Knowledge management limited to code graph context",
+      "Amp is relatively new - maturity unclear vs established competitors",
+      "High total cost when considering Sourcegraph infrastructure"
+    ],
+    "comparison_to_forge": "Cody/Amp provides superior codebase context retrieval via Sourcegraph search, which outperforms Forge's graph-based context. However, it lacks structured SDLC pipeline: no requirements management, no phased planning, no 8-layer verification, no session continuity with ledger. Forge's code graph serves a similar but lighter purpose to Sourcegraph's index. Amp's agentic mode approaches Forge's execution capability but without the structured planning and verification framework."
+  },
+  {
+    "name": "Tabnine",
+    "url": "https://www.tabnine.com/",
+    "category": "commercial",
+    "description": "Privacy-first enterprise AI code assistant evolved into an Agentic Platform. Enterprise Context Engine understands codebase architecture, coding standards, and API patterns. Offers full air-gapped, on-prem deployment including Dell PowerEdge servers with NVIDIA GPUs.",
+    "input_format": "Code context in IDE, natural language chat, codebase-wide patterns and standards",
+    "output_format": "Code completions, chat responses, refactoring suggestions, multi-step agent task outputs",
+    "verification_method": "No dedicated verification layer. Relies on existing CI/CD and developer review.",
+    "human_gates": "Developer reviews all suggestions. Agent workflows require human confirmation.",
+    "agent_architecture": "Enterprise Context Engine providing codebase-aware AI. Agentic Platform (launched 2025) adds MCP tool integration and multi-step autonomous task execution. Supports BYO LLM.",
+    "execution_model": "IDE-integrated assistant with agentic capabilities. Code completions are real-time; agent tasks execute multi-step workflows. Deployed on SaaS, VPC, or fully air-gapped on-prem.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "Go", "Ruby", "PHP", "Kotlin", "Swift", "Rust", "Scala", "Perl"],
+    "pricing_model": "Basic free, Pro $12/user/mo, Enterprise $39/user/mo, Agentic $59/user/mo. Enterprise on-prem: custom pricing.",
+    "funding": "$102M total across 5 rounds. Series B $25M (Jul 2024, led by Telstra Ventures with Atlassian). Earlier: Khosla Ventures, Qualcomm Ventures, Headline. 18 total investors including Y Combinator.",
+    "target_market": "Privacy-sensitive enterprises, regulated industries (defense, finance, healthcare), organizations requiring on-prem deployment",
+    "notable_customers": ["Samsung", "Cisco", "Comcast", "1M+ developers"],
+    "differentiator": "Most complete air-gapped deployment option (including dedicated hardware). Zero code retention policy. License-safe AI. GDPR, SOC 2, ISO 27001 compliance. Enterprise Context Engine for organization-specific patterns.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 0,
+      "D2_planning": 1,
+      "D3_verification": 1,
+      "D4_human_gates": 2,
+      "D5_knowledge": 3,
+      "D6_enterprise": 5,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Best-in-class privacy and air-gapped deployment (including hardware options)",
+      "GDPR, SOC 2, ISO 27001 compliance",
+      "Zero code retention - no training on customer code",
+      "License-safe AI usage",
+      "Enterprise Context Engine learns organization patterns",
+      "BYO LLM support",
+      "Broad IDE support"
+    ],
+    "weaknesses": [
+      "No requirements management or planning capabilities",
+      "No verification engine or testing pipeline",
+      "Agent capabilities are new (2025) and less mature than competitors",
+      "Knowledge limited to code patterns - no structured learning across sessions",
+      "Not designed for autonomous task execution at scale",
+      "Moderate funding compared to peers"
+    ],
+    "comparison_to_forge": "Tabnine is the enterprise privacy benchmark with unmatched air-gapped deployment. However, it offers zero SDLC pipeline: no requirements, no planning, no phased execution, no verification engine, no session continuity. Forge provides the complete development workflow but relies on cloud LLMs. Tabnine's Enterprise Context Engine concept is analogous to Forge's code graph but focused on completion quality rather than impact analysis."
+  },
+  {
+    "name": "Tessl",
+    "url": "https://tessl.io/",
+    "category": "commercial",
+    "description": "Specification-driven development platform with the Intent Integrity Kit (IIKit) that preserves developer intent from idea to implementation through a 10-phase workflow. Prevents circular verification where AI modifies tests to match buggy code. Includes tile registry with 2000+ runtime knowledge tiles.",
+    "input_format": "CONSTITUTION.md (project governance), natural language specifications, Gherkin feature files, clarifying questions",
+    "output_format": "Specifications, implementation plans, locked Gherkin test files, task breakdowns, code implementations, exportable artifacts",
+    "verification_method": "Locked Gherkin .feature files prevent AI from modifying tests to match code. 10-phase workflow with mandatory checkpoints (constitution, specify, clarify, plan, testify, implement). Anti-circular-verification by design.",
+    "human_gates": "Multiple gates: specification approval, plan review, test file locking (human-approved tests cannot be AI-modified), implementation review. Detect and warn on downstream impact of spec changes.",
+    "agent_architecture": "Workflow orchestrator with 10 skill-based phases. Each phase is a Tessl skill with scoped context and prerequisite gating. Runtime knowledge via tile registry queries current API docs during implementation. Works with Claude Code, Codex, Gemini, OpenCode.",
+    "execution_model": "Linear workflow (first pass) with iterative refinement: constitution -> specify -> clarify -> plan -> checklist -> testify -> tasks -> analyze -> implement -> export. Agent-agnostic - wraps multiple LLM backends.",
+    "languages_supported": ["JavaScript", "TypeScript", "Python", "React", "Vue", "Angular", "Node.js"],
+    "pricing_model": "Not publicly disclosed. IIKit is available via Tessl registry. Enterprise pricing likely custom.",
+    "funding": "$125M total. Seed $25M (Google Ventures, Boldstart Ventures), Series A $100M (Index Ventures, Accel). Post-money valuation $750M. Founded 2024 by Guy Podjarny (founder of Snyk).",
+    "target_market": "Enterprise development teams wanting structured, specification-driven AI development with verification guarantees",
+    "notable_customers": [],
+    "differentiator": "Only platform with anti-circular-verification (locked test files). Spec-driven 10-phase workflow. Runtime knowledge tiles keep AI current with latest APIs. Agent-agnostic - works across LLM providers. Founded by Snyk's Guy Podjarny.",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 5,
+      "D2_planning": 4,
+      "D3_verification": 4,
+      "D4_human_gates": 5,
+      "D5_knowledge": 3,
+      "D6_enterprise": 2,
+      "D7_extensibility": 4
+    },
+    "strengths": [
+      "Best-in-class specification-driven workflow with 10 structured phases",
+      "Anti-circular-verification: locked Gherkin tests prevent AI tampering",
+      "Runtime knowledge tiles (2000+) keep AI current with latest APIs",
+      "Agent-agnostic - works with Claude Code, Codex, Gemini, OpenCode",
+      "Strong funding ($125M) from tier-1 VCs; founder has deep DevTools pedigree (Snyk)",
+      "Semantic diff detection on spec changes with downstream impact warnings"
+    ],
+    "weaknesses": [
+      "Early stage - launched 2024, enterprise features still developing",
+      "No documented RBAC, SSO, audit trail, or compliance certifications",
+      "No autonomous execution - workflow requires human progression through phases",
+      "Pricing not publicly available",
+      "Limited language/framework support compared to competitors",
+      "No integrated deployment or CI/CD pipeline"
+    ],
+    "comparison_to_forge": "Tessl is the closest competitor to Forge's structured SDLC philosophy. Both use phased workflows (Tessl: 10 phases, Forge: requirements -> planning -> execution -> verification). Tessl's anti-circular-verification and locked Gherkin tests are more rigorous than Forge's Layer 6 behavioral verification. However, Forge provides autonomous agent execution, parallel wave-based execution, session continuity with ledger, and cross-session knowledge propagation that Tessl lacks. Forge's 8-layer verification is broader. Tessl is agent-agnostic while Forge is tightly integrated."
+  },
+  {
+    "name": "v0 by Vercel",
+    "url": "https://v0.dev/",
+    "category": "commercial",
+    "description": "AI-powered frontend and full-stack app generator by Vercel. Generates Tailwind + React components from natural language, with Git integration, VS Code-style editor, database connectivity, and agentic workflows added in Feb 2026.",
+    "input_format": "Natural language descriptions, design references, conversational refinement",
+    "output_format": "React/Tailwind components, Next.js applications, full-stack apps with database integration. Deployable to Vercel.",
+    "verification_method": "Sandbox-based runtime for testing generated apps. Preview functionality. No formal verification pipeline.",
+    "human_gates": "Iterative generation with human review at each step. Git integration enables PR-based review workflow.",
+    "agent_architecture": "Proprietary v0 model (v0-1.5-lg) with sandbox runtime. Agentic workflows added Feb 2026 for multi-step app building. Git panel for branch creation and PRs from chat.",
+    "execution_model": "Prompt-to-component/app generation with iterative refinement. Token-based billing (Feb 2026 switch from fixed credits). Sandbox execution for full-stack apps.",
+    "languages_supported": ["JavaScript", "TypeScript", "React", "Next.js", "Tailwind CSS", "HTML/CSS"],
+    "pricing_model": "Free ($5/mo credits), Pro $20/user/mo ($20 credits), Team $30/user/mo, Business $100/user/mo, Enterprise custom. Token-based consumption.",
+    "funding": "Part of Vercel (raised $563M+ total, valued at $3.5B). Not separately funded.",
+    "target_market": "Frontend developers, designers, rapid prototyping teams, Vercel ecosystem users",
+    "notable_customers": ["Vercel's enterprise customer base"],
+    "differentiator": "Tight integration with Vercel/Next.js ecosystem; sandbox runtime for full-stack apps; Git integration from chat; proprietary model optimized for UI generation",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 3,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Best-in-class UI/frontend generation quality",
+      "Seamless Vercel/Next.js deployment pipeline",
+      "Sandbox runtime for testing full-stack apps",
+      "Git integration enables standard PR workflows",
+      "Backed by Vercel's $563M+ funding and enterprise presence",
+      "SOC 2, SAML SSO, audit logs on enterprise tier"
+    ],
+    "weaknesses": [
+      "Narrow scope - primarily frontend/UI generation",
+      "No requirements management or planning",
+      "No formal verification beyond sandbox preview",
+      "No knowledge management or cross-session learning",
+      "Locked to Vercel/Next.js ecosystem",
+      "No self-hosted option",
+      "Token-based pricing can be unpredictable"
+    ],
+    "comparison_to_forge": "v0 is a specialized UI generation tool, not a general SDLC platform. It excels at rapid frontend prototyping but lacks every Forge capability: requirements, planning, verification engine, session continuity, knowledge propagation, and multi-language support. v0 could potentially be used within a Forge pipeline for UI-specific sub-tasks."
+  },
+  {
+    "name": "Windsurf (formerly Codeium)",
+    "url": "https://windsurf.com/",
+    "category": "commercial",
+    "description": "Agentic IDE acquired by Cognition AI (makers of Devin) in Dec 2025 for ~$250M. Features Cascade for multi-step agentic coding, Tab/Supercomplete for completions, and Devin integration for autonomous cloud-based development. FedRAMP High authorized.",
+    "input_format": "Code in IDE, natural language instructions, terminal commands, workflow definitions (reusable markdown commands)",
+    "output_format": "Code edits, multi-step refactoring, PRs, autonomous task results (via Devin), terminal operations",
+    "verification_method": "Cascade plans and executes multi-step edits with tool calls. Devin validates work across complex systems. No dedicated verification engine.",
+    "human_gates": "Cascade operates with developer oversight in IDE. Devin delegation for autonomous tasks with results review. Agent Command Center provides oversight.",
+    "agent_architecture": "Cascade: agentic assistant with deep repo context, terminal integration, and reusable workflow commands. Devin: autonomous cloud agent for complex delegated tasks. Agent Command Center unifies local and cloud agents.",
+    "execution_model": "Hybrid: local IDE agentic coding (Cascade) + cloud autonomous agent (Devin). Cascade uses deep repo context for multi-step edits. Devin handles end-to-end tasks independently in cloud.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "Go", "Ruby", "PHP", "Kotlin", "Swift", "Rust", "Scala"],
+    "pricing_model": "Free (25 credits/mo), Pro $15/mo (500 credits), Teams $30/user/mo, Enterprise $60/user/mo with ZDR. Pricing revamped Mar 2026 toward usage-based.",
+    "funding": "Codeium raised $150M+ before acquisition. Cognition (parent) raised $175M at $2B valuation. Combined entity well-funded. $82M ARR at acquisition.",
+    "target_market": "Individual developers through large enterprises; 59% of Fortune 500 companies",
+    "notable_customers": ["1M+ active users", "4000+ enterprise customers", "59% of Fortune 500"],
+    "differentiator": "Only agentic IDE with both local (Cascade) and autonomous cloud (Devin) agents. FedRAMP High + HIPAA + SOC 2 Type II. True on-prem deployment. Cognition acquisition creates unique local+cloud agent story.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 3,
+      "D3_verification": 2,
+      "D4_human_gates": 3,
+      "D5_knowledge": 2,
+      "D6_enterprise": 5,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Unique hybrid: local IDE agent (Cascade) + cloud autonomous agent (Devin)",
+      "FedRAMP High, HIPAA, SOC 2 Type II - broadest compliance coverage",
+      "True on-prem deployment option",
+      "59% Fortune 500 penetration, 4000+ enterprise customers",
+      "Agent Command Center for unified oversight",
+      "Reusable workflow commands saved as markdown"
+    ],
+    "weaknesses": [
+      "Post-acquisition integration risk - Cognition/Codeium merger still maturing",
+      "No structured requirements or phased planning",
+      "No formal verification engine",
+      "Credit/usage-based pricing can be confusing and unpredictable",
+      "No cross-session knowledge propagation",
+      "Devin integration is still early stage"
+    ],
+    "comparison_to_forge": "Windsurf provides the IDE-level developer experience that Forge does not (Forge is CLI/workflow-focused). Windsurf's Devin integration offers autonomous execution similar to Forge's agent containers. However, Windsurf lacks structured SDLC: no requirements management, no phased planning, no 8-layer verification, no session continuity with ledger, no knowledge propagation. Forge provides the workflow backbone; Windsurf provides the IDE surface."
+  },
+  {
+    "name": "Warp AI",
+    "url": "https://www.warp.dev/",
+    "category": "commercial",
+    "description": "AI-native terminal reimagined as an Agentic Development Environment. Features Agent Mode with Pair and Dispatch modes, Warp Drive for team knowledge sharing, and the Oz cloud agent orchestration platform (launched Feb 2026) for autonomous multi-repo workflows.",
+    "input_format": "Natural language commands in terminal, task descriptions for agents, cron schedules, Slack/GitHub/Linear triggers",
+    "output_format": "Terminal operations, code changes, commits, PRs, agent execution results. Oz: parallel cloud agent outputs.",
+    "verification_method": "Agents run tests, make fixes autonomously. No dedicated verification layer beyond CI integration.",
+    "human_gates": "Configurable autonomy: Pair mode (approve every step) to Dispatch mode (full autonomy with post-review). Agent profile customization.",
+    "agent_architecture": "Rust-based terminal with AI agent layer. Agent Mode with Pair (collaborative) and Dispatch (autonomous) modes. Oz: cloud orchestration platform with CLI, API, SDK, scheduler, and first-party integrations (Slack, GitHub, Linear).",
+    "execution_model": "Terminal-native execution. Dispatch Mode enables fully autonomous operation: write code, push commits, open PRs, run tests, fix issues. Oz enables parallel cloud agents with cron scheduling and event triggers.",
+    "languages_supported": ["Any language usable from terminal - language agnostic"],
+    "pricing_model": "Free, Build $18/mo (1500 credits), Max $180/mo, Business $45/user/mo, Enterprise custom. BYOK option. Reload credits roll over 12 months.",
+    "funding": "$73M total. Series B $50M (Jun 2023, led by Sequoia Capital). Investors: Sequoia, Google Ventures, Neo.",
+    "target_market": "Developers wanting AI-enhanced terminal workflows; teams needing automated DevOps; enterprise engineering organizations",
+    "notable_customers": ["700K+ developers"],
+    "differentiator": "Only terminal-first ADE with cloud agent orchestration (Oz). Configurable autonomy levels per agent. BYO LLM with per-agent model selection. SOC 2 with zero data retention. Multi-repo agent support with cron/event triggers.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 0,
+      "D2_planning": 2,
+      "D3_verification": 2,
+      "D4_human_gates": 4,
+      "D5_knowledge": 2,
+      "D6_enterprise": 4,
+      "D7_extensibility": 4
+    },
+    "strengths": [
+      "Unique terminal-first approach with AI-native design",
+      "Oz orchestration platform for cloud agent scheduling and triggers",
+      "Configurable autonomy spectrum (Pair to Dispatch)",
+      "BYO LLM with per-agent model selection",
+      "Multi-repo agent support",
+      "SOC 2 with zero data retention",
+      "Built in Rust for performance"
+    ],
+    "weaknesses": [
+      "Terminal-focused - not a complete IDE or SDLC platform",
+      "No requirements management or structured planning",
+      "No formal verification engine",
+      "No cross-session knowledge propagation",
+      "Oz is very new (Feb 2026) - maturity unclear",
+      "Pricing at Max tier ($180/mo) is expensive for individual developers"
+    ],
+    "comparison_to_forge": "Warp's Oz orchestration is conceptually similar to Forge's parallel wave execution - both orchestrate multiple agents on sub-tasks. However, Warp is terminal-focused while Forge is SDLC-focused. Forge provides structured requirements, phased planning, 8-layer verification, session continuity, and knowledge propagation. Warp's configurable autonomy levels (Pair/Dispatch) are more granular than Forge's human gate approach. Warp could serve as a terminal interface to Forge's backend."
+  },
+  {
+    "name": "Magic AI",
+    "url": "https://magic.dev/",
+    "category": "commercial",
+    "description": "AI coding startup building frontier-scale code models with ultra-long context windows. Focus on autonomous code generation using custom pre-training, domain-specific RL, and inference-time compute. Positions as building a 'coworker, not a copilot' on the path to AGI.",
+    "input_format": "Natural language descriptions of desired applications or functions",
+    "output_format": "Autonomously generated code, application implementations",
+    "verification_method": "Models trained with execution-based feedback. No public verification pipeline documented.",
+    "human_gates": "Developer reviews generated output. No structured gate system documented.",
+    "agent_architecture": "Custom LTM (Long-Term Memory) models with ultra-long context. LTM-2-mini demonstrated autonomous implementation of features. Frontier-scale pre-training with domain-specific RL.",
+    "execution_model": "Autonomous code generation from high-level descriptions. Focus on long-context processing for full-codebase understanding. 8000+ H100 GPUs for training. Product details largely undisclosed.",
+    "languages_supported": ["Not publicly specified - likely broad given model-based approach"],
+    "pricing_model": "Not publicly disclosed. Product not yet widely available.",
+    "funding": "$515M total. Key rounds: $23M seed (Feb 2023), $320M (Aug 2024, from Eric Schmidt, Jane Street, Sequoia, Atlassian Ventures). Investors: Nat Friedman, Daniel Gross, CapitalG, Elad Gil.",
+    "target_market": "Not yet clearly defined - appears to target enterprise software engineering teams",
+    "notable_customers": [],
+    "differentiator": "Ultra-long context windows for full-codebase understanding; custom frontier models trained specifically for code; AGI-focused research approach; massive compute infrastructure (8000+ H100s)",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": false,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 0,
+      "D2_planning": 1,
+      "D3_verification": 1,
+      "D4_human_gates": 1,
+      "D5_knowledge": 2,
+      "D6_enterprise": 0,
+      "D7_extensibility": 1
+    },
+    "strengths": [
+      "Massive funding ($515M) from tier-1 investors",
+      "Custom frontier code models with ultra-long context",
+      "Large compute infrastructure (8000+ H100 GPUs)",
+      "Strong team (founded by AI researchers)",
+      "Long-context approach enables full-codebase understanding"
+    ],
+    "weaknesses": [
+      "No publicly available product as of early 2026",
+      "No enterprise features documented",
+      "No verification, planning, or requirements capabilities",
+      "Extremely research-focused with unclear product timeline",
+      "No pricing or deployment details available",
+      "High burn rate with no revenue visibility"
+    ],
+    "comparison_to_forge": "Magic is a model/research company, not a development workflow tool. Their long-context models could theoretically power Forge-like systems, but Magic itself provides none of Forge's capabilities: no requirements, no planning, no verification, no session management, no enterprise features. They are at different layers of the stack."
+  },
+  {
+    "name": "Mutable AI",
+    "url": "https://mutable.ai/",
+    "category": "commercial",
+    "description": "AI-powered codebase intelligence platform focused on automatic documentation generation (Auto Wiki) that converts codebases into Wikipedia-style articles with code citations and architecture diagrams. NOTE: Appears to have shut down by late 2024, with CEO joining Google.",
+    "input_format": "Git repositories, codebase source files",
+    "output_format": "Wiki-style documentation website, code architecture diagrams, progress reports, AI-revised articles with citations",
+    "verification_method": "Citations link documentation claims to specific lines of code. No code verification capabilities.",
+    "human_gates": "Documentation generated for human review. Not a code generation tool.",
+    "agent_architecture": "Automated documentation generator using AI analysis of codebase. Produces wiki articles, diagrams, and reports.",
+    "execution_model": "Batch processing of codebases to generate documentation. Automatic updates on source changes.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "Go", "Ruby"],
+    "pricing_model": "Free (open source repos), Auto Wiki $2/repo/mo, Premium $15/mo, Enterprise custom. YC-backed (S21).",
+    "funding": "YC S21 batch. Specific funding amounts not publicly disclosed. Appears defunct as of late 2024.",
+    "target_market": "Development teams needing automated codebase documentation",
+    "notable_customers": [],
+    "differentiator": "Auto Wiki with code citations; automatic documentation updates on code changes; architecture diagram generation",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 0,
+      "D2_planning": 0,
+      "D3_verification": 0,
+      "D4_human_gates": 1,
+      "D5_knowledge": 3,
+      "D6_enterprise": 1,
+      "D7_extensibility": 1
+    },
+    "strengths": [
+      "Innovative Auto Wiki concept with code citations",
+      "Automatic documentation updates on code changes",
+      "Architecture diagram generation",
+      "Very affordable pricing ($2/repo/mo)"
+    ],
+    "weaknesses": [
+      "APPEARS DEFUNCT - CEO joined Google, website gone by late 2024",
+      "Not a code generation or execution tool",
+      "No verification, planning, or requirements capabilities",
+      "No enterprise features",
+      "Very narrow scope - documentation only",
+      "No active development or support"
+    ],
+    "comparison_to_forge": "Mutable AI was a documentation tool, not a development platform. Its Auto Wiki concept is somewhat analogous to Forge's code graph dashboard but with natural language articles instead of dependency visualization. Given its apparent shutdown, it is not a viable competitor or complement."
+  },
+  {
+    "name": "CodeRabbit",
+    "url": "https://www.coderabbit.ai/",
+    "category": "commercial",
+    "description": "AI code review platform combining LLM reasoning with 40+ static analysis and security tools in ephemeral sandboxes. Supports GitHub, GitLab, Azure DevOps, and Bitbucket. Issue Planner (Feb 2026) expands into pre-coding planning from issue trackers.",
+    "input_format": "Pull requests on GitHub/GitLab/Azure DevOps/Bitbucket, @coderabbitai commands, issue tracker integration (Linear, Jira, GitHub Issues, GitLab)",
+    "output_format": "PR review comments, security findings, style violation reports, generated unit tests, documentation, Jira/Linear issues, Coding Plans from issues",
+    "verification_method": "40+ integrated static analysis and security tools (linters, SAST, secrets detection). Reviews run in ephemeral containers. Learning from team feedback patterns.",
+    "human_gates": "PR review workflow - developers approve/reject suggestions. Team can customize review rules in natural language style guide.",
+    "agent_architecture": "LLM reasoning layer + 40+ static analysis tools in ephemeral containers. Learns from team interaction patterns. Issue Planner generates Coding Plans from issue tracker items.",
+    "execution_model": "Event-driven: triggered by PR creation/updates. Agentic capabilities: can generate tests, draft docs, open issues. Issue Planner creates pre-coding plans referencing relevant codebase files.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "Go", "Ruby", "PHP", "Kotlin", "Swift", "Rust", "Scala", "20+ languages"],
+    "pricing_model": "Free (open source), Pro $15/user/mo (or $24 annual), Enterprise $30/user/mo. Self-hosted Enterprise ~$15K/mo (500+ seats). SOC 2 Type II certified.",
+    "funding": "$88M total. Series B $60M at $550M valuation (Sep 2025). Growing rapidly: 2M+ repos, 13M+ PRs, 8000+ paying customers.",
+    "target_market": "Development teams of all sizes; enterprises needing automated code review with compliance",
+    "notable_customers": ["Chegg", "Groupon", "Life360", "Mercury"],
+    "differentiator": "Deepest code review tool: LLM + 40 static analysis tools. Issue Planner bridges planning and review. Learning from team patterns. 4 Git platform support. SOC 2 Type II. Self-hosted for 500+ seat enterprises.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 2,
+      "D3_verification": 5,
+      "D4_human_gates": 3,
+      "D5_knowledge": 3,
+      "D6_enterprise": 4,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Best-in-class code review with 40+ integrated analysis tools",
+      "Issue Planner bridges planning and review (Feb 2026)",
+      "Learns from team interaction patterns",
+      "4 Git platform support (GitHub, GitLab, Azure DevOps, Bitbucket)",
+      "SOC 2 Type II certified; ephemeral container execution",
+      "Strong traction: 2M+ repos, 13M+ PRs, 8000+ customers",
+      "Self-hosted option for large enterprises"
+    ],
+    "weaknesses": [
+      "Focused on review - not a code generation or execution platform",
+      "Issue Planner is new (beta Feb 2026) and limited scope",
+      "No autonomous coding or deployment capabilities",
+      "No phased execution or multi-step workflows",
+      "No session continuity or cross-project knowledge",
+      "Self-hosted requires 500+ seats minimum"
+    ],
+    "comparison_to_forge": "CodeRabbit's review capabilities exceed Forge's Layer 1 (structural) and partially overlap with Layers 2-5. Its 40+ analysis tools provide broader static analysis than Forge's current verification. The Issue Planner is a nascent version of Forge's requirements-to-plan pipeline. However, CodeRabbit has no execution engine, no agent orchestration, no session management, and no phased workflow. It is a strong complementary tool that could enhance Forge's verification layers."
+  },
+  {
+    "name": "Ellipsis",
+    "url": "https://www.ellipsis.dev/",
+    "category": "commercial",
+    "description": "AI code review and bug-fixing tool delivered as a GitHub App. Automatically reviews PRs for logical errors, security issues, and style violations. Can generate code fixes from reviewer comments. Tracks weekly codebase change summaries. YC W24.",
+    "input_format": "GitHub pull requests, reviewer comments (@ellipsis commands), Slack messages, natural language style guides",
+    "output_format": "PR review comments, auto-generated fix commits, release notes, weekly codebase summaries",
+    "verification_method": "Catches logical errors, security issues, anti-patterns, and natural-language style guide violations. Supports 20+ languages. Claims 13% faster merge times.",
+    "human_gates": "PR review workflow with human approval. Fixes are generated as commits for review, not auto-merged.",
+    "agent_architecture": "GitHub App with LLM-based review engine. Learns from team comment preferences over time. Can generate code fixes from PR review comments.",
+    "execution_model": "Event-driven: triggered by PR events and @ellipsis mentions. Generates reviews and fix commits. Not an autonomous coding agent.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "Go", "Ruby", "PHP", "Kotlin", "Swift", "Rust", "20+ languages"],
+    "pricing_model": "$20/user/mo (unlimited usage). Free for public GitHub repos. Previously per-commit pricing.",
+    "funding": "$2.5M total. Pre-seed $500K (Mar 2024), Seed $2M (Twenty Two Ventures, Four Cities Capital, Garage Capital, Amino Capital, Pioneer Fund). YC W24.",
+    "target_market": "Small to mid-size development teams using GitHub wanting automated code review",
+    "notable_customers": ["30+ customers (75% outside YC batch)"],
+    "differentiator": "Natural language style guide enforcement; auto-fix from reviewer comments; weekly codebase change summaries; learns from team preferences; simple flat pricing",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": false,
+      "sso": false,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 0,
+      "D2_planning": 0,
+      "D3_verification": 3,
+      "D4_human_gates": 2,
+      "D5_knowledge": 2,
+      "D6_enterprise": 1,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Simple, effective PR review automation",
+      "Auto-generates fix commits from review comments",
+      "Natural language style guide enforcement",
+      "Learns from team preferences over time",
+      "Simple flat pricing ($20/user/mo)",
+      "SOC II Type I certified"
+    ],
+    "weaknesses": [
+      "Very early stage ($2.5M funding, 30 customers)",
+      "GitHub-only - no GitLab, Bitbucket, or Azure DevOps",
+      "No enterprise features (SSO, RBAC, self-hosted)",
+      "Not a code generation or execution platform",
+      "No planning or requirements capabilities",
+      "Limited compared to CodeRabbit's 40+ analysis tools"
+    ],
+    "comparison_to_forge": "Ellipsis is a lightweight PR review tool that overlaps minimally with Forge. It provides a subset of Forge's verification (basic code review vs. 8-layer engine). No overlap in requirements, planning, execution, session management, or knowledge propagation. Could serve as a simple review layer but is far less capable than Forge's integrated verification."
+  },
+  {
+    "name": "Sweep AI",
+    "url": "https://sweep.dev/",
+    "category": "commercial",
+    "description": "AI coding assistant originally positioned as an 'AI junior developer' that turns GitHub issues into PRs. Now pivoted to JetBrains IDE plugin with autocomplete, code modifications, test generation, and static analysis. Also available as GitHub marketplace app.",
+    "input_format": "GitHub issues (tagged 'sweep'), PR comments for feedback, JetBrains IDE code context",
+    "output_format": "Pull requests with code changes and tests, IDE code completions, refactoring suggestions",
+    "verification_method": "Generated PRs include tests. Responds to PR feedback with revised commits. Static analysis feedback in IDE plugin.",
+    "human_gates": "PR review required. Comment-based feedback loop for iterative refinement on generated PRs.",
+    "agent_architecture": "GitHub bot (issue-to-PR) and JetBrains IDE plugin. Reads codebase, plans changes, writes code, submits PRs with tests. Iterates on PR feedback.",
+    "execution_model": "Event-driven for GitHub (issue tag triggers agent). On-demand for IDE plugin. Best for well-defined tasks: bug fixes, config updates, simple features.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "Go", "C#", "C++", "Rust"],
+    "pricing_model": "Free tier available. Pro $20/mo ($20 in API credits). Team $40/seat/mo ($40 credits). LLM cost + 5% markup. Unused credits roll 30 days.",
+    "funding": "YC-backed (S23). Specific amounts not publicly disclosed.",
+    "target_market": "Small development teams, individual developers using GitHub and JetBrains IDEs",
+    "notable_customers": [],
+    "differentiator": "Issue-to-PR automation with iterative feedback; JetBrains IDE integration; simple pricing with transparent LLM cost passthrough",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 2,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Simple issue-to-PR automation for routine tasks",
+      "Iterative feedback via PR comments",
+      "JetBrains IDE integration (rare differentiator)",
+      "Transparent pricing (LLM cost + 5%)",
+      "Self-hosted option available",
+      "SOC 2 compliance"
+    ],
+    "weaknesses": [
+      "Best only for simple, well-defined tasks",
+      "Complex tasks exceed reliable capabilities",
+      "Limited enterprise features",
+      "No structured planning or requirements",
+      "No formal verification beyond generated tests",
+      "Unclear long-term viability (small team, limited funding)"
+    ],
+    "comparison_to_forge": "Sweep handles the simplest slice of what Forge does: turning a well-defined task into a code change. Forge provides the entire pipeline from requirements to verified delivery, with multi-phase planning, parallel agent execution, 8-layer verification, and session continuity. Sweep's issue-to-PR is roughly equivalent to a single Forge sub-plan execution without any of the surrounding infrastructure."
+  },
+  {
+    "name": "Factory AI",
+    "url": "https://factory.ai/",
+    "category": "commercial",
+    "description": "Agent-native software development platform selling 'Droids' - AI agents that code, test, review, document, and deploy across the full development lifecycle. Missions feature enables multi-Droid, multi-day autonomous execution of business objectives described in natural language.",
+    "input_format": "Natural language business objectives (Missions), code review tasks, testing tasks, deployment instructions",
+    "output_format": "Code changes, test suites, documentation, deployments, PRs. Multi-Droid coordinated outputs over hours/days.",
+    "verification_method": "Droids handle testing and review as part of their workflow. Missions include verification steps. No independent verification engine documented.",
+    "human_gates": "Missions provide oversight of multi-Droid execution. Code review Droids provide human-reviewable feedback. Enterprise governance features.",
+    "agent_architecture": "Droids: specialized AI agents for different SDLC tasks. Missions: orchestration of multiple Droids for complex objectives. Model routing: different LLMs for planning (Claude), generation (DeepSeek), and testing (smaller models).",
+    "execution_model": "Autonomous multi-agent execution over hours/days. Natural language objective -> Droid planning -> parallel execution -> verification. Model routing optimizes cost/quality per subtask.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "Kotlin", "C#", "C++", "Go", "Rust"],
+    "pricing_model": "Free tier, Pro from $20/mo, Enterprise up to $2000/mo, Custom enterprise pricing. Used by hundreds of thousands of developers.",
+    "funding": "$150M Series C at $1.5B valuation (Apr 2026, led by Khosla Ventures). Investors: Sequoia, Insight Partners, Blackstone, NEA, Abstract Ventures. Founded 2023.",
+    "target_market": "Enterprise engineering teams; companies wanting autonomous software development at scale",
+    "notable_customers": ["Nvidia", "Adobe", "Bayer", "EY", "MongoDB", "Zapier"],
+    "differentiator": "Multi-Droid Missions for multi-day autonomous execution of business objectives. Model routing across providers for cost/quality optimization. Agent-readiness Improvement Program for enterprises. Massive enterprise customer list.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 4,
+      "D3_verification": 3,
+      "D4_human_gates": 3,
+      "D5_knowledge": 2,
+      "D6_enterprise": 5,
+      "D7_extensibility": 4
+    },
+    "strengths": [
+      "Multi-Droid Missions enable multi-day autonomous execution",
+      "Smart model routing across LLM providers",
+      "Massive enterprise customers (Nvidia, Adobe, Bayer)",
+      "Strong funding ($150M Series C, $1.5B valuation)",
+      "Full SDLC coverage: code, test, review, document, deploy",
+      "Enterprise governance: SSO, SAML/SCIM, compliance, on-prem"
+    ],
+    "weaknesses": [
+      "Verification is part of Droid workflow, not an independent engine",
+      "No structured requirements management",
+      "Knowledge propagation between Missions unclear",
+      "Session continuity across tasks not documented",
+      "Relatively new platform (founded 2023)",
+      "Pricing can escalate quickly at enterprise scale"
+    ],
+    "comparison_to_forge": "Factory's Droids and Missions are the closest commercial analog to Forge's agent-based wave execution. Both orchestrate multiple AI agents on complex tasks. Key differences: Forge has structured requirements-to-delivery pipeline, 8-layer verification, session ledger with knowledge propagation, and code graph for impact analysis. Factory has better enterprise adoption, model routing, and multi-day autonomous execution. Factory lacks Forge's explicit verification engine and structured phase management."
+  },
+  {
+    "name": "Augment Code",
+    "url": "https://www.augmentcode.com/",
+    "category": "commercial",
+    "description": "Enterprise AI coding platform with Context Engine for full-stack understanding. IDE Agents (VS Code, JetBrains), CLI, and Intent (macOS multi-agent workspace with Coordinator agent). Code Review on all plans.",
+    "input_format": "Natural language tasks in IDE/CLI, multi-agent orchestration in Intent workspace",
+    "output_format": "Code edits, PRs, multi-step workflow results, code review comments",
+    "verification_method": "Code Review integrated on all plans. Intent Coordinator validates specialist agent outputs. No standalone verification engine.",
+    "human_gates": "Task list review in IDE agents. Intent Coordinator creates living spec for human approval before delegating to specialist agents.",
+    "agent_architecture": "Context Engine provides live understanding of entire stack (code, dependencies, architecture, history). IDE Agents for VS Code/JetBrains. Intent: Coordinator agent breaks tasks into specs, delegates to parallel specialist agents. Persistent memories across sessions.",
+    "execution_model": "IDE-integrated agent with multi-step workflows. Intent workspace enables parallel specialist agents coordinated by a central Coordinator. Credit-based consumption varies by task complexity.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "Go", "Ruby", "Kotlin", "Swift", "Rust"],
+    "pricing_model": "Indie $20/mo (40K credits), Standard $60/user/mo (130K credits), Max $200/user/mo (450K credits), Enterprise custom. Credits pooled across teams.",
+    "funding": "Not publicly disclosed at scale. Recently launched Intent product in 2026.",
+    "target_market": "Large enterprise engineering teams; organizations with complex codebases",
+    "notable_customers": [],
+    "differentiator": "Intent workspace with Coordinator + parallel specialist agents. Context Engine for full-stack awareness. Persistent memories across sessions. Code Review on all plans.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 3,
+      "D3_verification": 2,
+      "D4_human_gates": 3,
+      "D5_knowledge": 3,
+      "D6_enterprise": 4,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Intent's Coordinator + specialist agent architecture is sophisticated",
+      "Context Engine provides full-stack codebase understanding",
+      "Persistent memories across sessions",
+      "Code Review integrated on all plans",
+      "Multi-platform: VS Code, JetBrains, CLI, macOS app"
+    ],
+    "weaknesses": [
+      "Intent is macOS-only (2026 launch)",
+      "Credit-based pricing can be unpredictable vs flat-rate competitors",
+      "No self-hosted deployment option",
+      "No structured requirements management",
+      "No standalone verification engine",
+      "No formal session ledger or knowledge propagation system"
+    ],
+    "comparison_to_forge": "Augment's Intent workspace with Coordinator + specialist agents is conceptually similar to Forge's parallel planner + agent factory. Both decompose tasks and execute in parallel. Key differences: Forge has structured phase management, 8-layer verification, session ledger, and knowledge propagation. Augment has persistent memories (partial overlap with Forge's ledger). Augment is IDE-centric; Forge is CLI/workflow-centric."
+  },
+  {
+    "name": "Blitzy",
+    "url": "https://blitzy.com/",
+    "category": "commercial",
+    "description": "Autonomous code generation platform orchestrating 3000+ specialized AI agents that cooperate to bulk-build enterprise software. Processes up to 100M lines of code context. Generates up to 3M lines of enterprise-grade code validated at compile and runtime.",
+    "input_format": "Software requirements documents, technical specifications, descriptive inputs for desired applications",
+    "output_format": "Requirements docs, technical designs, code structure, generated code in repos (up to 3M lines), compile/runtime validation results",
+    "verification_method": "Compile-time and runtime validation of generated code. Claims 80%+ code built autonomously with remaining 20% codified for engineering team review.",
+    "human_gates": "Engineering team handles final 20% of code. Review of generated requirements, tech spec, and code structure before full generation.",
+    "agent_architecture": "3000+ specialized AI agents orchestrated by Blitzy OS. Agents think, plan, build, and validate code from technical specifications. Infinite code context (up to 100M lines in single pass).",
+    "execution_model": "Specification-to-code pipeline: descriptive inputs -> requirements -> technical design -> code structure -> generated code. Multi-agent swarm operates for hours on complex projects. Claims to turn 6-month projects into 6-day turnarounds.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C#", "Go", "Ruby"],
+    "pricing_model": "Free tier for requirements/tech spec generation. Paid tiers for full development. $0.20 per line of code. Enterprise custom with unlimited seats, VPC/on-prem deployment.",
+    "funding": "Not publicly disclosed. Early-stage company.",
+    "target_market": "Enterprise development teams wanting to accelerate large-scale software projects",
+    "notable_customers": [],
+    "differentiator": "Scale: 3000+ agents, 100M line code context, 3M lines generated. Full spec-to-code pipeline. Claims 80%+ autonomous build rate. Per-line pricing model.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 3,
+      "D2_planning": 3,
+      "D3_verification": 3,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 2,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Massive scale: 3000+ agents, 100M line context window",
+      "Full spec-to-code pipeline with requirements and tech design",
+      "Compile and runtime validation of generated code",
+      "VPC and on-prem deployment options",
+      "Ambitious scope: 6-month projects in 6 days claim"
+    ],
+    "weaknesses": [
+      "Extremely bold claims (80% autonomous, 3M lines) unverified independently",
+      "No disclosed funding or customer references",
+      "Per-line pricing ($0.20/line) could be very expensive at scale",
+      "Limited enterprise governance features documented",
+      "No cross-session knowledge or learning",
+      "Very early stage - sustainability unclear"
+    ],
+    "comparison_to_forge": "Blitzy's spec-to-code pipeline shares Forge's philosophy of structured input-to-output development. Both use multi-agent orchestration. Key differences: Blitzy claims massively larger scale (3000 agents vs Forge's wave-based agents), but with less documented verification rigor. Forge's 8-layer verification, session ledger, and knowledge propagation are more mature. Blitzy's claims require independent validation."
+  },
+  {
+    "name": "cto.new (by Engine Labs)",
+    "url": "https://cto.new/",
+    "category": "commercial",
+    "description": "Free AI code agent that works asynchronously in its own remote VM to turn issues into merge-ready PRs. Integrates with Linear, Jira, GitHub, GitLab, and Slack. Uses GPT-5 and Claude Sonnet 4.5. Raised $5.7M seed.",
+    "input_format": "GitHub/GitLab issues, Linear/Jira tickets, Slack messages, natural language task descriptions",
+    "output_format": "Merge-ready pull requests with code changes",
+    "verification_method": "Agent works in isolated VM sandbox, runs tests, returns merge-ready PRs for team review.",
+    "human_gates": "PR review required before merge. Asynchronous workflow - agent delivers results for human review.",
+    "agent_architecture": "Background AI agent running in Daytona-powered remote VMs. Plans work, executes code changes, runs validation, produces PRs. Uses multiple LLMs (GPT-5, Claude Sonnet 4.5).",
+    "execution_model": "Asynchronous: accepts task from issue tracker or chat, works independently in remote environment, returns merge-ready PR. No supervision required during execution.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "Go", "C#", "Ruby", "Rust"],
+    "pricing_model": "Completely free (as of launch). Revenue model unclear - seed-funded.",
+    "funding": "$5.7M seed round. Backed by Kindred Ventures.",
+    "target_market": "Development teams wanting free issue-to-PR automation across multiple project management tools",
+    "notable_customers": [],
+    "differentiator": "Completely free AI code agent. Multi-tool integration (Linear, Jira, GitHub, GitLab, Slack). Asynchronous execution in remote VMs. Uses frontier models (GPT-5, Claude 4.5).",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": false,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 0,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Completely free with frontier model access",
+      "Broad integration: Linear, Jira, GitHub, GitLab, Slack",
+      "Asynchronous execution in isolated VMs",
+      "Simple workflow: issue in, PR out",
+      "Uses best available LLMs"
+    ],
+    "weaknesses": [
+      "Very early stage with uncertain business model",
+      "No enterprise features whatsoever",
+      "Free pricing raises sustainability questions",
+      "No structured planning or requirements management",
+      "No formal verification engine",
+      "Limited to issue-to-PR scope"
+    ],
+    "comparison_to_forge": "cto.new provides a simplified version of Forge's execution phase: taking a task and producing code. It lacks Forge's entire upstream (requirements, planning, assessment) and downstream (8-layer verification, knowledge propagation) pipeline. Its asynchronous VM execution is similar to Forge's container-based agent isolation. Free pricing is attractive but sustainability is questionable."
+  }
+]

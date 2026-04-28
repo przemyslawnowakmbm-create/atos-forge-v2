@@ -1,0 +1,680 @@
+[
+  {
+    "name": "Augment Code (Intent)",
+    "url": "https://www.augmentcode.com/product/intent",
+    "category": "commercial",
+    "description": "Multi-agent orchestration platform with Coordinator-Implementor-Verifier (CIV) architecture. Intent is both a spec-driven development app and an agent orchestration app — specs keep the project aligned while up to six specialist agents execute work in parallel. Every agent shares the same Context Engine processing 400,000+ files. Living specs stay synchronized with actual work as Implementors read from and write to the spec.",
+    "input_format": "Natural language specification (living spec) that evolves during development. Supports MCP for external tools and data sources.",
+    "output_format": "Code changes across multiple branches (one per Implementor), merged via Coordinator. Pull requests with full audit trail of subtask completion and retry history.",
+    "verification_method": "Dedicated Verifier agent checks all results against the original specification. Flags inconsistencies, bugs, or missing pieces before surfacing for human review. Critique and Debug specialist agents provide additional verification layers.",
+    "human_gates": "Two mandatory checkpoints: (1) Human reviews Coordinator's spec, DAG, and parallelism plan before any code is written. (2) Human reviews Verifier output and approves commit/PR/merge, seeing passed subtasks and retry history. Optional manual spec-edit step between checkpoints.",
+    "agent_architecture": "Three-role CIV pattern: Coordinator decomposes tasks into dependency-ordered DAG, up to 6 specialist Implementors (Investigate, Implement, Verify, Critique, Debug, Code Review) execute in parallel with isolated contexts, Verifier validates against spec. Inner loop: ReAct reason-act-observe per Implementor. Outer loop: plan-execute-verify-replan across agent boundaries. Supports BYOA agents including Claude Code, Codex, OpenCode, plus native Auggie.",
+    "execution_model": "Parallel multi-agent with dependency-ordered DAG. Coordinator manages handoffs between agents using structured data contracts. Each Implementor works on its own branch.",
+    "languages_supported": ["All major languages via LLM support", "Model-agnostic: Claude Opus, Sonnet, GPT 5.2, others"],
+    "pricing_model": "Credit-based: Indie $20/mo (40K credits), Developer $50/mo (600 messages), Standard $60/mo (130K credits, up to 20 users), Max $200/mo (450K credits, up to 20 users), Enterprise custom pricing. Credit metering raises cost predictability concerns.",
+    "funding": "$252M total. $25M Series A, $227M Series B at $977M valuation (April 2024). Investors: Sutter Hill Ventures, Index Ventures, Innovation Endeavors, Lightspeed, Meritech Capital. Revenue: ~$20M ARR as of October 2025.",
+    "target_market": "Engineering teams (10-2000+ developers) building complex multi-file features. Enterprise software development organizations needing structured AI workflows with oversight.",
+    "notable_customers": ["Pure Storage (2,000 engineers)", "MoneyGram", "Tekion (1,300 engineers)", "Intercom", "Webflow", "Pigment", "Lemonade", "Datastax", "GoFundMe"],
+    "differentiator": "Only platform with formal Coordinator-Implementor-Verifier pattern, living specs that evolve with code, mandatory human gates before and after execution, and 400K+ file Context Engine shared across all agents. Most structured approach to multi-agent orchestration in the market.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SOC 2 Type II, ISO 42001, SSO/OIDC/SCIM, CMEK (customer-managed encryption keys), SIEM integration, no AI training on customer data. Enterprise contracts required for >20 users.",
+    "scores": {
+      "D1_requirements": 5,
+      "D2_planning": 5,
+      "D3_verification": 5,
+      "D4_human_gates": 5,
+      "D5_knowledge": 4,
+      "D6_enterprise": 4,
+      "D7_extensibility": 4
+    },
+    "scores_rationale": {
+      "D1_requirements": "Living spec is the core primitive — specs are first-class, editable, and synced with implementation. Best-in-class spec-driven approach.",
+      "D2_planning": "Coordinator produces dependency-ordered DAG with parallelism plan. Human reviews plan before execution. Best-in-class planning.",
+      "D3_verification": "Dedicated Verifier agent plus Critique and Debug specialists. Multi-layer verification against spec. Best-in-class.",
+      "D4_human_gates": "Two mandatory checkpoints (pre-execution plan review + post-execution approval). Strongest human oversight in the market.",
+      "D5_knowledge": "Context Engine indexes 400K+ files. Living spec propagates knowledge across agents. No evidence of cross-session learning persistence.",
+      "D6_enterprise": "SOC 2, SSO, SCIM, CMEK. No self-hosted option mentioned. Credit-based pricing may concern enterprise procurement.",
+      "D7_extensibility": "MCP support, BYOA agents, multiple LLM providers. Good extensibility but platform-specific orchestration."
+    },
+    "strengths": [
+      "Most structured multi-agent architecture with formal CIV pattern",
+      "Living specs prevent specification drift — the key problem in AI-assisted development",
+      "Mandatory human gates ensure oversight without blocking parallel execution",
+      "Context Engine indexes 400K+ files so all agents reason about the same codebase",
+      "BYOA support (Claude Code, Codex, OpenCode) reduces vendor lock-in",
+      "Strong enterprise compliance (SOC 2 Type II, ISO 42001, CMEK)"
+    ],
+    "weaknesses": [
+      "Credit-based pricing raises cost predictability concerns vs. flat per-seat competitors",
+      "No self-hosted deployment option mentioned — may block regulated industries",
+      "Gap between Max ($200/mo for 20 users) and Enterprise (custom) pricing",
+      "Relatively small funding ($252M) compared to competitors like Cursor ($10B+) or Cognition ($696M)",
+      "Revenue at $20M ARR suggests still early in enterprise adoption despite strong customer logos"
+    ],
+    "comparison_to_forge": "Most architecturally similar to Forge among all competitors. Both use spec-driven development with multi-agent orchestration, human gates, and verification loops. Key differences: Intent's CIV is a fixed 3-role pattern vs. Forge's configurable archetype system; Intent's living spec vs. Forge's phase-based planning with PLAN.md files; Intent lacks Forge's 8-layer verification engine, cross-session knowledge persistence, and self-contained CLI deployment. Intent is a hosted SaaS product while Forge is a CLI tool that runs locally."
+  },
+  {
+    "name": "Amazon Q Developer",
+    "url": "https://aws.amazon.com/q/developer/",
+    "category": "commercial",
+    "description": "Enterprise AI coding assistant deeply integrated with AWS ecosystem. Features five specialized AI agents (Development, Documentation, Testing, Review, Transformation) built on RAG architecture. Strongest differentiation is the Transformation Agent for legacy code modernization (Java 8-17/21, .NET Framework to .NET 8). Supports 25+ programming languages.",
+    "input_format": "Natural language prompts via IDE chat or slash commands (/dev, /doc, /test, /review). GitHub issues for autonomous agent mode. AWS Console integration for infrastructure tasks.",
+    "output_format": "Code suggestions, multi-file implementations, pull requests, documentation, test suites, and full language/framework migration plans.",
+    "verification_method": "Review Agent identifies code quality issues. Transformation Agent runs build verification after migrations. No dedicated verification loop — relies on existing CI/CD and developer review.",
+    "human_gates": "Developer reviews all generated code before committing. No formal mandatory checkpoint system — standard PR review workflow assumed.",
+    "agent_architecture": "Five specialized agents: /dev (multi-file feature implementation), /doc (documentation generation), /test (unit test creation), /review (code quality analysis), /transform (language version upgrades). RAG-based architecture. Each agent operates independently rather than in coordinated multi-agent workflows.",
+    "execution_model": "Single-agent per task. Developer initiates agent via slash command, agent works autonomously, developer reviews output. No parallel multi-agent coordination.",
+    "languages_supported": ["Java", "Python", "JavaScript", "TypeScript", "C#", ".NET", "Go", "Rust", "Ruby", "PHP", "C/C++", "Kotlin", "Swift", "25+ languages total"],
+    "pricing_model": "Free tier (limited features) and Pro at $19/user/month. No separate enterprise tier — teams subscribe developers to Pro and manage via IAM Identity Center. Simple, predictable per-seat pricing.",
+    "funding": "Amazon/AWS internal product. AWS revenue $107B+ annually. Effectively unlimited resources.",
+    "target_market": "AWS-centric enterprises. Strongest for organizations with legacy Java/.NET codebases needing modernization. Teams already invested in AWS toolchain.",
+    "notable_customers": ["DXC Technology (115,000 employees, 40,000 engineers)", "FINRA", "Bayer AG", "Nasdaq", "Ancileo"],
+    "differentiator": "Unmatched legacy code transformation capability (Java 8 to 17/21, .NET Framework to .NET 8). Deep AWS service integration. IP indemnity included with Pro. Automatic data opt-out for Pro users. Best value at $19/user/month for enterprise-grade features.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SSO via IAM Identity Center, usage analytics, policy controls. SOC, ISO, HIPAA, PCI compliance (inherited from AWS). IP indemnity for Pro users. Automatic training data opt-out. No self-hosted option — runs on AWS infrastructure.",
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 2,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 3,
+      "D6_enterprise": 5,
+      "D7_extensibility": 3
+    },
+    "scores_rationale": {
+      "D1_requirements": "No formal spec/requirements system. Developer writes prompts, agent generates code. Transformation agent reads existing code as implicit requirements.",
+      "D2_planning": "/dev agent breaks prompts into logical steps, but no formal planning phase or dependency DAG. No human-reviewable plan before execution.",
+      "D3_verification": "Review agent exists but limited to code quality. No multi-layer verification, no spec compliance checking, no automated test execution loop.",
+      "D4_human_gates": "Standard PR review workflow. No mandatory checkpoints or structured human oversight beyond normal code review.",
+      "D5_knowledge": "RAG indexes workspace structure. Customization to codebase available in Pro. No cross-session learning or knowledge persistence.",
+      "D6_enterprise": "Best-in-class enterprise via AWS ecosystem. SOC/ISO/HIPAA/PCI, IAM, IP indemnity. Unmatched compliance portfolio.",
+      "D7_extensibility": "Limited to AWS ecosystem. No MCP, no BYOM, no plugin architecture. Tightly coupled to AWS services."
+    },
+    "strengths": [
+      "Best-in-class enterprise compliance inherited from AWS (SOC, ISO, HIPAA, PCI, FedRAMP)",
+      "Transformation Agent is unmatched for legacy modernization — measurable ROI for Java/NET shops",
+      "Simple $19/user/month pricing with IP indemnity included",
+      "Massive scale proven (DXC: 115K employees, 40K engineers)",
+      "Five specialized agents covering full development lifecycle",
+      "Automatic data opt-out for all Pro users"
+    ],
+    "weaknesses": [
+      "No formal spec-driven workflow or planning phase",
+      "Agents operate independently — no multi-agent coordination or parallel execution",
+      "Deeply tied to AWS — limited value for non-AWS organizations",
+      "No self-hosted option — must use AWS infrastructure",
+      "Verification is minimal — no dedicated verification loop or automated testing integration",
+      "No extensibility beyond AWS ecosystem"
+    ],
+    "comparison_to_forge": "Complementary rather than competitive. Q Developer excels at individual developer productivity within AWS, while Forge focuses on structured multi-agent orchestration with planning, verification, and human gates. Q Developer has no equivalent to Forge's spec-driven planning, 8-layer verification, knowledge propagation, or wave-based parallel execution. Q Developer's Transformation Agent is a unique capability Forge doesn't offer. Q Developer's enterprise compliance is stronger due to AWS inheritance."
+  },
+  {
+    "name": "Amazon Kiro",
+    "url": "https://kiro.dev/",
+    "category": "commercial",
+    "description": "Spec-driven agentic IDE built by AWS. The unit of work is a natural-language specification rather than code — specs describe intent, agents translate specs into code and keep them aligned, hooks automate the surrounding workflow. Three primitives: Specs, Agents, Hooks. Built on Amazon Bedrock. Launched mid-2025, reached GA with team features and CLI support in November 2025.",
+    "input_format": "Natural language requirements → auto-generated user stories with acceptance criteria, technical design documents, and coding task lists. Steering files provide persistent project context (conventions, patterns, preferences).",
+    "output_format": "Generated code aligned to specs. Specs, design docs, and task lists are maintained artifacts. Pull requests with spec traceability.",
+    "verification_method": "Agents check for drift between spec and implementation. Agent hooks fire on file save, PR open, and repo events to run tests, update docs, and cascade spec changes automatically. No formal multi-layer verification engine.",
+    "human_gates": "Human writes/approves the spec. Human reviews generated code. Spec drift is surfaced for human resolution. No formal mandatory checkpoint system beyond standard review workflows.",
+    "agent_architecture": "Three primitives: Specs (intent descriptions), Agents (translate specs to code, detect drift), Hooks (event-driven automation on file save/PR/repo events). Built on Amazon Bedrock with foundation models. Hooks are stored at repository level for team-wide automation.",
+    "execution_model": "Spec-driven single-agent execution. Agent works on one spec at a time. Hooks provide background automation. No parallel multi-agent coordination.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "React", "Terraform", "Infrastructure-as-Code", "AWS CDK"],
+    "pricing_model": "Free tier available. Kiro Pro $20/mo, Pro+ $40/mo, Power $200/mo. Flexible overages at $0.04/credit. Enterprise billing via AWS IAM Identity Center. Startup program: 1 year of Pro+ free via AWS Startups.",
+    "funding": "Amazon/AWS internal product. Effectively unlimited resources.",
+    "target_market": "AWS-native development teams. Developers who want structured spec-driven development over ad-hoc prompting. Teams adopting 'spec-driven development' methodology.",
+    "notable_customers": ["AWS Startups program participants", "Drug discovery teams (AWS case study)", "AWS Connect development teams"],
+    "differentiator": "Only IDE where the unit of work is a specification, not code. Agent hooks provide unique event-driven automation (file save triggers test runs, spec updates cascade). Steering files give teams persistent shared context. Repository-level hooks mean team-wide automation on checkout.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": false,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SSO via AWS IAM Identity Center (more identity providers coming). Admin controls for subscription management, cost monitoring, AI tool connectivity. No telemetry collection for IAM-authenticated users. Enterprise admin can configure user activity reports. Team billing and management features noted as 'coming soon' as of recent search.",
+    "scores": {
+      "D1_requirements": 5,
+      "D2_planning": 3,
+      "D3_verification": 3,
+      "D4_human_gates": 3,
+      "D5_knowledge": 3,
+      "D6_enterprise": 3,
+      "D7_extensibility": 3
+    },
+    "scores_rationale": {
+      "D1_requirements": "Spec-driven development is the core paradigm. Auto-generates user stories, acceptance criteria, design docs, and task lists from natural language. Best-in-class requirements handling.",
+      "D2_planning": "Generates technical design documents and task lists from specs. Decent planning but no dependency DAG or resource-aware scheduling.",
+      "D3_verification": "Drift detection between spec and implementation. Hook-based test automation. No formal multi-layer verification engine.",
+      "D4_human_gates": "Human writes/approves spec and reviews code. Drift surfaced for resolution. No mandatory structured checkpoints.",
+      "D5_knowledge": "Steering files provide persistent project context. Repository-level hooks propagate team knowledge. No cross-session learning.",
+      "D6_enterprise": "AWS IAM SSO. Admin controls. But team billing 'coming soon' suggests enterprise features still maturing.",
+      "D7_extensibility": "MCP server support. Hook system is extensible. Built on Bedrock for model flexibility. AWS ecosystem integration."
+    },
+    "strengths": [
+      "Strongest spec-driven development paradigm — specs are first-class persistent artifacts",
+      "Agent hooks provide unique event-driven automation (save → test, PR → update docs)",
+      "Steering files give teams shared persistent context without repeating instructions",
+      "Repository-level hooks mean team automation is instant on checkout",
+      "Built on Amazon Bedrock — access to multiple foundation models",
+      "Free tier available with generous startup program (1 year Pro+ free)"
+    ],
+    "weaknesses": [
+      "Single-agent execution — no parallel multi-agent coordination",
+      "Enterprise team features still maturing ('coming soon' for billing/management)",
+      "Language support appears limited compared to competitors (primarily JS/TS/Python/IaC)",
+      "No formal verification engine — relies on hooks and drift detection",
+      "Tied to AWS ecosystem via Bedrock dependency",
+      "No notable large enterprise customer logos publicly referenced"
+    ],
+    "comparison_to_forge": "Strong conceptual overlap in spec-driven development. Both treat specifications as first-class artifacts. Key differences: Kiro is an IDE while Forge is a CLI orchestration tool; Kiro uses single-agent execution vs. Forge's parallel wave-based multi-agent system; Kiro's hooks are event-driven automation vs. Forge's 8-layer verification engine; Kiro lacks Forge's cross-session knowledge propagation, assessment/splitting pipeline, and container-based isolated execution. Kiro's steering files are similar in concept to Forge's session ledger but less structured."
+  },
+  {
+    "name": "Bolt.new",
+    "url": "https://bolt.new/",
+    "category": "commercial",
+    "description": "AI-powered full-stack web development platform running entirely in the browser via WebContainers (StackBlitz technology). Users prompt, run, edit, and deploy web applications without local setup. Agents-of-agents architecture with Plan Mode (thinking) and Build Mode (action). Launched October 2024, reached ~$40M ARR by March 2025. Now offers Teams and Enterprise plans.",
+    "input_format": "Natural language prompts in chat interface. Plan Mode for architecture discussion without code changes. Build Mode for active code generation. Design system uploads for enterprise consistency.",
+    "output_format": "Full-stack web applications (React, Vue, Next.js, Svelte, Angular, etc.) with live preview. Deployed directly from browser. GitHub integration for code export.",
+    "verification_method": "Automatic testing, refactoring, and iteration during build. Build verification via npm run build. No formal verification engine — relies on live preview and manual testing.",
+    "human_gates": "Human reviews code in real-time via live preview. Plan Mode allows discussion before execution. Admin deploy controls in Teams plan. No formal mandatory checkpoint system.",
+    "agent_architecture": "Agents-of-agents architecture with Claude Agent as primary. Plan Mode (reasoning lane — questions, architecture, roadmap) and Build Mode (action lane — file changes, dependencies). LLM-selectable: supports Claude, GPT, and other frontier models. In-browser execution via WebContainers (no server-side build).",
+    "execution_model": "Single-agent conversational. Human prompts, agent generates, human reviews in live preview. No parallel multi-agent execution. Sequential prompt-response cycle.",
+    "languages_supported": ["JavaScript", "TypeScript", "React", "Vue", "Next.js", "Astro", "Svelte", "Remix", "Angular", "Node.js"],
+    "pricing_model": "Free (1M tokens/mo), Pro $25/mo (10M tokens), Teams $30/member/mo, Enterprise custom. Annual billing saves 10%. Enterprise via AWS Marketplace at $100K base + $150/seat + $0.01/token. No PHP or Python backend support.",
+    "funding": "$135M total (StackBlitz). $105.5M Series B at $700M valuation (January 2025). Revenue: ~$40M ARR by March 2025 — one of the fastest growth trajectories in software history.",
+    "target_market": "Rapid prototyping and full-stack web development. Teams building React/Vue/Next.js applications. Enterprise teams wanting consistent design system enforcement. Non-technical founders building MVPs.",
+    "notable_customers": ["Enterprise customers via AWS Marketplace", "Claimed but specific logos not publicly listed for Teams/Enterprise"],
+    "differentiator": "Only platform running full development environment in the browser via WebContainers — zero local setup. Plan Mode / Build Mode separation gives unique thinking-before-doing workflow. Design system upload for enterprise consistency across projects. AWS Marketplace procurement for enterprise.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SSO with Okta, Azure AD, SAML providers. Deployment to customer's AWS/Azure tenant with full infrastructure isolation. HIPAA, FedRAMP, SOC 2 compliance. Audit logs. Role-based permissions. Admin deploy controls. Dedicated customer success manager. Design system enforcement.",
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 2,
+      "D3_verification": 1,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 4,
+      "D7_extensibility": 2
+    },
+    "scores_rationale": {
+      "D1_requirements": "Plan Mode allows requirements discussion but no formal spec system. Natural language prompts, not structured requirements.",
+      "D2_planning": "Plan Mode provides thinking-before-doing, but no dependency DAG, task decomposition, or resource planning.",
+      "D3_verification": "Basic build verification and live preview. No formal verification engine, test automation, or multi-layer checking.",
+      "D4_human_gates": "Live preview provides continuous visibility. Admin deploy controls. But no structured mandatory checkpoints.",
+      "D5_knowledge": "Design system uploads for consistency. No cross-session learning, no knowledge persistence, no context propagation.",
+      "D6_enterprise": "Strong: SSO, self-hosted, HIPAA, FedRAMP, SOC 2, audit logs, AWS Marketplace. Well-developed enterprise offering.",
+      "D7_extensibility": "GitHub, Figma, Supabase integrations. Model selection. But limited to JS/TS web ecosystem only."
+    },
+    "strengths": [
+      "Zero-setup browser-based development via WebContainers — unique technical capability",
+      "Fastest time-to-deployed-app in the market",
+      "Strong enterprise offering: self-hosted, HIPAA, FedRAMP, SOC 2",
+      "Plan Mode / Build Mode separation prevents accidental code changes",
+      "Design system upload enforces consistency across enterprise projects",
+      "Explosive growth ($0 to $40M ARR in 5 months) validates market demand"
+    ],
+    "weaknesses": [
+      "Limited to JavaScript/TypeScript web ecosystem — no Python, PHP, or backend diversity",
+      "No formal specification or requirements system",
+      "Minimal verification — no test automation, no multi-layer checking",
+      "Single-agent sequential execution — no parallel multi-agent orchestration",
+      "No cross-session knowledge persistence or learning",
+      "Quality concerns at scale — better for prototyping than production enterprise applications"
+    ],
+    "comparison_to_forge": "Minimal overlap. Bolt.new targets rapid web prototyping with browser-based development while Forge targets structured enterprise software engineering. Bolt has no equivalent to Forge's spec-driven planning, multi-agent orchestration, 8-layer verification, knowledge propagation, or wave-based execution. Bolt's enterprise features (SSO, self-hosted, compliance) are surprisingly strong for its category. Not a competitor to Forge for complex multi-module engineering work."
+  },
+  {
+    "name": "Cognition Devin",
+    "url": "https://cognition.ai/",
+    "category": "commercial",
+    "description": "Autonomous AI software engineer operating in a complete isolated Linux sandbox with shell, browser, editor, and code execution. Compound AI system with Planner, Coder, and Critic models orchestrating workflows. Devin 2.0 (2025) introduced collaborative features. Devin Enterprise supports parallel orchestration of Managed Devins, playbooks, and knowledge bases. Used by Microsoft, Dell, Cisco.",
+    "input_format": "Natural language task descriptions via chat interface, Slack integration, or API. Supports Jira/Linear ticket ingestion. Accepts codebases of any size including legacy (COBOL, Fortran, Objective-C) for modernization.",
+    "output_format": "Pull requests with full session recordings. End-to-end testing recordings using computer use. Code diffs, documentation, and deployment artifacts. Playbooks (reusable workflows) as output.",
+    "verification_method": "Critic model reviews code for security vulnerabilities and logic errors before execution. Devin runs its own code, observes results, and iterates based on real execution feedback. End-to-end testing via computer use — Devin uses desktop to test applications and sends edited recordings for human review. Closes the generate-verify loop that earlier tools lacked.",
+    "human_gates": "Human assigns task, Devin works autonomously, human reviews PR and session recording. Devin can request QA approval before testing. No mandatory structured checkpoints during execution — human oversight is primarily at task assignment and PR review.",
+    "agent_architecture": "Compound AI system (not a single model): Planner model outlines strategy, Coder model generates code, Critic model reviews for security/logic. Each session runs in isolated Linux sandbox with internet access, full filesystem, web browser, terminal, and code execution. Enterprise: Devin Enterprise orchestrates Managed Devins in parallel, analyzes past sessions, creates playbooks, manages knowledge bases.",
+    "execution_model": "Fully autonomous single-agent sessions in isolated sandboxes. Enterprise tier supports parallel Managed Devin orchestration. Asynchronous — assign task and return later for PR. Pay-per-compute (Agent Compute Units).",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "Go", "Rust", "C/C++", "Kotlin", "COBOL", "Fortran", "Objective-C", "Protocol Buffers", "Most mainstream and legacy languages"],
+    "pricing_model": "Core: $20/mo minimum + $2.25 per ACU (1 ACU ≈ 15 min work, ~$9/hr). Team: flat monthly with included ACUs + API access. Enterprise: custom pricing with VPC deployment, parallel Managed Devins, playbooks. Previously $500/mo, slashed to $20/mo minimum with Devin 2.0.",
+    "funding": "$696M total over 4 rounds. $400M round at $10.2B valuation (September 2025). Currently in talks for $25B valuation (April 2026). Investors: Founders Fund, Khosla Ventures.",
+    "target_market": "Engineering teams wanting autonomous task completion. Legacy modernization projects. Enterprise organizations needing scalable AI engineering capacity. Teams with large backlogs of well-defined tasks.",
+    "notable_customers": ["Microsoft", "Dell Technologies", "Cisco Systems", "Morgan Stanley (claimed)"],
+    "differentiator": "Most autonomous AI developer — complete isolated sandbox with shell, browser, file system, and execution. Closes the generate-verify loop by running its own code. End-to-end testing via computer use is unique. Enterprise parallel Managed Devins enable scaling AI development capacity. Playbook system for reusable workflows.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SAML/OIDC SSO, audit logging, RBAC via API, centralized admin controls. VPC deployment (code never leaves customer boundary). SaaS with tenant isolation or full VPC deployment. Session recordings provide built-in audit trail. Managed Devins with enterprise controls.",
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 3,
+      "D3_verification": 4,
+      "D4_human_gates": 2,
+      "D5_knowledge": 4,
+      "D6_enterprise": 5,
+      "D7_extensibility": 3
+    },
+    "scores_rationale": {
+      "D1_requirements": "Accepts natural language tasks and tickets but no formal spec system. Requirements are implicit in task descriptions.",
+      "D2_planning": "Planner model creates strategy. Plans visible in session but not formally human-reviewable before execution.",
+      "D3_verification": "Critic model + self-execution + iteration loop + end-to-end testing via computer use. Strong verification but not multi-layer structured.",
+      "D4_human_gates": "Primarily post-hoc: assign task, review PR. QA approval for testing. No mandatory pre-execution plan review.",
+      "D5_knowledge": "Enterprise playbooks, session analysis, knowledge bases. Strong cross-session learning. Past session analysis informs future work.",
+      "D6_enterprise": "VPC deployment, SSO, RBAC, audit logging, session recordings. Proven with Microsoft, Dell, Cisco. Best-in-class enterprise deployment options.",
+      "D7_extensibility": "API access, Slack integration, Jira/Linear ingestion. Playbook system for customization. But tightly controlled platform — no BYOM or MCP."
+    },
+    "strengths": [
+      "Most autonomous AI developer with complete isolated execution environment",
+      "Closes generate-verify loop — runs code, observes results, iterates automatically",
+      "End-to-end testing via computer use is unique in the market",
+      "Enterprise VPC deployment ensures code never leaves customer boundary",
+      "Playbook system enables reusable AI workflows",
+      "Massive funding ($696M) and valuation ($10.2B → targeting $25B) signal market confidence",
+      "Proven enterprise adoption (Microsoft, Dell, Cisco)"
+    ],
+    "weaknesses": [
+      "Limited human oversight during execution — primarily post-hoc review",
+      "No formal spec-driven workflow or requirements management",
+      "Pay-per-compute pricing (ACUs) makes costs hard to predict for large-scale use",
+      "Autonomous execution can produce unexpected results — 'black box' concern",
+      "No formal planning phase with human review before code generation begins",
+      "Session-based model — each task is relatively isolated without broader project context"
+    ],
+    "comparison_to_forge": "Philosophically opposite in key dimension: Devin maximizes autonomy while Forge maximizes structured oversight. Devin's isolated sandbox is more powerful than Forge's container-based execution but lacks Forge's human gates, spec-driven planning, and 8-layer verification. Devin's Enterprise parallel Managed Devins are conceptually similar to Forge's wave-based parallel execution but without DAG-based dependency ordering. Devin's playbooks are a simpler version of Forge's knowledge propagation system. Both target enterprise teams but with fundamentally different philosophies on AI autonomy vs. human control."
+  },
+  {
+    "name": "Cosine Genie",
+    "url": "https://cosine.sh/",
+    "category": "commercial",
+    "description": "Autonomous AI developer with deep codebase understanding. Native macOS app with full codebase awareness, inline review, and autonomous task execution. Genie Multi-agent decomposes backlog items into subtasks, producing polished PRs. Trained on data embedding human reasoning into the training process. Y Combinator backed. Supports 50+ languages.",
+    "input_format": "Natural language task descriptions, backlog items, bug reports. Slack integration for async communication. System notifications for status updates and questions.",
+    "output_format": "Pull requests that are structured, documented, and ready to merge. Inline code review comments. Slack messages for status/questions/issues.",
+    "verification_method": "Multi-agent subtask decomposition with review step. Genie flags issues and asks questions like a human colleague. No formal multi-layer verification engine documented. Relies on code review and developer approval.",
+    "human_gates": "Genie communicates via Slack — alerts on state, asks questions, flags issues. Human reviews PR before merge. No formal mandatory checkpoint system documented.",
+    "agent_architecture": "Multi-agent system: Genie Multi-agent decomposes backlog items into logical subtasks. 30+ diverse tools available to agents. Achieves convergence through tighter, more efficient sequences of steps. Native macOS app plus VS Code extension and cloud platform.",
+    "execution_model": "Autonomous or collaborative. Can work fully independently on defined tasks or interactively with developer guidance. Multi-agent decomposition for complex tasks.",
+    "languages_supported": ["50+ programming languages", "Focus on enterprise codebase complexity"],
+    "pricing_model": "Hobby $20/seat/mo (5M tokens), Professional $200/seat/mo (60M tokens), Enterprise custom. Task-based pricing model also mentioned — pay per outcome (bug fix, feature) rather than compute. No public enterprise pricing.",
+    "funding": "$3M total seed funding. Investors: Y Combinator, Soma Capital, UpHonest Capital, Lakestar, Focal. Very early stage compared to competitors.",
+    "target_market": "Enterprise engineering teams with complex codebases. Teams wanting AI that communicates like a human colleague. Organizations needing autonomous code review and merge automation.",
+    "notable_customers": ["No specific enterprise customers publicly listed as of 2026"],
+    "differentiator": "Human reasoning embedded in training data — designed to think like a developer, not just generate code. 30+ diverse tools for autonomous problem-solving. Slack-native communication model. Task-based pricing vision (pay per outcome). Strong SWE-bench performance.",
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": false,
+      "sso": false,
+      "compliance": false
+    },
+    "enterprise_features_detail": "Enterprise data agreements with all AI vendors (no training on customer data). Self-managed option mentioned on pricing page but not detailed. Enterprise features appear limited — no documented SSO, RBAC, audit trail, or compliance certifications. Claimed but unverified enterprise readiness.",
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 2,
+      "D6_enterprise": 1,
+      "D7_extensibility": 2
+    },
+    "scores_rationale": {
+      "D1_requirements": "Accepts backlog items and task descriptions but no formal spec or requirements system.",
+      "D2_planning": "Multi-agent decomposition into subtasks. No formal planning phase or DAG visible to humans.",
+      "D3_verification": "Inline review and question-asking. No formal verification engine or multi-layer checking.",
+      "D4_human_gates": "Slack communication and PR review. No mandatory structured checkpoints.",
+      "D5_knowledge": "Codebase awareness via deep understanding. No documented cross-session learning or knowledge persistence.",
+      "D6_enterprise": "Minimal enterprise features. No documented SSO, RBAC, or compliance. Very early stage ($3M funding).",
+      "D7_extensibility": "30+ tools, VS Code extension, Slack integration. But limited documentation on extensibility."
+    },
+    "strengths": [
+      "Human reasoning embedded in training — behaves more like a developer colleague",
+      "30+ diverse tools for autonomous problem-solving",
+      "Slack-native communication makes it feel like a team member",
+      "Strong benchmark performance (claimed SWE-bench SOTA)",
+      "Task-based pricing vision is appealing for cost predictability",
+      "50+ language support"
+    ],
+    "weaknesses": [
+      "Very early stage — only $3M funding vs. competitors with $100M-$10B+",
+      "No documented enterprise features (SSO, RBAC, audit, compliance)",
+      "No specific enterprise customers publicly listed",
+      "Limited documentation on architecture and verification methods",
+      "macOS-native app limits cross-platform enterprise deployment",
+      "Token-based pricing at current tiers may be expensive for heavy use"
+    ],
+    "comparison_to_forge": "Cosine Genie is in a much earlier stage and lacks Forge's structured approach. No equivalents to Forge's spec-driven planning, 8-layer verification, human gates, knowledge propagation, or wave-based execution. Genie's multi-agent decomposition is simpler than Forge's archetype-based factory system. The Slack-native communication model is a different interaction paradigm than Forge's CLI approach. Not a meaningful competitor to Forge for structured enterprise development."
+  },
+  {
+    "name": "Cursor",
+    "url": "https://cursor.com/",
+    "category": "commercial",
+    "description": "AI-first code editor (VS Code fork) that has become the dominant AI coding tool with $2B ARR (February 2026) and ~$50B valuation. Features inline completions, AI chat, and background agents that clone repos in the cloud and work autonomously to produce PRs. Enterprise plan with SOC 2, SSO, SCIM, privacy mode. Used by 50,000+ engineering teams including 70% of Fortune 1000.",
+    "input_format": "Natural language prompts in chat, inline code comments, @-mentions for file/symbol context. Background agents receive task descriptions and work on cloned repos.",
+    "output_format": "Inline code completions, multi-file edits, pull requests (from background agents). Code changes applied directly in editor or as PRs from cloud agents.",
+    "verification_method": "No formal verification engine. Developer reviews changes in editor. Background agents work autonomously but human reviews resulting PR. Privacy mode ensures no code stored or trained on.",
+    "human_gates": "Developer reviews all inline suggestions. Background agent PRs require human review and merge. Admin controls for agent settings. No formal mandatory checkpoint system — standard development workflow.",
+    "agent_architecture": "Single-agent model with multiple interaction modes: Tab completion (autocomplete), Chat (conversational), Composer (multi-file edit), Background Agents (autonomous cloud execution on cloned repos, up to 8 parallel). Credit-based model selection (Claude, GPT, Gemini). Auto mode provides unlimited usage with model rotation.",
+    "execution_model": "Interactive single-agent for in-editor work. Background agents run autonomously in cloud on cloned repos. Up to 8 parallel background agents. Credit-based metering for model selection.",
+    "languages_supported": ["All languages supported by VS Code", "TypeScript", "JavaScript", "Python", "Go", "Rust", "Java", "C/C++", "Ruby", "PHP", "Any language with VS Code extension support"],
+    "pricing_model": "Hobby $0, Pro $20/mo, Pro+ $60/mo, Ultra $200/mo, Teams $40/user/mo, Enterprise custom. Credit-based: each plan includes credits equal to plan price. Auto mode is unlimited. Background agents: Pro+ for daily use, Ultra for power users. Annual billing saves 20%. Revenue: $2B ARR (Feb 2026).",
+    "funding": "$10B+ total raised. Latest: $2B at $50B valuation (April 2026). Previous: $2.3B at $29.3B (November 2025), $900M (June 2025). Investors: Andreessen Horowitz, Nvidia, Thrive Capital. Parent company: Anysphere.",
+    "target_market": "All software developers. 60% enterprise revenue in 2026 (up from primarily individual in 2024). Bottom-up adoption translating to enterprise accounts. 50,000+ engineering teams, 70% of Fortune 1000.",
+    "notable_customers": ["NVIDIA", "Uber", "Adobe", "Salesforce (20,000 engineers, 90%+ usage)", "PwC", "70% of Fortune 1000"],
+    "differentiator": "Market-dominant AI IDE with unmatched adoption ($2B ARR, 1M+ paying customers). Background agents provide autonomous cloud execution. Strongest network effects — most developers already using it. Enterprise privacy mode (no code stored/trained). Massive funding creates defensibility. Credit-based model agnosticism (Claude, GPT, Gemini).",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SOC 2 Type 2 certified, GDPR/CCPA compliant, annual penetration testing. SAML/OIDC SSO (Okta, Microsoft Entra, Google Workspace), SCIM 2.0 provisioning. RBAC with role permissions, repo/model/MCP whitelists/blocklists. Privacy mode enforced org-wide. AES-256 encryption at rest, TLS 1.2+ in transit. Usage analytics dashboards with API export. No self-hosted option.",
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 1,
+      "D4_human_gates": 2,
+      "D5_knowledge": 2,
+      "D6_enterprise": 4,
+      "D7_extensibility": 4
+    },
+    "scores_rationale": {
+      "D1_requirements": "No formal requirements or spec system. Natural language prompts in chat. Background agents accept task descriptions but no structured requirements.",
+      "D2_planning": "No formal planning phase. Developer directs work through prompts. No DAG, task decomposition, or resource planning.",
+      "D3_verification": "No formal verification engine. Developer reviews code visually. No automated testing, spec compliance, or multi-layer checking.",
+      "D4_human_gates": "Developer reviews all suggestions and PRs. Admin controls exist. But no mandatory structured checkpoints.",
+      "D5_knowledge": "Codebase indexing and @-mentions for context. Rules for AI files. No cross-session learning or knowledge propagation.",
+      "D6_enterprise": "SOC 2, SSO/SCIM, RBAC, privacy mode, analytics. Strong but no self-hosted and no FedRAMP/HIPAA.",
+      "D7_extensibility": "Model-agnostic (Claude, GPT, Gemini), MCP support, VS Code extension ecosystem. Strong extensibility."
+    },
+    "strengths": [
+      "Market-dominant position: $2B ARR, 1M+ paying, 70% Fortune 1000",
+      "Background agents enable autonomous cloud execution (up to 8 parallel)",
+      "Model-agnostic: Claude, GPT, Gemini with Auto mode for unlimited usage",
+      "Strongest developer network effects — most developers already use it",
+      "Enterprise privacy mode enforced org-wide — no code stored or trained on",
+      "Massive funding ($10B+) creates significant defensibility",
+      "VS Code compatibility means zero learning curve for most developers"
+    ],
+    "weaknesses": [
+      "No formal spec-driven workflow, planning phase, or verification engine",
+      "Individual developer tool, not a structured development orchestration platform",
+      "No self-hosted deployment option",
+      "Background agents are relatively basic — no multi-agent coordination or DAG",
+      "Credit-based pricing can be confusing and unpredictable",
+      "Risk of lock-in despite model agnosticism — proprietary editor layer",
+      "Dominant market position may lead to complacency on structured workflows"
+    ],
+    "comparison_to_forge": "Fundamentally different categories despite surface similarity. Cursor is an AI-enhanced IDE for individual developers; Forge is a structured development orchestration platform. Cursor has no equivalents to Forge's spec-driven planning, 8-layer verification, knowledge propagation, wave-based multi-agent execution, assessment/splitting, or human gates. Cursor's background agents are simpler than Forge's container-based agent factory. However, Cursor's market dominance means developers are already using it — Forge could potentially integrate with or complement Cursor rather than compete directly."
+  },
+  {
+    "name": "Factory AI",
+    "url": "https://factory.ai/",
+    "category": "commercial",
+    "description": "Enterprise agent-native development platform with specialized Droids (coding agents). Five canonical droids: Code, Review, Docs, Test, and Knowledge, coordinated by a central coordinator agent. Droids pick up Jira/Linear tickets with acceptance criteria and work autonomously. DroidShield provides real-time static analysis. Used by NVIDIA, Adobe, Morgan Stanley, EY, Palo Alto Networks. Unicorn: $150M Series C at $1.5B valuation (April 2026).",
+    "input_format": "Jira/Linear tickets as native unit of work — issues with acceptance criteria, comments, and linked context are ingested directly. Natural language task descriptions. Pull request triggers for Review Droid.",
+    "output_format": "Pull requests from Code Droid. Review comments from Review Droid. Updated documentation from Docs Droid. Test suites from Test Droid. Knowledge artifacts from Knowledge Droid. All with reasoning logs for auditability.",
+    "verification_method": "Multi-droid verification: Review Droid critiques diffs against project standards and flags regressions (explicit role boundary — Review Droid cannot patch its own complaints). DroidShield performs real-time static analysis for security, bugs, and IP breaches before commit. Reasoning logs enable developer validation of all actions.",
+    "human_gates": "Human assigns tickets, reviews PRs, approves merges. Review Droid provides automated code review but human approval required. Role boundaries between droids prevent self-approval. No formal mandatory pre-execution checkpoint for plans.",
+    "agent_architecture": "Coordinator agent decomposes work and dispatches to 5 specialized droids: Code Droid (feature implementation), Review Droid (code critique — explicit role boundary prevents self-patching), Docs Droid (documentation updates), Test Droid (test generation), Knowledge Droid (knowledge management). Multi-model: dynamically routes tasks to most appropriate LLM (Anthropic, OpenAI, others). DroidShield for security analysis.",
+    "execution_model": "Coordinator dispatches to parallel specialized droids. Droids execute in sandboxed environments. Multi-model routing based on task characteristics. Jira/Linear integration makes tickets the unit of work.",
+    "languages_supported": ["All major languages", "Multi-model approach adapts to language requirements", "Enterprise codebase support"],
+    "pricing_model": "Individual: $20/mo. Enterprise: custom pricing. $150M Series C funding suggests enterprise focus. AWS Marketplace availability. Details limited — 'contact sales' for enterprise.",
+    "funding": "$150M Series C at $1.5B valuation (April 2026). Led by Khosla Ventures with Sequoia Capital, Insight Partners, Blackstone, Evantic Capital, 20VC, NEA, Mantis VC. Founded 2023.",
+    "target_market": "Enterprise engineering teams in regulated industries (financial services, healthcare, government). Organizations with established Jira/Linear ticket workflows. Teams needing auditable AI development with role separation.",
+    "notable_customers": ["NVIDIA", "Adobe", "Ernst & Young (EY)", "Palo Alto Networks", "Morgan Stanley", "Bayer", "MongoDB", "Zapier"],
+    "differentiator": "Only platform with explicit role-bounded specialized droids (Review Droid cannot patch its own complaints). Jira/Linear tickets as native work unit. DroidShield for pre-commit security/IP analysis. Three deployment patterns (cloud, hybrid, airgapped). Multi-model routing. SOC 2, ISO 27001, ISO 42001. OTEL-native telemetry.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SOC 2, ISO 27001, ISO 42001. SSO/SAML with all major providers. Three deployment patterns: cloud-managed, hybrid (LLMs/telemetry stay in customer network), fully airgapped (no outbound internet). Single-tenant VPC sandboxing. OTEL-native telemetry and audit logging. No training on customer code. DroidShield for IP protection.",
+    "scores": {
+      "D1_requirements": 3,
+      "D2_planning": 3,
+      "D3_verification": 4,
+      "D4_human_gates": 3,
+      "D5_knowledge": 3,
+      "D6_enterprise": 5,
+      "D7_extensibility": 4
+    },
+    "scores_rationale": {
+      "D1_requirements": "Jira/Linear tickets with acceptance criteria as input. Not spec-driven but structured ticket ingestion is above basic prompts.",
+      "D2_planning": "Coordinator decomposes work and dispatches to droids. Task-level planning but no formal human-reviewable plan or DAG.",
+      "D3_verification": "Strong: Review Droid + DroidShield + reasoning logs + role boundaries. Multi-layer but not as structured as a formal verification engine.",
+      "D4_human_gates": "Human assigns tickets and reviews PRs. Role boundaries prevent self-approval. But no mandatory pre-execution plan review.",
+      "D5_knowledge": "Knowledge Droid manages knowledge artifacts. Reasoning logs persist. Limited documentation on cross-session learning.",
+      "D6_enterprise": "Best-in-class: SOC 2, ISO 27001/42001, SSO, airgapped deployment, VPC, OTEL telemetry. Proven with NVIDIA, Morgan Stanley, EY.",
+      "D7_extensibility": "Multi-model routing, Jira/Linear integration, OTEL telemetry. Droid architecture is modular. Good extensibility."
+    },
+    "strengths": [
+      "Strongest enterprise deployment options: cloud, hybrid, fully airgapped",
+      "Explicit role boundaries between droids (Review can't patch own complaints) — unique safety feature",
+      "DroidShield for pre-commit security and IP breach detection",
+      "Jira/Linear tickets as native work unit — fits existing enterprise workflows",
+      "Multi-model routing optimizes LLM selection per task",
+      "Proven with major enterprises: NVIDIA, Adobe, Morgan Stanley, EY",
+      "Triple compliance: SOC 2, ISO 27001, ISO 42001",
+      "OTEL-native telemetry integrates with existing observability stacks"
+    ],
+    "weaknesses": [
+      "No formal spec-driven workflow — relies on ticket descriptions rather than specifications",
+      "No mandatory pre-execution plan review checkpoint",
+      "Limited public documentation on architecture details",
+      "Pricing opaque for enterprise ('contact sales')",
+      "Coordinator-Droid pattern is less flexible than Forge's archetype-based agent factory",
+      "No documented cross-session knowledge persistence beyond Knowledge Droid"
+    ],
+    "comparison_to_forge": "Most architecturally similar to Forge after Augment Intent. Both use multi-agent orchestration with specialized roles (Droids vs. archetypes), coordinator patterns, and parallel execution. Key differences: Factory's droids have fixed roles vs. Forge's configurable archetypes; Factory's ticket-based input vs. Forge's spec-driven PLAN.md; Factory's DroidShield vs. Forge's 8-layer verification engine; Factory has stronger enterprise deployment (airgapped) while Forge has stronger planning (DAG) and knowledge propagation (ledger, learnings). Factory's Review Droid role boundary is similar to Forge's separating verification from implementation."
+  },
+  {
+    "name": "GitHub Copilot Workspace / Coding Agent",
+    "url": "https://github.com/features/copilot",
+    "category": "commercial",
+    "description": "GitHub's AI platform evolved from Copilot Workspace (spec-to-code) into the Copilot Coding Agent (fully autonomous, GA September 2025). The coding agent works asynchronously in GitHub Actions — assign a GitHub issue, receive a PR. Agentic code review (March 2026) passes suggestions to the coding agent for automatic fix PRs. GitHub Spark enables natural language app building. Five pricing tiers from Free to Enterprise ($39/user/mo). Transitioning to usage-based billing June 2026.",
+    "input_format": "GitHub issues (for coding agent), natural language descriptions (for Spark), pull request diffs (for agentic review). Workspace: current state → desired state specification.",
+    "output_format": "Pull requests with code changes, branch creation, and documentation. Agentic review produces fix PRs automatically. Spark produces full applications from natural language.",
+    "verification_method": "Agentic code review gathers full project context before suggesting changes. Coding agent runs in GitHub Actions — can execute tests. But no formal multi-layer verification engine. Relies on existing CI/CD pipelines and human PR review.",
+    "human_gates": "Human assigns issues and reviews PRs. Workspace allows human editing of spec/plan at any point with downstream regeneration. Agentic review suggestions require human or agent approval. Standard GitHub PR review workflow.",
+    "agent_architecture": "Coding Agent: autonomous background worker in GitHub Actions environment. Analyzes issue, repository context, creates plan, implements changes, opens PR. Agentic Review: context-aware reviewer that can dispatch fixes to coding agent. Spark: natural language app builder (Pro+/Enterprise). Single-agent per task.",
+    "execution_model": "Asynchronous single-agent. Assign GitHub issue → coding agent works autonomously → PR delivered. Agentic review → fix PR → human review. No parallel multi-agent orchestration.",
+    "languages_supported": ["All languages with GitHub repository support", "Focus on popular languages", "TypeScript", "JavaScript", "Python", "Java", "Go", "Ruby", "C#", "Rust"],
+    "pricing_model": "Free (50 agent requests, 2K completions/mo), Pro $10/mo, Pro+ $39/mo, Business $19/user/mo, Enterprise $39/user/mo. Transitioning to usage-based billing (GitHub AI Credits) June 2026. Coding agent available on all paid plans.",
+    "funding": "Microsoft/GitHub internal product. Microsoft revenue $245B+ annually. Effectively unlimited resources. GitHub: 100M+ developers on platform.",
+    "target_market": "All GitHub users — 100M+ developers. Enterprise teams already on GitHub Enterprise Cloud. Teams wanting AI that fits existing GitHub workflow (issues → PRs → review → merge).",
+    "notable_customers": ["Carvana", "EY", "All GitHub Enterprise Cloud customers", "100M+ developers on GitHub platform"],
+    "differentiator": "Deepest GitHub integration — works natively with issues, PRs, Actions, and review. Largest distribution network (100M+ developers). Agentic review → coding agent pipeline is unique closed loop. Workspace spec-to-code workflow allows human editing at any stage. US/EU data residency. FedRAMP Moderate compliance. IP indemnity.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SOC 1/2 Type 2, FedRAMP Tailored ATO (working on Moderate). SAML SSO, SCIM provisioning, Enterprise Managed Users. Advanced audit logging with API access. IP allow lists. US/EU data residency. IP indemnity. Organization knowledge bases. Custom model fine-tuning (Enterprise). Policy controls for agent/MCP access.",
+    "scores": {
+      "D1_requirements": 3,
+      "D2_planning": 3,
+      "D3_verification": 2,
+      "D4_human_gates": 3,
+      "D5_knowledge": 3,
+      "D6_enterprise": 5,
+      "D7_extensibility": 4
+    },
+    "scores_rationale": {
+      "D1_requirements": "Workspace generates spec (current state → desired state). Coding agent reads GitHub issues with context. Decent but not formal spec management.",
+      "D2_planning": "Workspace generates plan from spec. Coding agent creates plan from issue. Human can edit spec/plan with downstream regeneration. Good but no DAG.",
+      "D3_verification": "Agentic review provides context-aware checking. GitHub Actions can run tests. But no formal multi-layer verification engine.",
+      "D4_human_gates": "Workspace allows editing at any stage. PR review is mandatory. Agentic review → human approval pipeline. Good structured oversight.",
+      "D5_knowledge": "Organization knowledge bases (Enterprise). Repository indexing for context. No cross-session learning persistence.",
+      "D6_enterprise": "Best-in-class: SOC 1/2, FedRAMP, SSO/SCIM, EMU, US/EU data residency, IP indemnity. Unmatched compliance portfolio.",
+      "D7_extensibility": "GitHub Actions, MCP, Marketplace extensions, custom model fine-tuning. Strong ecosystem."
+    },
+    "strengths": [
+      "Largest distribution: 100M+ developers on GitHub, built-in to existing workflow",
+      "Agentic review → coding agent pipeline is unique closed-loop automation",
+      "Best-in-class compliance: SOC 1/2, FedRAMP, US/EU data residency, IP indemnity",
+      "Workspace spec editing with downstream regeneration provides good iterative control",
+      "Asynchronous coding agent fits naturally into issue-based development",
+      "Most accessible pricing: coding agent on all paid plans starting at $10/mo",
+      "GitHub Enterprise Cloud integration provides SSO, SCIM, EMU, audit logging"
+    ],
+    "weaknesses": [
+      "Single-agent per task — no parallel multi-agent orchestration",
+      "No formal multi-layer verification engine",
+      "Deeply tied to GitHub ecosystem — limited value for non-GitHub organizations",
+      "No self-hosted option (GitHub Enterprise Server support unclear for AI features)",
+      "Transition to usage-based billing (June 2026) creates pricing uncertainty",
+      "Coding agent quality varies — autonomous execution without structured verification"
+    ],
+    "comparison_to_forge": "GitHub Copilot has the distribution advantage (100M+ developers) but Forge has the structural advantage. Copilot's spec-to-code (Workspace) is simpler than Forge's multi-phase planning with PLAN.md files. Copilot has no equivalent to Forge's 8-layer verification, wave-based parallel execution, knowledge propagation, or assessment/splitting pipeline. Copilot's agentic review → coding agent pipeline is a good two-agent loop but far simpler than Forge's multi-agent factory with archetypes. Copilot's enterprise compliance (FedRAMP, data residency) exceeds Forge's. These are complementary — Forge could orchestrate work that feeds into GitHub PRs reviewed by Copilot."
+  },
+  {
+    "name": "JetBrains AI (Junie)",
+    "url": "https://www.jetbrains.com/ai/",
+    "category": "commercial",
+    "description": "AI assistant deeply integrated into JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, etc.) with Junie as the autonomous coding agent. Junie CLI (beta March 2026) enables terminal, CI/CD, and GitHub/GitLab use. LLM-agnostic: supports JetBrains models, GPT-4.1, Claude 3.7 Sonnet, Gemini 2.5 Pro, plus local models via Ollama/LM Studio. BYOK (Bring Your Own Key) for compliance. Used by 88 of Fortune Global Top 100.",
+    "input_format": "Natural language prompts in IDE chat, inline code context, terminal commands (Junie CLI). Supports contextual awareness of project structure within JetBrains IDE.",
+    "output_format": "Code completions, multi-file refactorings, documentation, test generation, full feature implementations (Junie). Git diffs and patches from Junie CLI.",
+    "verification_method": "IDE-native analysis (inspections, type checking) inform AI suggestions. Junie can run tests and verify results. No formal multi-layer verification engine. Leverages JetBrains' deep language understanding (PSI tree) for higher quality suggestions.",
+    "human_gates": "Developer reviews all suggestions in IDE. Junie CLI outputs require human review. No formal mandatory checkpoint system. Standard development workflow with IDE integration.",
+    "agent_architecture": "Two-tier: AI Assistant (inline completions, chat, refactoring suggestions using multiple LLMs) and Junie Agent (autonomous coding agent for complex tasks). Junie CLI extends agent to terminal, CI/CD, GitHub/GitLab. LLM-agnostic with BYOK: choose provider for compliance, performance, or cost. Local model support via Ollama/LM Studio.",
+    "execution_model": "Single-agent interactive (AI Assistant) or autonomous (Junie). Junie CLI enables headless execution in CI/CD. No parallel multi-agent coordination.",
+    "languages_supported": ["Java", "Kotlin", "Python", "JavaScript", "TypeScript", "Go", "PHP", "Ruby", "Rust", "C/C++", "Swift", "Scala", "All JetBrains IDE-supported languages"],
+    "pricing_model": "AI Free ($0), AI Pro $8/mo, AI Ultimate $30/mo, AI Enterprise $60+/mo custom. Credit-based: 1 credit = $1, credits equal plan price. Basic completion unlimited, cloud features consume quota. Annual All Products Pack integrates AI. JetBrains total revenue: $252M (2026).",
+    "funding": "Privately held, profitable since founding. No external venture funding. Revenue: $252M annually (2026). Self-funded growth. 11.4M active developers.",
+    "target_market": "JetBrains IDE users (11.4M active developers). Enterprise Java/Kotlin teams. Organizations needing on-premise LLM support for compliance. Teams wanting IDE-native AI without switching editors.",
+    "notable_customers": ["Google", "NASA", "Netflix", "Ubisoft", "88 of Fortune Global Top 100"],
+    "differentiator": "Deepest IDE integration leveraging JetBrains' 20+ years of language understanding (PSI tree, inspections, refactoring engine). LLM-agnostic with BYOK — unique compliance flexibility. On-premise LLM support via Ollama/LM Studio. Junie CLI bridges IDE agent to CI/CD and terminal. Zero Data Retention for enterprise accounts. Self-funded profitability (no VC pressure).",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": true
+    },
+    "enterprise_features_detail": "SOC 2 certification. SSO and enhanced controls (Enterprise tier). License Server with floating licenses. BYOK for model provider compliance. On-premise LLM integration (Ollama, LM Studio). Zero Data Retention for enterprise. Local analysis — only necessary metadata sent to LLM. Junie CLI for CI/CD integration.",
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 2,
+      "D6_enterprise": 4,
+      "D7_extensibility": 5
+    },
+    "scores_rationale": {
+      "D1_requirements": "No formal requirements or spec system. Developer writes prompts, AI assists within IDE context.",
+      "D2_planning": "No formal planning phase. Junie decomposes tasks internally but no human-reviewable plan.",
+      "D3_verification": "IDE inspections and type checking inform suggestions. Junie can run tests. But no formal verification engine.",
+      "D4_human_gates": "Developer reviews in IDE. Standard workflow. No mandatory structured checkpoints.",
+      "D5_knowledge": "IDE project context. No cross-session learning or knowledge propagation documented.",
+      "D6_enterprise": "SOC 2, SSO, License Server, BYOK, on-premise LLM, Zero Data Retention. Strong but not as comprehensive as AWS/GitHub.",
+      "D7_extensibility": "Best-in-class: LLM-agnostic, BYOK, on-premise models, Ollama/LM Studio, Junie CLI for CI/CD, plugin ecosystem. Maximum flexibility."
+    },
+    "strengths": [
+      "Deepest IDE integration with 20+ years of language understanding (PSI tree)",
+      "Best-in-class extensibility: LLM-agnostic, BYOK, on-premise models, CI/CD via CLI",
+      "Zero Data Retention for enterprise — strongest data privacy guarantee",
+      "On-premise LLM support enables fully air-gapped enterprise deployment",
+      "Self-funded profitability — no VC pressure to compromise on quality",
+      "Massive existing user base: 11.4M active developers, 88 of Fortune 100",
+      "Junie CLI bridges IDE agent to terminal and CI/CD pipelines"
+    ],
+    "weaknesses": [
+      "No formal spec-driven workflow, planning, or verification engine",
+      "Individual developer assistant, not a development orchestration platform",
+      "No multi-agent coordination or parallel execution",
+      "Revenue ($252M) modest compared to Cursor ($2B) despite larger user base",
+      "AI features are add-on to IDE — not purpose-built for agentic development",
+      "Late entrant to autonomous agent space (Junie CLI beta March 2026)"
+    ],
+    "comparison_to_forge": "Different categories entirely. JetBrains AI is an IDE-integrated assistant; Forge is a development orchestration platform. JetBrains has no equivalents to Forge's spec-driven planning, multi-agent orchestration, 8-layer verification, knowledge propagation, or wave-based execution. However, JetBrains' BYOK, on-premise LLM, and Junie CLI create the most flexible deployment options in the market — a capability Forge could learn from. JetBrains' deep language understanding (PSI tree) is a unique technical asset that pure LLM-based tools can't match."
+  },
+  {
+    "name": "Lovable",
+    "url": "https://lovable.dev/",
+    "category": "commercial",
+    "description": "AI-powered full-stack app builder that generates complete web applications from natural language descriptions. Agent Mode handles end-to-end development: writing code, connecting frontend to backend, debugging, and verifying results. Visual Edits provide Figma-like direct manipulation. Fastest to $100M ARR in software history. $653M total funding at $6.6B valuation. Enterprise customers include Klarna, Uber, Deutsche Telekom, Zendesk.",
+    "input_format": "Natural language descriptions of desired applications. Visual Edits for direct UI manipulation. Supports multi-model: Claude Sonnet 4.5 (default), GPT-4, Deepseek, Groq, Mistral.",
+    "output_format": "Full-stack web applications (React, Supabase, Tailwind CSS). Deployable directly from platform. Complete codebases with frontend, backend connections, authentication, and data layer.",
+    "verification_method": "Agent Mode runs tests and verifies results while user watches in real-time. Proactive debugging with web search for solutions. No formal multi-layer verification engine. Relies on visual preview and user testing.",
+    "human_gates": "Human describes desired application. Human watches Agent Mode in real-time. Human approves each step. Visual Edits allow manual corrections. No formal mandatory checkpoint system beyond continuous visibility.",
+    "agent_architecture": "Agent Mode: autonomous multi-file development with codebase exploration, proactive debugging, web search, and automated problem-solving. Multi-model orchestration: GPT-4 Mini for fast initial processing, Claude Sonnet 4.5 for complex generation, plus Deepseek, Groq, Mistral. Single-agent with continuous human visibility.",
+    "execution_model": "Single-agent conversational with real-time visibility. Agent writes code across multiple files, runs tests, verifies results while user watches each step. Sequential task execution, no parallel agents.",
+    "languages_supported": ["React", "TypeScript", "JavaScript", "Tailwind CSS", "Supabase", "HTML/CSS"],
+    "pricing_model": "Free (5 daily credits), Starter $20/mo, Launch $50/mo, Scale $100/mo, Enterprise custom. Until May 2026: $25 Cloud + $1 AI per month free for every workspace. $653M total funding. Revenue: $200M ARR (December 2025).",
+    "funding": "$653M total over 4 rounds. $330M Series B at $6.6B valuation (December 2025). $200M Series A at $1.8B (July 2025). Revenue: $200M ARR. Fastest to $100M ARR in software history. Enterprise ~50% of customer base. Investors: CapitalG, Menlo Ventures Anthology, Accel, Lightspeed.",
+    "target_market": "Non-technical founders building MVPs. Product teams prototyping quickly. Enterprise teams for internal tools. 100K+ new projects built daily. Upmarket motion with Fortune 500 enterprise accounts.",
+    "notable_customers": ["Klarna", "Deutsche Telekom", "Uber", "Zendesk", "Enterprise-linked accounts ~50% of base"],
+    "differentiator": "Fastest time from idea to deployed full-stack application. Visual Edits provide Figma-like direct manipulation unique among AI builders. Agent Mode with real-time visibility. Fastest-growing SaaS in history ($200M ARR in 12 months). 100K+ projects built daily. Strong enterprise traction despite app-builder positioning.",
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": false,
+      "self_hosted": false,
+      "sso": true,
+      "compliance": false
+    },
+    "enterprise_features_detail": "SSO integration. Data training opt-out. Reusable design templates. Centralized billing. Dedicated product specialist. Custom integrations. Domain management. Workspace collaboration. No documented SOC 2, HIPAA, or FedRAMP compliance. No self-hosted option. Enterprise features less mature than competitors despite strong adoption.",
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 3,
+      "D7_extensibility": 2
+    },
+    "scores_rationale": {
+      "D1_requirements": "Natural language descriptions only. No formal spec, requirements management, or structured input.",
+      "D2_planning": "No formal planning phase. Agent Mode works directly from descriptions.",
+      "D3_verification": "Agent runs tests and verifies in real-time. Proactive debugging. But no formal verification engine or multi-layer checking.",
+      "D4_human_gates": "Real-time visibility into Agent Mode. Human watches each step. But no mandatory structured checkpoints.",
+      "D5_knowledge": "Design templates for consistency. No cross-session learning or knowledge propagation.",
+      "D6_enterprise": "SSO, data opt-out, centralized billing. But no SOC 2, no self-hosted, no audit trail documented.",
+      "D7_extensibility": "Multi-model support. Supabase integration. But limited to React/Tailwind stack — not extensible to other frameworks."
+    },
+    "strengths": [
+      "Fastest time from idea to deployed full-stack application",
+      "Visual Edits (Figma-like) provide unique direct manipulation capability",
+      "Agent Mode with real-time visibility builds user trust",
+      "Fastest-growing SaaS ever: $200M ARR in 12 months",
+      "Strong enterprise traction: Klarna, Uber, Deutsche Telekom, Zendesk",
+      "100K+ projects built daily — massive adoption validation"
+    ],
+    "weaknesses": [
+      "Limited to React/TypeScript/Tailwind/Supabase stack",
+      "No formal spec, planning, or verification systems",
+      "Enterprise features immature (no SOC 2, no self-hosted, no audit trail)",
+      "App builder, not a development orchestration platform — different category",
+      "Quality concerns for production enterprise applications",
+      "No parallel agent execution or multi-agent coordination",
+      "Single-stack limitation severely restricts enterprise applicability"
+    ],
+    "comparison_to_forge": "Minimal overlap — different product categories entirely. Lovable is a rapid app builder for React applications; Forge is a structured development orchestration platform. Lovable has no equivalents to Forge's spec-driven planning, multi-agent orchestration, 8-layer verification, knowledge propagation, wave-based execution, or enterprise compliance. Lovable's real-time visibility into Agent Mode is a good UX pattern that Forge lacks. Not a competitor for complex multi-module engineering work."
+  }
+]

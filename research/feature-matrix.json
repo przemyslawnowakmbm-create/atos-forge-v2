@@ -1,0 +1,119 @@
+{
+  "generated": "2026-04-28",
+  "dimensions": {
+    "D1": "Requirements Handling",
+    "D2": "Planning & Decomposition",
+    "D3": "Verification & Testing",
+    "D4": "Human Validation Gates",
+    "D5": "Knowledge & Context Management",
+    "D6": "Enterprise Readiness",
+    "D7": "Architecture & Extensibility"
+  },
+  "systems": [
+    {
+      "name": "Atos Forge V2",
+      "category": "open-source",
+      "url": "https://github.com/przemyslawnowakmbm-create/atos-forge-v2",
+      "scores": { "D1": 5, "D2": 5, "D3": 5, "D4": 5, "D5": 5, "D6": 3, "D7": 4, "total": 32 },
+      "notes": "Deterministic requirement validator (34 weasel words, 6-dimension enhancer), mandatory 100% coverage planner with 12-dimension plan-checker, 11-layer verification engine with hash lock and fix loop (repeated-error kill), Constitution.md + PreToolUse guard hook, session ledger with cross-milestone knowledge propagation, 17-agent catalog factory. Self-hosted CLI, MIT license. Loses on enterprise (no SSO/RBAC/compliance certifications, no SaaS offering) and extensibility (Claude-specific, no MCP server, no plugin ecosystem)."
+    },
+    {
+      "name": "Augment Code (Intent)",
+      "category": "commercial",
+      "url": "https://www.augmentcode.com/product/intent",
+      "scores": { "D1": 5, "D2": 5, "D3": 5, "D4": 5, "D5": 4, "D6": 4, "D7": 4, "total": 32 },
+      "notes": "Living spec as core primitive, Coordinator-Implementor-Verifier (CIV) pattern with DAG, 6 parallel specialist agents, 400K+ file Context Engine, mandatory pre/post-execution human gates. SOC 2 Type II, ISO 42001, SSO/SCIM, CMEK. $252M funding, $977M valuation. No self-hosted option. Credit-based pricing."
+    },
+    {
+      "name": "Tessl",
+      "category": "commercial",
+      "url": "https://tessl.io/",
+      "scores": { "D1": 5, "D2": 4, "D3": 4, "D4": 5, "D5": 3, "D6": 2, "D7": 4, "total": 27 },
+      "notes": "10-phase spec-driven workflow (constitution to export), anti-circular-verification via locked Gherkin tests, 2000+ runtime knowledge tiles, agent-agnostic (Claude Code, Codex, Gemini, OpenCode). $125M funding from Index/Accel, founded by Snyk creator. Enterprise features still developing (no SSO/RBAC/audit)."
+    },
+    {
+      "name": "Factory AI",
+      "category": "commercial",
+      "url": "https://factory.ai/",
+      "scores": { "D1": 3, "D2": 4, "D3": 4, "D4": 3, "D5": 3, "D6": 5, "D7": 4, "total": 26 },
+      "notes": "5 specialized Droids (Code, Review, Docs, Test, Knowledge) with coordinator. DroidShield pre-commit security/IP analysis. Review Droid role boundary (cannot patch own complaints). SOC 2, ISO 27001, ISO 42001. Cloud, hybrid, and fully airgapped deployment. NVIDIA, Adobe, Morgan Stanley customers. $150M Series C at $1.5B."
+    },
+    {
+      "name": "GitHub Spec Kit",
+      "category": "open-source",
+      "url": "https://github.com/github/spec-kit",
+      "scores": { "D1": 5, "D2": 4, "D3": 2, "D4": 4, "D5": 0, "D6": 2, "D7": 4, "total": 21 },
+      "notes": "Best requirements framework: specify -> plan -> tasks -> implement with quality checklists. Agent-agnostic (30+ AI coding tools). 80K stars. No execution engine, no verification pipeline, no knowledge persistence. Specification toolkit only."
+    },
+    {
+      "name": "Intent Integrity Kit (IIKit)",
+      "category": "open-source",
+      "url": "https://github.com/intent-integrity-chain/kit",
+      "scores": { "D1": 4, "D2": 3, "D3": 5, "D4": 4, "D5": 0, "D6": 2, "D7": 3, "total": 21 },
+      "notes": "SHA256 cryptographic integrity chains prevent test tampering. 10-phase pipeline with git hook enforcement. Agent-agnostic. Compliance-oriented with audit trail. Small community (1.2K stars). No execution engine, no knowledge persistence."
+    },
+    {
+      "name": "Superpowers",
+      "category": "open-source",
+      "url": "https://github.com/obra/superpowers",
+      "scores": { "D1": 3, "D2": 4, "D3": 3, "D4": 3, "D5": 1, "D6": 1, "D7": 5, "total": 20 },
+      "notes": "Composable markdown-based skills framework. Brainstorm -> plan -> implement with subagent-driven TDD. Two-stage review (spec compliance + code quality). Agent-agnostic (Claude Code, OpenCode, Codex). 121K stars. No built-in verification engine, no formal context budget management, no DAG scheduling."
+    },
+    {
+      "name": "MetaGPT",
+      "category": "open-source",
+      "url": "https://github.com/FoundationAgents/MetaGPT",
+      "scores": { "D1": 4, "D2": 4, "D3": 2, "D4": 1, "D5": 1, "D6": 1, "D7": 3, "total": 16 },
+      "notes": "Multi-agent software company simulation (PM, Architect, Engineer, QA). SOP-driven pipeline generating PRD, design, tasks, code. ICLR 2025 oral (AFlow). 67K stars. Weak verification, limited human gates, no persistent knowledge, development slowed."
+    },
+    {
+      "name": "OpenHands (formerly OpenDevin)",
+      "category": "open-source",
+      "url": "https://github.com/OpenHands/OpenHands",
+      "scores": { "D1": 2, "D2": 2, "D3": 3, "D4": 3, "D5": 2, "D6": 4, "D7": 5, "total": 21 },
+      "notes": "Most mature open-source AI developer platform (65K stars). Composable Python SDK for building coding agents. Docker sandbox isolation. 50%+ SWE-bench solve rate. Enterprise directory with RBAC/SSO. No structured spec-to-code pipeline, limited planning."
+    },
+    {
+      "name": "Cognition Devin",
+      "category": "commercial",
+      "url": "https://cognition.ai/",
+      "scores": { "D1": 2, "D2": 3, "D3": 4, "D4": 2, "D5": 4, "D6": 5, "D7": 3, "total": 23 },
+      "notes": "Most autonomous AI developer with full isolated Linux sandbox. Compound AI (Planner + Coder + Critic). End-to-end testing via computer use. Enterprise VPC deployment. Playbook system. Microsoft, Dell, Cisco customers. $696M funding, $10.2B valuation. Limited human oversight, no formal spec workflow."
+    },
+    {
+      "name": "ComposioHQ Agent Orchestrator",
+      "category": "open-source",
+      "url": "https://github.com/ComposioHQ/agent-orchestrator",
+      "scores": { "D1": 2, "D2": 3, "D3": 3, "D4": 3, "D5": 1, "D6": 2, "D7": 5, "total": 19 },
+      "notes": "Agent-agnostic orchestrator (Claude Code, Codex, Aider). Git worktree isolation per agent. Autonomous CI failure fixing. 8 swappable architectural slots. Web dashboard. 3,288 test cases. No formal spec pipeline, no multi-layer verification, limited knowledge propagation."
+    },
+    {
+      "name": "GitHub Copilot (Workspace / Coding Agent)",
+      "category": "commercial",
+      "url": "https://github.com/features/copilot",
+      "scores": { "D1": 3, "D2": 3, "D3": 2, "D4": 3, "D5": 3, "D6": 5, "D7": 4, "total": 23 },
+      "notes": "100M+ developer distribution. Coding Agent (GA Sep 2025) works asynchronously in GitHub Actions. Agentic review -> coding agent pipeline. Workspace spec editing with downstream regeneration. SOC 1/2, FedRAMP, US/EU data residency, IP indemnity. No multi-agent orchestration, no formal verification engine."
+    },
+    {
+      "name": "CodeRabbit",
+      "category": "commercial",
+      "url": "https://www.coderabbit.ai/",
+      "scores": { "D1": 2, "D2": 2, "D3": 5, "D4": 3, "D5": 3, "D6": 4, "D7": 3, "total": 22 },
+      "notes": "Best-in-class code review: LLM + 40 static analysis tools in ephemeral containers. Issue Planner (Feb 2026) bridges planning and review. Learns from team patterns. 4 Git platform support. SOC 2 Type II. 2M+ repos, 13M+ PRs, 8K+ customers. Review-focused, not a code generation or execution platform."
+    },
+    {
+      "name": "Open SWE (LangChain)",
+      "category": "open-source",
+      "url": "https://github.com/langchain-ai/open-swe",
+      "scores": { "D1": 2, "D2": 3, "D3": 3, "D4": 3, "D5": 1, "D6": 3, "D7": 4, "total": 19 },
+      "notes": "True multi-agent architecture (Planner, Coder, Reviewer). Async cloud execution with human messaging mid-task. Multiple sandbox providers (Modal, Daytona, Runloop). Slack/Linear/GitHub integration. LangGraph ecosystem. No structured spec pipeline, no persistent knowledge."
+    },
+    {
+      "name": "Replit Agent",
+      "category": "commercial",
+      "url": "https://replit.com/",
+      "scores": { "D1": 2, "D2": 3, "D3": 4, "D4": 3, "D5": 2, "D6": 3, "D7": 3, "total": 20 },
+      "notes": "Multi-agent (Manager, Editor, Verifier). Novel REPL-based self-testing with browser automation. 200+ minute autonomous sessions. 30+ connectors. CVE detection. $922M funding, $9B valuation, 50M+ users. Cloud-only, no self-hosted. Focused on greenfield app creation."
+    }
+  ]
+}

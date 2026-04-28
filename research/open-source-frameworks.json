@@ -1,0 +1,1219 @@
+[
+  {
+    "name": "OpenHands (formerly OpenDevin)",
+    "url": "https://github.com/OpenHands/OpenHands",
+    "category": "open-source",
+    "stars": 65000,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "AI-driven development platform. Composable Python SDK for building coding agents that can modify code, run commands, browse web, call APIs. Supports local or cloud execution at scale (1000s of agents). V1 architecture with optional isolation, stateless design, and two-layer composability.",
+    "input_format": "GitHub issues, natural language instructions, CLI prompts",
+    "output_format": "Code patches, pull requests, terminal output",
+    "verification_method": "Test execution in sandboxed Docker environments, SWE-bench evaluation (50%+ solve rate)",
+    "human_gates": "Approval-based in CLI mode; asynchronous PR review in cloud mode",
+    "agent_architecture": "Single agent with tool-use loop; SDK supports custom multi-agent compositions. CodeAct agent as default. Sandboxed execution environments.",
+    "execution_model": "Event-driven agent loop with tool calls. Docker sandbox isolation. Local CLI or cloud-hosted agent server.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "Go", "C++", "Rust", "any"],
+    "enterprise_features": {
+      "rbac": true,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": true,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 2,
+      "D3_verification": 3,
+      "D4_human_gates": 3,
+      "D5_knowledge": 2,
+      "D6_enterprise": 4,
+      "D7_extensibility": 5
+    },
+    "strengths": [
+      "Most mature open-source AI developer platform with 65K+ stars",
+      "Composable SDK enables custom agent architectures",
+      "Docker sandbox isolation for safe execution",
+      "Strong SWE-bench performance (50%+ solve rate)",
+      "Enterprise directory with RBAC and SSO",
+      "Active community with hundreds of contributors"
+    ],
+    "weaknesses": [
+      "No structured spec-to-code pipeline - primarily issue-driven",
+      "Limited built-in planning/decomposition for large features",
+      "No formal verification layers beyond test execution",
+      "No persistent knowledge/learning system across sessions",
+      "No structured human gates between phases"
+    ],
+    "comparison_to_forge": "OpenHands is broader but shallower in the spec-to-code pipeline. It excels at ad-hoc issue resolution but lacks Forge's structured phases (requirements -> plan -> execute -> verify), 8-layer verification engine, session ledger for cross-wave knowledge propagation, and assessment/splitting pipeline for context management."
+  },
+  {
+    "name": "SWE-agent",
+    "url": "https://github.com/SWE-agent/SWE-agent",
+    "category": "open-source",
+    "stars": 18000,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "Academic research project from Princeton/Stanford that autonomously fixes GitHub issues using a custom Agent-Computer Interface (ACI). State-of-the-art on SWE-bench among open-source projects. Configurable via single YAML file. Designed for research - simple and hackable.",
+    "input_format": "GitHub issues, bug reports, natural language task descriptions",
+    "output_format": "Git patches, code diffs",
+    "verification_method": "Test suite execution, SWE-bench evaluation. SWE-ReX sandbox for isolated code execution.",
+    "human_gates": "None - fully autonomous execution. Results reviewed post-hoc.",
+    "agent_architecture": "Single agent with custom ACI (Agent-Computer Interface) for repository browsing, viewing, editing, and executing code. Tool-based approach with LLM choosing actions.",
+    "execution_model": "Sequential agent loop. Single issue at a time. SWE-ReX provides sandboxed execution locally or in cloud. YAML-configurable.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C", "C++", "Go", "Rust"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 3,
+      "D4_human_gates": 0,
+      "D5_knowledge": 0,
+      "D6_enterprise": 1,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "State-of-the-art SWE-bench performance among open-source tools",
+      "Custom ACI optimized for LLM-code interaction",
+      "Research-grade - well-documented, peer-reviewed (NeurIPS 2024)",
+      "Minimal configuration - single YAML file",
+      "SWE-ReX sandbox for safe parallel execution",
+      "Model-agnostic - works with GPT-4o, Claude, etc."
+    ],
+    "weaknesses": [
+      "No planning or decomposition - single-issue focused",
+      "No human-in-the-loop gates",
+      "No persistent knowledge or session state",
+      "No multi-agent coordination",
+      "Research tool, not production engineering pipeline",
+      "No spec/requirements handling"
+    ],
+    "comparison_to_forge": "SWE-agent is a research tool for autonomous bug fixing, not an engineering pipeline. It excels at single-issue resolution but has no concept of specifications, phased planning, verification layers, knowledge propagation, or human gates. Forge provides the full SDLC structure that SWE-agent lacks."
+  },
+  {
+    "name": "Aider",
+    "url": "https://github.com/Aider-AI/aider",
+    "category": "open-source",
+    "stars": 95000,
+    "last_commit": "2026-04",
+    "license": "Apache-2.0",
+    "description": "AI pair programming in the terminal. Uses tree-sitter repo maps for whole-codebase awareness. Automatic git commits, multi-file editing, voice coding support. Works with 75+ LLM providers. Architect mode for plan-first development.",
+    "input_format": "Natural language chat, voice input, image input, URLs",
+    "output_format": "Direct file edits with automatic git commits",
+    "verification_method": "Linter/compiler error detection and auto-fix. No built-in test execution pipeline.",
+    "human_gates": "Interactive chat-based approval. Every change visible before commit. /ask mode for exploration without changes.",
+    "agent_architecture": "Single agent with repo-map context. Architect mode uses two-model pipeline (architect plans, editor implements). Tree-sitter for code understanding.",
+    "execution_model": "Interactive REPL. Sequential editing with git integration. Architect mode for plan-then-execute. Can run in scripted/headless mode.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "PHP", "HTML", "CSS", "Java", "C", "C++", "Go", "Rust", "Ruby", "and more"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 2,
+      "D4_human_gates": 3,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Massive community (95K+ stars) with excellent documentation",
+      "Tree-sitter repo map for whole-codebase context",
+      "Architect mode provides plan-first development",
+      "Automatic git commits with sensible messages",
+      "Works with 75+ LLM providers including local models",
+      "Voice coding and image input support"
+    ],
+    "weaknesses": [
+      "No structured spec/requirements pipeline",
+      "No multi-agent execution or parallelism",
+      "No formal verification beyond linting",
+      "No persistent knowledge system across sessions",
+      "Primarily interactive - limited automation",
+      "No decomposition for large tasks"
+    ],
+    "comparison_to_forge": "Aider is an excellent interactive pair programmer but not a structured engineering pipeline. It lacks Forge's phased workflow, multi-agent parallelism, 8-layer verification, assessment/splitting for large tasks, and session continuity. Aider's architect mode is a basic plan-then-execute, while Forge provides full DAG-based wave planning with dependency resolution."
+  },
+  {
+    "name": "MetaGPT",
+    "url": "https://github.com/FoundationAgents/MetaGPT",
+    "category": "open-source",
+    "stars": 67400,
+    "last_commit": "2026-01",
+    "license": "MIT",
+    "description": "Multi-agent framework simulating a software company. Agents play roles (PM, Architect, Engineer, QA) following SOPs. Takes one-line requirement and outputs PRD, design, tasks, and code. Core philosophy: Code = SOP(Team). Evolved into MGX for natural language programming.",
+    "input_format": "One-line natural language requirement",
+    "output_format": "PRD, system design, API specs, data structures, complete codebase, documentation",
+    "verification_method": "QA agent reviews code. Code review between agents. No external test execution pipeline.",
+    "human_gates": "Minimal - primarily autonomous. Design review possible but not enforced.",
+    "agent_architecture": "Multi-agent with role-based specialization: ProductManager, Architect, ProjectManager, Engineer, QA. Agents communicate via structured message passing following SOPs. Chat chain coordination.",
+    "execution_model": "Sequential pipeline: requirement -> PRD -> design -> task decomposition -> implementation -> review. Waterfall-like flow through agent roles.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 4,
+      "D2_planning": 4,
+      "D3_verification": 2,
+      "D4_human_gates": 1,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Most complete spec-to-code pipeline among open-source tools",
+      "Structured role-based multi-agent architecture",
+      "Generates PRD, design docs, API specs automatically",
+      "SOP-driven methodology mirrors real software teams",
+      "Strong academic backing (ICLR 2025 oral, AFlow)",
+      "67K+ stars, large community"
+    ],
+    "weaknesses": [
+      "Weak verification - no test execution or multi-layer checks",
+      "Limited human gates in the pipeline",
+      "No persistent knowledge/learning across projects",
+      "No context management for large codebases",
+      "Waterfall-like flow, limited iteration capability",
+      "Development appears to have slowed (last commit Jan 2026)"
+    ],
+    "comparison_to_forge": "MetaGPT is the closest philosophical match to Forge in the open-source space - both simulate structured software teams with role-based agents. However, MetaGPT lacks Forge's 8-layer verification engine, session ledger for knowledge propagation, context budget management with assessment/splitting, parallel wave execution with DAG scheduling, and human gates between phases. MetaGPT's verification is limited to agent-level code review."
+  },
+  {
+    "name": "GPT-Engineer",
+    "url": "https://github.com/AntonOsika/gpt-engineer",
+    "category": "open-source",
+    "stars": 55000,
+    "last_commit": "2025-06",
+    "license": "MIT",
+    "description": "CLI platform for AI code generation. Specify what you want, AI asks for clarification, then builds it. Historically significant as one of the first autonomous coding tools (April 2023). Now in maintenance mode - team focused on commercial Lovable.dev product.",
+    "input_format": "Natural language prompt in text file, optional image inputs",
+    "output_format": "Complete codebase generation, file structure",
+    "verification_method": "None built-in. Manual testing required.",
+    "human_gates": "Clarification questions before generation. No gates during execution.",
+    "agent_architecture": "Single agent with clarification loop. Generates full codebase in one pass. No multi-agent coordination.",
+    "execution_model": "Single-shot generation: prompt -> clarify -> generate. No iterative refinement or execution.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "HTML", "CSS", "any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 1,
+      "D3_verification": 0,
+      "D4_human_gates": 1,
+      "D5_knowledge": 0,
+      "D6_enterprise": 0,
+      "D7_extensibility": 1
+    },
+    "strengths": [
+      "Historically significant - pioneered prompt-to-codebase generation",
+      "Simple UX - specify and generate",
+      "Clarification loop before generation",
+      "Large community (55K stars)",
+      "MIT license"
+    ],
+    "weaknesses": [
+      "In maintenance mode - team moved to Lovable.dev",
+      "No verification or testing pipeline",
+      "Single-shot generation, no iterative refinement",
+      "No multi-agent architecture",
+      "No persistent knowledge or session state",
+      "Cannot work with existing codebases effectively"
+    ],
+    "comparison_to_forge": "GPT-Engineer is a generation-only tool with no pipeline structure. It lacks everything that makes Forge an engineering system: phased execution, verification layers, planning, knowledge propagation, parallel execution, and human gates. Effectively deprecated in favor of Lovable.dev."
+  },
+  {
+    "name": "GPT-Pilot (Pythagora)",
+    "url": "https://github.com/Pythagora-io/gpt-pilot",
+    "category": "open-source",
+    "stars": 33700,
+    "last_commit": "2025-10",
+    "license": "FSL-1.1-MIT (Fair Source)",
+    "description": "AI developer that builds apps step-by-step like a human developer, with debugging throughout development. Clarifies requirements, writes specs, implements incrementally, and debugs issues as they arise. Core technology behind Pythagora VS Code extension.",
+    "input_format": "Natural language app description, iterative clarification",
+    "output_format": "Complete application codebase with step-by-step implementation",
+    "verification_method": "Self-debugging during development. Human testing prompts at checkpoints. No automated test pipeline.",
+    "human_gates": "Extensive - asks for approval at each development step, requests testing feedback, clarifies requirements iteratively",
+    "agent_architecture": "Multi-step agent with specialized phases: specification, architecture, development, debugging. Single agent with different modes rather than multiple agents.",
+    "execution_model": "Sequential step-by-step development mimicking human workflow. Each step produces working code. Debug loops when issues detected.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Node.js", "React", "any web stack"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 3,
+      "D2_planning": 3,
+      "D3_verification": 2,
+      "D4_human_gates": 4,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Strong human-in-the-loop design with approval at each step",
+      "Step-by-step development mirrors real developer workflow",
+      "Self-debugging capability during development",
+      "Good requirements clarification process",
+      "Produces working applications, not just code snippets"
+    ],
+    "weaknesses": [
+      "Fair Source License limits commercial use",
+      "No parallel execution or multi-agent architecture",
+      "No formal verification layers",
+      "Limited to greenfield app development",
+      "No persistent knowledge across projects",
+      "Development shifted to commercial Pythagora VS Code extension"
+    ],
+    "comparison_to_forge": "GPT-Pilot has the strongest human gate design among open-source tools, similar in spirit to Forge's phase gates. However, it lacks Forge's parallel execution, 8-layer verification, code graph awareness, context budget management, and is focused on greenfield development rather than working with existing codebases."
+  },
+  {
+    "name": "ChatDev",
+    "url": "https://github.com/OpenBMB/ChatDev",
+    "category": "open-source",
+    "stars": 32300,
+    "last_commit": "2026-01",
+    "license": "Apache-2.0",
+    "description": "Multi-agent collaboration framework simulating a software company. Agents (CEO, CTO, Programmer, Tester) participate in functional seminars to automate the SDLC. ChatDev 2.0 (DevAll) is a zero-code multi-agent platform for diverse tasks beyond software development.",
+    "input_format": "Natural language software description",
+    "output_format": "Complete software project with code, documentation, tests",
+    "verification_method": "Tester agent reviews code. Communicative dehallucination technique. No external test execution.",
+    "human_gates": "Minimal - primarily autonomous execution. Post-hoc review.",
+    "agent_architecture": "Multi-agent with role-based specialization (CEO, CTO, Programmer, Reviewer, Tester). Chat chain orchestration. Communicative dehallucination for quality. V2 adds visual workflow designer.",
+    "execution_model": "Sequential chat chain: design -> coding -> testing -> documenting. Agents communicate in structured dialogues through phases.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "HTML", "CSS"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 3,
+      "D2_planning": 3,
+      "D3_verification": 2,
+      "D4_human_gates": 1,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Academic rigor with peer-reviewed research (ACL 2024)",
+      "Communicative dehallucination reduces errors",
+      "Full SDLC simulation with role-based agents",
+      "V2 adds zero-code visual workflow designer",
+      "Apache-2.0 license enables commercial use",
+      "Strong research community"
+    ],
+    "weaknesses": [
+      "Primarily for greenfield small projects",
+      "No real test execution pipeline",
+      "Limited human oversight during execution",
+      "No persistent knowledge or session state",
+      "No context management for large codebases",
+      "V2 broadened scope away from software engineering focus"
+    ],
+    "comparison_to_forge": "ChatDev shares Forge's multi-agent role-based philosophy but implements it as academic research rather than production engineering. It lacks Forge's verification engine, session ledger, context budget management, DAG-based parallel execution, and human gates. ChatDev 2.0 has moved toward general-purpose multi-agent orchestration rather than deepening software engineering capabilities."
+  },
+  {
+    "name": "AutoCodeRover",
+    "url": "https://github.com/AutoCodeRoverSG/auto-code-rover",
+    "category": "open-source",
+    "stars": 3200,
+    "last_commit": "2025-12",
+    "license": "GPL-3.0",
+    "description": "AST-aware autonomous software engineer for program improvement. Searches code context in abstract syntax trees rather than plain string matching. Uses statistical fault localization when test suites available. Resolves GitHub issues at $0.43-0.65 average cost per issue.",
+    "input_format": "GitHub issues, bug reports",
+    "output_format": "Git patches in diff format",
+    "verification_method": "Test suite execution, statistical fault localization, patch validation. Multi-patch generation with ranking.",
+    "human_gates": "None - fully autonomous. Results reviewed post-hoc.",
+    "agent_architecture": "Single agent with AST-aware code search. Two-phase: localization (hierarchical file->class->function->location narrowing) then repair (multi-patch generation with filtering/ranking).",
+    "execution_model": "Sequential: localize -> repair -> validate. Generates multiple candidate patches and ranks them. Interactive mode available.",
+    "languages_supported": ["Python", "Java", "JavaScript", "TypeScript", "C", "C++"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 3,
+      "D4_human_gates": 0,
+      "D5_knowledge": 0,
+      "D6_enterprise": 0,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "AST-aware code search - understands program structure",
+      "Strong SWE-bench performance (46.2% pass@1 verified)",
+      "Very cost-effective ($0.43-0.65 per issue)",
+      "Statistical fault localization when tests available",
+      "Multi-patch generation with ranking",
+      "Academic peer review (ISSTA 2024)"
+    ],
+    "weaknesses": [
+      "Bug-fixing focused, not feature development",
+      "No planning or decomposition capability",
+      "GPL-3.0 license may limit commercial adoption",
+      "No human-in-the-loop",
+      "No persistent knowledge",
+      "No multi-agent coordination"
+    ],
+    "comparison_to_forge": "AutoCodeRover is a specialized bug-fixing tool, not an engineering pipeline. Its AST-aware localization is interesting technology that Forge's code graph provides at a deeper level. AutoCodeRover lacks all of Forge's pipeline structure, verification layers, session management, and parallel execution."
+  },
+  {
+    "name": "Agentless",
+    "url": "https://github.com/OpenAutoCoder/Agentless",
+    "category": "open-source",
+    "stars": 3500,
+    "last_commit": "2025-09",
+    "license": "MIT",
+    "description": "Non-agent approach to automated software repair from UIUC. Simple three-phase pipeline: localization, repair, patch validation. Demonstrates that structured non-agent approaches can match or exceed complex agent systems. Low cost at $0.70 per fix.",
+    "input_format": "GitHub issues, bug descriptions",
+    "output_format": "Git patches in diff format",
+    "verification_method": "Test-based patch validation, patch ranking and filtering",
+    "human_gates": "None - fully autonomous pipeline",
+    "agent_architecture": "No agents - structured pipeline with LLM calls. Three phases: hierarchical localization (file -> class/function -> edit location), repair (multi-patch generation), validation (test execution + ranking).",
+    "execution_model": "Sequential three-phase pipeline. Non-agentic - no tool use or action loops. Direct LLM prompting with structured output.",
+    "languages_supported": ["Python", "JavaScript", "Java"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 3,
+      "D4_human_gates": 0,
+      "D5_knowledge": 0,
+      "D6_enterprise": 0,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Proves simple pipelines can match complex agents",
+      "Very cost-effective ($0.70 per fix)",
+      "Clean three-phase architecture - easy to understand",
+      "Strong SWE-bench performance (32% lite, 50.8% verified with Claude 3.5)",
+      "Academic rigor - well-documented methodology",
+      "MIT license"
+    ],
+    "weaknesses": [
+      "Bug-fixing only, not feature development",
+      "No agent capabilities - cannot use tools or iterate",
+      "No human interaction",
+      "No persistent knowledge",
+      "Limited to single-issue resolution",
+      "Research project, not production tool"
+    ],
+    "comparison_to_forge": "Agentless is philosophically interesting as a counterpoint - showing that structured pipelines without agents can work. Forge takes the opposite approach with rich agent orchestration. Agentless's three-phase pipeline (localize-repair-validate) is a minimal version of what Forge does across 8 verification layers and multiple execution waves."
+  },
+  {
+    "name": "Cline (formerly Claude Dev)",
+    "url": "https://github.com/cline/cline",
+    "category": "open-source",
+    "stars": 61000,
+    "last_commit": "2026-04",
+    "license": "Apache-2.0",
+    "description": "Autonomous coding agent as VS Code/JetBrains extension. Creates/edits files, executes commands, automates browser interactions with human approval at each step. Model-agnostic, supports any LLM provider. Token tracking and cost monitoring built in.",
+    "input_format": "Natural language chat in IDE, file context",
+    "output_format": "Direct file edits, terminal commands, browser actions",
+    "verification_method": "Linter/compiler error monitoring with proactive fix. No structured verification pipeline.",
+    "human_gates": "Strong - asks permission for every file edit, command execution, and browser action. Full transparency.",
+    "agent_architecture": "Single agent with tool use (file edit, terminal, browser). Human-in-the-loop approval for each action. MCP extension support.",
+    "execution_model": "Interactive agent loop in IDE. Sequential tool use with human approval. Token and cost tracking per task.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 2,
+      "D4_human_gates": 5,
+      "D5_knowledge": 0,
+      "D6_enterprise": 1,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Best-in-class human-in-the-loop with per-action approval",
+      "IDE-native experience in VS Code and JetBrains",
+      "Browser automation for web development testing",
+      "Model-agnostic - works with any LLM provider",
+      "Token/cost tracking throughout task execution",
+      "Free and open source (Apache-2.0)"
+    ],
+    "weaknesses": [
+      "No structured pipeline - reactive coding assistant",
+      "No planning or decomposition for large tasks",
+      "No persistent knowledge across sessions",
+      "No parallel execution",
+      "No formal verification beyond linting",
+      "Per-action approval can be tedious for large changes"
+    ],
+    "comparison_to_forge": "Cline excels at human oversight (per-action approval) but lacks all pipeline structure. Forge provides structured phases, planning, verification layers, and knowledge propagation that Cline doesn't attempt. Cline is an interactive assistant; Forge is an engineering automation system."
+  },
+  {
+    "name": "Plandex",
+    "url": "https://github.com/plandex-ai/plandex",
+    "category": "open-source",
+    "stars": 15200,
+    "last_commit": "2025-10",
+    "license": "MIT",
+    "description": "Terminal-based AI coding agent for large projects. Plans and executes multi-step tasks across dozens of files. Cumulative diff review sandbox, full version control for plans, branch exploration. Handles 2M token context with tree-sitter project maps. WINDING DOWN as of Oct 2025.",
+    "input_format": "Natural language tasks, file context, REPL commands",
+    "output_format": "Sandboxed diffs (reviewed before applying), git commits",
+    "verification_method": "Diff review sandbox separates AI changes from project files. Rollback capability. No automated test execution.",
+    "human_gates": "Strong - cumulative diff review before applying. Branch exploration for comparing approaches. Step-by-step review mode.",
+    "agent_architecture": "Single agent with plan-execute model. Version-controlled plans with branching. Client-server architecture.",
+    "execution_model": "Plan-then-execute with sandboxed changes. Full autonomy possible but configurable step-by-step review. Tree-sitter indexing for 20M+ token directories.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 3,
+      "D3_verification": 2,
+      "D4_human_gates": 4,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Best sandboxed change management - review before applying",
+      "Version control for plans with branching",
+      "Large context handling (2M tokens, 20M+ with indexing)",
+      "Strong rollback and debugging capabilities",
+      "Multi-model support for optimal cost/quality"
+    ],
+    "weaknesses": [
+      "WINDING DOWN - no longer accepting new users (Oct 2025)",
+      "No automated verification/testing pipeline",
+      "No multi-agent parallelism",
+      "No persistent knowledge",
+      "Client-server architecture adds complexity",
+      "Effectively abandoned"
+    ],
+    "comparison_to_forge": "Plandex had the most Forge-like planning approach with version-controlled plans and sandboxed changes. Its diff sandbox is conceptually similar to Forge's patch collection from container agents. However, Plandex lacked verification layers, multi-agent execution, and knowledge propagation. Now effectively defunct."
+  },
+  {
+    "name": "Sweep AI",
+    "url": "https://github.com/sweepai/sweep",
+    "category": "open-source",
+    "stars": 6000,
+    "last_commit": "2025-12",
+    "license": "Apache-2.0",
+    "description": "AI junior developer that turns GitHub issues into pull requests. Reads repository, plans implementation, writes code, adds tests, creates PRs. Includes sandbox for test execution. Now pivoted to JetBrains IDE plugin.",
+    "input_format": "GitHub issues with sweep label",
+    "output_format": "Pull requests with code changes and tests",
+    "verification_method": "Sandbox test suite execution. Self-fixing on test failure before PR creation.",
+    "human_gates": "PR review as primary gate. Automated execution between issue and PR.",
+    "agent_architecture": "Single agent with GitHub integration. Reads codebase, plans, implements, tests, creates PR. Sandbox environment for verification.",
+    "execution_model": "Event-driven: GitHub issue triggers autonomous pipeline. Sandbox execution for testing. Self-fix loop on failures.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "Go", "C#", "C++", "Rust"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 2,
+      "D3_verification": 3,
+      "D4_human_gates": 2,
+      "D5_knowledge": 0,
+      "D6_enterprise": 1,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "End-to-end GitHub integration (issue -> PR)",
+      "Sandbox test execution with self-fixing",
+      "Self-hostable with Docker",
+      "Multi-language support",
+      "Automated test generation"
+    ],
+    "weaknesses": [
+      "Pivoted to JetBrains plugin - original GitHub bot less maintained",
+      "No structured planning pipeline",
+      "No persistent knowledge",
+      "No multi-agent coordination",
+      "Limited to single-issue scope",
+      "No human gates between planning and execution"
+    ],
+    "comparison_to_forge": "Sweep's GitHub integration for issue-to-PR automation is clean but shallow compared to Forge's full pipeline. Sweep's self-fix loop is a basic version of Forge's verification loop with loop detection and escalation. Forge provides deeper planning, multi-layer verification, and cross-wave knowledge propagation."
+  },
+  {
+    "name": "OpenCode",
+    "url": "https://github.com/opencode-ai/opencode",
+    "category": "open-source",
+    "stars": 147000,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "The most-starred open-source AI coding agent. Go-based terminal TUI supporting 75+ LLM providers. Built-in build and plan agents. Session management, LSP integration, vim-like editor. Client/server architecture. 6.5M monthly developers.",
+    "input_format": "Natural language chat in TUI, file context",
+    "output_format": "Direct file edits, command execution",
+    "verification_method": "LSP integration for code intelligence. No structured verification pipeline.",
+    "human_gates": "Interactive chat with approval. Plan agent for read-only analysis before changes.",
+    "agent_architecture": "Two built-in agents: 'build' (full-access development) and 'plan' (read-only analysis). MCP extension support. Plugin ecosystem.",
+    "execution_model": "Interactive TUI agent loop. Client/server architecture. SQLite for persistent sessions. Fully offline capable with local models.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 1,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 4
+    },
+    "strengths": [
+      "Most popular open-source coding agent (147K stars, 6.5M users)",
+      "Built in Go for speed and efficiency",
+      "75+ LLM providers including fully offline operation",
+      "Rich TUI with vim-like editor",
+      "Growing plugin ecosystem",
+      "Session management with SQLite persistence"
+    ],
+    "weaknesses": [
+      "No structured engineering pipeline",
+      "No formal verification layers",
+      "No multi-agent parallelism for large tasks",
+      "No spec/requirements handling",
+      "Plan agent is read-only, not a real planner",
+      "Popularity-driven development vs. engineering depth"
+    ],
+    "comparison_to_forge": "OpenCode is the most popular tool in this space but is fundamentally an interactive coding assistant, not an engineering pipeline. It has no equivalent to Forge's phased workflow, 8-layer verification, assessment/splitting, wave-based parallel execution, or session ledger. OpenCode's 'plan' agent is a read-only explorer, not a real planning system."
+  },
+  {
+    "name": "Superpowers",
+    "url": "https://github.com/obra/superpowers",
+    "category": "open-source",
+    "stars": 121000,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "Agentic skills framework and software development methodology. Composable markdown-based skills for coding agents. Enforces brainstorm -> plan -> implement via subagent-driven development with TDD. Each task gets fresh subagent with two-stage review (spec compliance + code quality).",
+    "input_format": "Natural language design discussions, approved designs",
+    "output_format": "Implemented code via git worktrees, tested and reviewed",
+    "verification_method": "Two-stage review per task (spec compliance, code quality). TDD enforcement (red-green-refactor). Test baseline verification.",
+    "human_gates": "Design validation checkpoints. Batch implementation with human review points. Plan approval before execution.",
+    "agent_architecture": "Coordinator agent dispatches fresh subagents per task. Each subagent gets only task description and relevant context (prevents context pollution). Skills are composable markdown files. Works with Claude Code, OpenCode, Codex.",
+    "execution_model": "Brainstorm -> design -> plan (2-5min tasks) -> subagent execution -> two-stage review. Git worktree isolation per task. Supports hours of autonomous operation.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 3,
+      "D2_planning": 4,
+      "D3_verification": 3,
+      "D4_human_gates": 3,
+      "D5_knowledge": 1,
+      "D6_enterprise": 1,
+      "D7_extensibility": 5
+    },
+    "strengths": [
+      "Most structured development methodology in the space",
+      "Subagent-driven development prevents context pollution",
+      "Two-stage review (spec + quality) for every task",
+      "TDD enforcement with red-green-refactor",
+      "Composable skill system - highly extensible",
+      "Agent-agnostic - works with Claude Code, OpenCode, Codex",
+      "121K stars - second most popular after OpenCode"
+    ],
+    "weaknesses": [
+      "Methodology framework, not integrated system - depends on host agent",
+      "No built-in verification engine (relies on TDD within subagents)",
+      "No persistent knowledge/learning system across sessions",
+      "No formal context budget management",
+      "No DAG-based parallel scheduling",
+      "No containerized isolation (uses git worktrees)"
+    ],
+    "comparison_to_forge": "Superpowers is the closest methodological match to Forge's philosophy. Both emphasize structured planning, task decomposition, and verification. Key differences: Forge has a built-in 8-layer verification engine vs. Superpowers' TDD-only approach; Forge has session ledger for knowledge propagation; Forge has DAG-based wave scheduling vs. sequential subagent dispatch; Forge has context budget management with assessment/splitting. Superpowers is a methodology layer; Forge is an integrated system."
+  },
+  {
+    "name": "GitHub Spec Kit",
+    "url": "https://github.com/github/spec-kit",
+    "category": "open-source",
+    "stars": 80000,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "Toolkit for Spec-Driven Development from GitHub. CLI (specify) and workflow for structured AI-assisted coding: specify -> plan -> tasks -> implement. Agent-agnostic - works with 30+ AI coding tools. Separates 'what' (specs) from 'how' (code). Quality checklists for requirements validation.",
+    "input_format": "Specifications in markdown, natural language requirements",
+    "output_format": "Technical plans, task lists, implementation via integrated agents",
+    "verification_method": "Quality checklists for spec validation. Plan review. Task-level verification criteria. No automated test execution.",
+    "human_gates": "Checkpoints between each phase: spec review, plan review, task review, implementation review",
+    "agent_architecture": "No built-in agents - provides scaffolding for external agents. Slash commands integrate with host agents (Copilot, Claude Code, Gemini). Template-driven workflow.",
+    "execution_model": "Four-phase workflow: specify -> plan -> tasks -> implement. Each phase produces artifacts reviewed by human. Agent-agnostic execution.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 5,
+      "D2_planning": 4,
+      "D3_verification": 2,
+      "D4_human_gates": 4,
+      "D5_knowledge": 0,
+      "D6_enterprise": 2,
+      "D7_extensibility": 4
+    },
+    "strengths": [
+      "Best-in-class requirements/specification handling",
+      "Agent-agnostic - works with 30+ AI coding tools",
+      "Strong human gates between each phase",
+      "Quality checklists for requirements validation",
+      "Backed by GitHub with strong documentation",
+      "80K stars - massive adoption",
+      "Separates intent from implementation"
+    ],
+    "weaknesses": [
+      "No built-in execution engine - relies on external agents",
+      "No automated verification/testing pipeline",
+      "No persistent knowledge or learning",
+      "No parallel execution or resource management",
+      "No context budget management",
+      "Specification toolkit, not complete engineering system"
+    ],
+    "comparison_to_forge": "Spec Kit is the best requirements framework but only a framework - it needs an execution engine. Forge provides the complete pipeline that Spec Kit starts but doesn't finish: verification engine, agent factory, parallel execution planner, session management, and knowledge propagation. Spec Kit's specify->plan->tasks->implement mirrors Forge's requirements->plan->execute->verify but without the execution and verification infrastructure."
+  },
+  {
+    "name": "Intent Integrity Kit (IIKit)",
+    "url": "https://github.com/intent-integrity-chain/kit",
+    "category": "open-source",
+    "stars": 1200,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "Methodology and toolkit for making AI-generated code verifiable from requirements to running software. Uses SHA256 cryptographic hashing to prevent test tampering during implementation. 10-phase workflow from constitution to export. Agent-agnostic with git hook enforcement.",
+    "input_format": "Specifications, Gherkin .feature files, natural language requirements",
+    "output_format": "Verified implementation with cryptographic integrity chain",
+    "verification_method": "SHA256 assertion integrity hashing. Git hook enforcement (pre-commit, post-commit). Prevents circular verification (AI modifying tests to match bugs). Coverage and quality verification.",
+    "human_gates": "Specification approval before implementation. Feature file locking before coding. Requirements change forces spec revision.",
+    "agent_architecture": "No built-in agents - provides verification layer for any agent. Agent-agnostic hooks work with Claude Code, Codex, Copilot, Gemini, OpenCode.",
+    "execution_model": "10-phase pipeline: constitution -> specify -> clarify -> plan -> checklist -> testify -> tasks -> analyze -> implement -> export. Cryptographic verification at each transition.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": true
+    },
+    "scores": {
+      "D1_requirements": 4,
+      "D2_planning": 3,
+      "D3_verification": 5,
+      "D4_human_gates": 4,
+      "D5_knowledge": 0,
+      "D6_enterprise": 2,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Best-in-class verification with cryptographic integrity",
+      "Prevents circular verification (AI tampering with tests)",
+      "10-phase structured pipeline",
+      "Agent-agnostic - works with any coding agent",
+      "Git hook enforcement is infrastructure-level guarantee",
+      "Compliance-oriented design with audit trail"
+    ],
+    "weaknesses": [
+      "Small community (1.2K stars) - relatively new",
+      "No built-in execution engine",
+      "No parallel execution or agent orchestration",
+      "No persistent knowledge or session management",
+      "Requires Tessl CLI for installation",
+      "Verification focus may slow development"
+    ],
+    "comparison_to_forge": "IIKit has the most sophisticated verification approach in the space - cryptographic integrity chains are stronger than Forge's hash-based contract checks. However, IIKit is a verification overlay, not a complete system. Forge provides the full pipeline (agent factory, parallel planner, container orchestration, session ledger) that IIKit doesn't attempt. The two are complementary - IIKit's cryptographic verification could enhance Forge's verification engine."
+  },
+  {
+    "name": "Codex CLI (OpenAI)",
+    "url": "https://github.com/openai/codex",
+    "category": "open-source",
+    "stars": 75600,
+    "last_commit": "2026-04",
+    "license": "Apache-2.0",
+    "description": "OpenAI's terminal-based coding agent built in Rust. Reads, changes, and runs code locally. Supports subagents for parallel tasks, code review agents, web search, MCP tool integration. Slash commands for specialized workflows.",
+    "input_format": "Natural language prompts, slash commands, MCP tool calls",
+    "output_format": "Direct file edits, command execution, PR creation",
+    "verification_method": "Separate review agent for code review before committing. No structured verification pipeline.",
+    "human_gates": "Configurable autonomy levels. Review agent as automated gate. Interactive approval in default mode.",
+    "agent_architecture": "Primary agent with subagent spawning for parallelism. MCP integration for tool extensibility. Slash commands for specialized workflows. Built in Rust.",
+    "execution_model": "Terminal agent loop. Subagents for parallel tasks. MCP servers for tool integration. Supports STDIO and streaming HTTP MCP servers.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 2,
+      "D4_human_gates": 2,
+      "D5_knowledge": 0,
+      "D6_enterprise": 1,
+      "D7_extensibility": 4
+    },
+    "strengths": [
+      "Backed by OpenAI with active development",
+      "Built in Rust for performance",
+      "Subagent parallelism for concurrent tasks",
+      "Rich MCP integration ecosystem",
+      "Code review agent before commits",
+      "75K+ stars, 428 contributors, Apache-2.0"
+    ],
+    "weaknesses": [
+      "No structured engineering pipeline",
+      "No spec/requirements handling",
+      "No persistent knowledge or session state",
+      "No formal verification layers",
+      "Primarily interactive assistant, not automation system",
+      "Tied to OpenAI models for best experience"
+    ],
+    "comparison_to_forge": "Codex CLI is a well-built interactive agent with subagent parallelism, but lacks all pipeline structure. Its subagent model is a primitive version of Forge's wave-based parallel execution. Forge provides structured phases, verification engine, session management, and knowledge propagation that Codex CLI doesn't attempt."
+  },
+  {
+    "name": "Goose (Block)",
+    "url": "https://github.com/block/goose",
+    "category": "open-source",
+    "stars": 29400,
+    "last_commit": "2026-04",
+    "license": "Apache-2.0",
+    "description": "Open-source extensible AI agent from Block (Square). Desktop app + CLI + API. 70+ MCP extensions. Subagent parallelism, prompt injection detection, adversary reviewer. Portable YAML recipes for shareable workflows. 15+ LLM providers.",
+    "input_format": "Natural language, YAML recipes, MCP tool calls",
+    "output_format": "File edits, command execution, multi-tool actions",
+    "verification_method": "Adversary reviewer for safety. Test execution via extensions. No structured verification pipeline.",
+    "human_gates": "Tool permission controls. Sandbox mode. Configurable autonomy.",
+    "agent_architecture": "Core agent loop in Rust with provider abstraction, MCP extension system. Subagent spawning for parallel tasks. Adversary reviewer for safety. Recipe system for workflow capture.",
+    "execution_model": "Plan-execute-evaluate loop. MCP-based tool integration. Subagent parallelism. Desktop, CLI, and API interfaces. YAML recipes for repeatable workflows.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 2,
+      "D3_verification": 2,
+      "D4_human_gates": 3,
+      "D5_knowledge": 0,
+      "D6_enterprise": 2,
+      "D7_extensibility": 5
+    },
+    "strengths": [
+      "Most extensible agent with 70+ MCP extensions",
+      "YAML recipes for shareable/repeatable workflows",
+      "Adversary reviewer for safety/security",
+      "Cross-platform (Desktop, CLI, API)",
+      "Subagent parallelism",
+      "Strong security model (injection detection, sandbox, permissions)"
+    ],
+    "weaknesses": [
+      "No structured engineering pipeline",
+      "No spec/requirements handling",
+      "No persistent knowledge or learning",
+      "No formal verification layers",
+      "General-purpose agent, not engineering-specific",
+      "Recipe system is not a real planning system"
+    ],
+    "comparison_to_forge": "Goose is the most extensible agent in the space (70+ MCP extensions) but is a general-purpose tool, not an engineering pipeline. Its recipe system enables workflow capture but not structured planning. Forge provides the engineering-specific structure (phases, verification, knowledge propagation) that Goose's general framework doesn't provide."
+  },
+  {
+    "name": "Devika",
+    "url": "https://github.com/stitionai/devika",
+    "category": "open-source",
+    "stars": 19500,
+    "last_commit": "2025-03",
+    "license": "MIT",
+    "description": "Open-source agentic AI software engineer, originally an alternative to Devin. Understands high-level instructions, breaks into steps, researches web, writes code. Supports Claude, GPT-4, and local LLMs via Ollama. Web UI for interaction. Project rebranded to Opcode.",
+    "input_format": "Natural language high-level instructions",
+    "output_format": "Complete codebase, project structure",
+    "verification_method": "None built-in. Manual review required.",
+    "human_gates": "Web UI interaction. No structured gates.",
+    "agent_architecture": "Single agent with modular components: Planning/Reasoning engine, Research module (web browsing), Code Writing module, Browser Interaction module. Keyword extraction for research.",
+    "execution_model": "Sequential: understand -> plan -> research -> code. Web browsing for information gathering. Single-pass generation.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "Java", "C++", "Ruby", "Go", "Rust"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 2,
+      "D3_verification": 0,
+      "D4_human_gates": 1,
+      "D5_knowledge": 0,
+      "D6_enterprise": 0,
+      "D7_extensibility": 1
+    },
+    "strengths": [
+      "Web research capability for context gathering",
+      "Supports local LLMs via Ollama",
+      "Web UI for interaction",
+      "Multi-language support",
+      "MIT license"
+    ],
+    "weaknesses": [
+      "No verification or testing pipeline",
+      "Appears abandoned (last commit March 2025, rebranded to Opcode)",
+      "No multi-agent coordination",
+      "No persistent knowledge",
+      "Limited to greenfield projects",
+      "No structured human gates"
+    ],
+    "comparison_to_forge": "Devika is a first-generation Devin clone that has been effectively abandoned. It lacks all of Forge's engineering pipeline structure, verification, knowledge management, and parallel execution. Its web research capability is interesting but insufficient for structured engineering."
+  },
+  {
+    "name": "Claude Code Agent Farm",
+    "url": "https://github.com/Dicklesworthstone/claude_code_agent_farm",
+    "category": "open-source",
+    "stars": 752,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "Orchestration framework for running 20-50+ Claude Code agents in parallel. Automated bug fixing, best-practices sweeps, lock-based coordination. Real-time tmux monitoring dashboard. Supports 34 technology stacks. Adaptive idle timeout and automatic agent recovery.",
+    "input_format": "Workflow configuration (bug-fix, best-practices), technology stack selection",
+    "output_format": "Code improvements applied across codebase",
+    "verification_method": "Lock-based coordination to prevent conflicts. Agent heartbeat monitoring. No formal verification pipeline.",
+    "human_gates": "Dashboard monitoring. Post-hoc review of changes.",
+    "agent_architecture": "Orchestrator spawns 20-50+ Claude Code agents in parallel tmux sessions. Lock-based coordination prevents file conflicts. Context warnings and heartbeat tracking.",
+    "execution_model": "Parallel agent farm with tmux sessions. Lock-based file coordination. Automatic agent recovery on failure. Adaptive idle timeout.",
+    "languages_supported": ["JavaScript", "TypeScript", "Python", "Rust", "Go", "Java", "C++", "Angular", "Flutter", "and 26 more"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 1,
+      "D4_human_gates": 1,
+      "D5_knowledge": 0,
+      "D6_enterprise": 1,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Massive parallelism - 20-50+ concurrent agents",
+      "Lock-based coordination prevents conflicts",
+      "Real-time tmux monitoring dashboard",
+      "34 technology stack support",
+      "Automatic agent recovery"
+    ],
+    "weaknesses": [
+      "Brute-force parallelism without structured planning",
+      "No spec/requirements pipeline",
+      "No verification beyond conflict prevention",
+      "No knowledge propagation between agents",
+      "Tied to Claude Code specifically",
+      "Small community (752 stars)"
+    ],
+    "comparison_to_forge": "Agent Farm provides brute-force parallelism (many Claude Code instances) while Forge provides structured parallelism (DAG-based wave planning with dependency resolution). Agent Farm's lock-based coordination is simpler than Forge's resource-aware bin-packing. Forge's knowledge propagation between waves is absent from Agent Farm."
+  },
+  {
+    "name": "ComposioHQ Agent Orchestrator",
+    "url": "https://github.com/ComposioHQ/agent-orchestrator",
+    "category": "open-source",
+    "stars": 6500,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "Agentic orchestrator for parallel coding agents. Plans tasks, spawns agents in git worktrees, handles CI fixes, merge conflicts, and code reviews autonomously. Agent-agnostic (Claude Code, Codex, Aider). Runtime-agnostic (tmux, Docker). Web dashboard at localhost:3000.",
+    "input_format": "Task descriptions, GitHub issues, backlog items",
+    "output_format": "Pull requests per agent, automated CI fixes",
+    "verification_method": "CI-driven verification. Automatic CI failure injection and fixing. Code review routing.",
+    "human_gates": "PR review as primary gate. Human notified only when judgment required. Otherwise fully autonomous.",
+    "agent_architecture": "Central orchestrator (itself an AI agent) coordinates multiple coding agents. 8 swappable slots (agent, runtime, tracker, SCM, notifier). Each agent gets own git worktree and branch. 3,288 test cases.",
+    "execution_model": "Central server coordinates agents. Each agent in isolated git worktree. Automatic CI failure detection and fixing. Review comment routing. Event-driven GitHub integration.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 3,
+      "D3_verification": 3,
+      "D4_human_gates": 3,
+      "D5_knowledge": 1,
+      "D6_enterprise": 2,
+      "D7_extensibility": 5
+    },
+    "strengths": [
+      "Most agent-agnostic orchestrator (Claude Code, Codex, Aider)",
+      "Autonomous CI failure fixing",
+      "Git worktree isolation per agent",
+      "8 swappable architectural slots",
+      "Web dashboard for monitoring",
+      "Event-driven GitHub integration",
+      "3,288 test cases - well-tested"
+    ],
+    "weaknesses": [
+      "No structured spec/requirements pipeline",
+      "No formal multi-layer verification",
+      "Limited knowledge propagation between agents",
+      "No context budget management",
+      "Relatively new project",
+      "No built-in assessment/splitting for large tasks"
+    ],
+    "comparison_to_forge": "Agent Orchestrator is the closest competitor to Forge's execution engine specifically. Both use git worktree isolation and parallel agent execution. Key differences: Forge has DAG-based wave planning with dependency resolution; Forge has 8-layer verification vs. CI-only; Forge has session ledger for cross-wave knowledge; Forge has assessment/splitting for context management; Forge has agent factory with archetype-based specialization. Agent Orchestrator is more agent-agnostic."
+  },
+  {
+    "name": "Open SWE (LangChain)",
+    "url": "https://github.com/langchain-ai/open-swe",
+    "category": "open-source",
+    "stars": 9600,
+    "last_commit": "2026-04",
+    "license": "MIT",
+    "description": "Cloud-based asynchronous coding agent built on LangGraph. Multi-agent architecture with Planner, Coder, and Reviewer. Subagent orchestration for complex tasks. Integrates with Slack, Linear, GitHub for triggering. Sandbox isolation via Modal/Daytona/Runloop.",
+    "input_format": "GitHub issues, Slack messages, Linear tickets",
+    "output_format": "Pull requests with reviewed changes",
+    "verification_method": "Dedicated Reviewer agent checks for errors, runs tests and formatters, reflects on changes before PR. Sandbox execution.",
+    "human_gates": "Asynchronous messaging during execution. Can accept feedback/redirects mid-task. PR review as final gate.",
+    "agent_architecture": "Multi-agent: Planner (researches codebase, forms strategy), Coder (implements), Reviewer (checks errors, runs tests, reflects). Subagent decomposition for complex tasks. Built on LangGraph Deep Agents.",
+    "execution_model": "Cloud-native asynchronous execution. Multiple sandbox providers (Modal, Daytona, Runloop). Parallel task processing. Human-in-the-loop messaging during execution.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 2,
+      "D2_planning": 3,
+      "D3_verification": 3,
+      "D4_human_gates": 3,
+      "D5_knowledge": 1,
+      "D6_enterprise": 3,
+      "D7_extensibility": 4
+    },
+    "strengths": [
+      "True multi-agent architecture (Planner, Coder, Reviewer)",
+      "Asynchronous cloud execution - no local resources consumed",
+      "Human messaging during execution (can redirect mid-task)",
+      "Multiple sandbox providers",
+      "Slack/Linear/GitHub integration",
+      "Backed by LangChain with enterprise support"
+    ],
+    "weaknesses": [
+      "Requires cloud infrastructure (not pure local)",
+      "No structured spec/requirements pipeline",
+      "No persistent knowledge across tasks",
+      "Limited verification (reviewer agent, not multi-layer)",
+      "Relatively new project",
+      "Depends on LangGraph ecosystem"
+    ],
+    "comparison_to_forge": "Open SWE's multi-agent architecture (Planner/Coder/Reviewer) is similar to Forge's agent archetypes but less specialized. Open SWE's async execution with human messaging is more flexible than Forge's phase gates. Forge has deeper verification (8 layers vs. single reviewer), session continuity, and DAG-based planning. Open SWE has better integration breadth (Slack, Linear, GitHub)."
+  },
+  {
+    "name": "Mentat",
+    "url": "https://github.com/AbanteAI/archive-old-cli-mentat",
+    "category": "open-source",
+    "stars": 2600,
+    "last_commit": "2025-01",
+    "license": "Apache-2.0",
+    "description": "AI coding assistant for coordinated multi-file edits from the command line. Unlike Copilot, coordinates across files. Project context-aware without copy-pasting. ARCHIVED Jan 2025 - team pivoted to GitHub bot product (mentat.ai).",
+    "input_format": "Natural language instructions, file context",
+    "output_format": "Multi-file code edits",
+    "verification_method": "None built-in",
+    "human_gates": "Interactive approval of changes",
+    "agent_architecture": "Single agent with project context awareness. Multi-file editing coordination.",
+    "execution_model": "Interactive CLI with project-wide context. Sequential editing.",
+    "languages_supported": ["Python", "JavaScript", "TypeScript", "any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 0,
+      "D2_planning": 1,
+      "D3_verification": 0,
+      "D4_human_gates": 2,
+      "D5_knowledge": 0,
+      "D6_enterprise": 0,
+      "D7_extensibility": 1
+    },
+    "strengths": [
+      "Multi-file editing coordination",
+      "Project context awareness",
+      "Simple CLI interface"
+    ],
+    "weaknesses": [
+      "ARCHIVED - no longer maintained (Jan 2025)",
+      "No verification pipeline",
+      "No planning or decomposition",
+      "No multi-agent architecture",
+      "No persistent knowledge",
+      "Pivoted to closed commercial product"
+    ],
+    "comparison_to_forge": "Mentat is an archived project with minimal engineering pipeline capabilities. Historically relevant as an early multi-file editing tool but now obsolete. Forge supersedes it in every dimension."
+  },
+  {
+    "name": "Continue.dev",
+    "url": "https://github.com/continuedev/continue",
+    "category": "open-source",
+    "stars": 32800,
+    "last_commit": "2026-04",
+    "license": "Apache-2.0",
+    "description": "Open-source AI code assistant for VS Code and JetBrains. Source-controlled AI checks enforceable in CI. Markdown-based check definitions run as GitHub status checks with suggested fixes. Chat, autocomplete, edit, and agent modes. Any model support.",
+    "input_format": "Natural language chat, code context, markdown check definitions",
+    "output_format": "Code edits, autocomplete suggestions, CI status checks, suggested fixes",
+    "verification_method": "Markdown-based checks run as GitHub status checks. CI-enforceable. Suggested fixes for failing checks.",
+    "human_gates": "PR-level checks with suggested fixes. Interactive approval in IDE.",
+    "agent_architecture": "IDE extension with multiple modes (chat, autocomplete, edit, agent). CI runner for source-controlled checks. Model-agnostic.",
+    "execution_model": "IDE-integrated assistant with CI pipeline for checks. Source-controlled check definitions in .continue/checks/. Cloud agents for automated workflows.",
+    "languages_supported": ["any"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": true,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 1,
+      "D3_verification": 3,
+      "D4_human_gates": 2,
+      "D5_knowledge": 1,
+      "D6_enterprise": 2,
+      "D7_extensibility": 3
+    },
+    "strengths": [
+      "Source-controlled AI checks in CI - unique approach",
+      "IDE-native with VS Code and JetBrains support",
+      "Model-agnostic with local model support",
+      "Enterprise-viable with CI integration",
+      "Active development and Y Combinator backing",
+      "32.8K stars, strong community"
+    ],
+    "weaknesses": [
+      "Primarily a coding assistant, not engineering pipeline",
+      "No structured spec/requirements workflow",
+      "No multi-agent orchestration for large tasks",
+      "No persistent knowledge system",
+      "Checks are quality gates, not verification pipeline",
+      "No planning or decomposition"
+    ],
+    "comparison_to_forge": "Continue's source-controlled AI checks for CI is a unique approach that complements Forge's verification engine. Continue focuses on code quality in the PR review phase, while Forge provides the full pipeline from requirements through execution. The two could be complementary - Forge for development, Continue for CI enforcement."
+  },
+  {
+    "name": "Bolt.diy",
+    "url": "https://github.com/stackblitz-labs/bolt.diy",
+    "category": "open-source",
+    "stars": 15000,
+    "last_commit": "2026-03",
+    "license": "MIT",
+    "description": "Open-source full-stack web app generator using any LLM. Browser-based development with WebContainers. Supports 19+ AI providers including Ollama for local models. Prompt, run, edit, deploy complete applications. Electron desktop app available.",
+    "input_format": "Natural language prompts for web applications",
+    "output_format": "Complete full-stack web applications (runnable in browser)",
+    "verification_method": "Live preview in WebContainers. No formal verification pipeline.",
+    "human_gates": "Interactive editing and preview. No structured gates.",
+    "agent_architecture": "Single agent with WebContainer integration for in-browser code execution. File system, node server, package manager access.",
+    "execution_model": "Browser-based development environment. AI generates code, WebContainers execute it. Real-time preview and editing.",
+    "languages_supported": ["JavaScript", "TypeScript", "React", "Next.js", "Vue", "Svelte", "HTML", "CSS"],
+    "enterprise_features": {
+      "rbac": false,
+      "audit_trail": false,
+      "self_hosted": true,
+      "sso": false,
+      "compliance": false
+    },
+    "scores": {
+      "D1_requirements": 1,
+      "D2_planning": 0,
+      "D3_verification": 1,
+      "D4_human_gates": 1,
+      "D5_knowledge": 0,
+      "D6_enterprise": 0,
+      "D7_extensibility": 2
+    },
+    "strengths": [
+      "Browser-based development with instant preview",
+      "19+ AI provider support including local models",
+      "WebContainers for sandboxed execution",
+      "Desktop app available",
+      "Great for rapid prototyping"
+    ],
+    "weaknesses": [
+      "Web apps only - no general software engineering",
+      "No verification pipeline",
+      "No planning or decomposition",
+      "No multi-agent architecture",
+      "No persistent knowledge",
+      "WebContainers license required for commercial use"
+    ],
+    "comparison_to_forge": "Bolt.diy is a rapid prototyping tool for web apps, not an engineering pipeline. It operates in a completely different space from Forge - generating apps from prompts vs. structured engineering of complex systems. No comparison on engineering pipeline dimensions."
+  }
+]
