@@ -280,6 +280,9 @@ function computeDriftReport(cwd, opts = {}) {
   if (!fs.existsSync(reportDir)) fs.mkdirSync(reportDir, { recursive: true });
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n');
 
+  // Return block signal for RED drift when block_on_red is true
+  report.should_block = report.aggregate_severity === 'RED' && report.block_on_red;
+
   return report;
 }
 

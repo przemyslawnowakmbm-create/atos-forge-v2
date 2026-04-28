@@ -410,7 +410,9 @@ function buildFixAgentConfig(opts) {
       }
 
       gq.db.close();
-    } catch { /* ignore graph errors */ }
+    } catch (err) {
+      if (process.env.FORGE_DEBUG) console.error('Graph context for fix agent failed: ' + err.message);
+    }
   }
 
   return {
@@ -803,7 +805,9 @@ async function verifyLoop(opts) {
         if (cfg.repeated_error_detection && typeof cfg.repeated_error_detection.max_identical_errors === 'number') {
           maxIdentical = cfg.repeated_error_detection.max_identical_errors;
         }
-      } catch {}
+      } catch (err) {
+        if (process.env.FORGE_DEBUG) console.error('Config load for repeated-error detection failed: ' + err.message);
+      }
 
       if (errorHashHistory.length >= maxIdentical) {
         const tail = errorHashHistory.slice(-maxIdentical);
@@ -897,7 +901,9 @@ async function verifyLoop(opts) {
 
     // Snapshot current state for potential revert
     let preFixDiff = '';
-    try { preFixDiff = execSync('git diff HEAD', { cwd, encoding: 'utf8', timeout: 10000 }); } catch { /* ignore */ }
+    try { preFixDiff = execSync('git diff HEAD', { cwd, encoding: 'utf8', timeout: 10000 }); } catch (err) {
+      if (process.env.FORGE_DEBUG) console.error('Pre-fix diff capture failed: ' + err.message);
+    }
 
     // Run fix agent
     const fixResult = opts.noAgent
@@ -912,7 +918,9 @@ async function verifyLoop(opts) {
     };
 
     // Invalidate verification cache after fix attempt
-    try { require('./cache').invalidate(cwd); } catch { /* ignore */ }
+    try { require('./cache').invalidate(cwd); } catch (err) {
+      if (process.env.FORGE_DEBUG) console.error('Verification cache invalidation failed: ' + err.message);
+    }
 
     // Collect learnings
     if (fixResult.learnings) {
@@ -1045,6 +1053,11 @@ async function verifyLoop(opts) {
 
   // ── Log final state to ledger ──
   logFinalToLedger(cwd, loopResult);
+
+  // Signal escalation to callers via exit code when running as CLI
+  if (loopResult.escalated && require.main === module) {
+    process.exitCode = 2;
+  }
 
   return loopResult;
 }

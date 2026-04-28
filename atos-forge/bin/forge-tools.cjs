@@ -427,6 +427,13 @@ async function main() {
         } else {
           console.log(driftMod.formatDriftMarkdown(report));
         }
+        if (report.should_block) {
+          process.exitCode = 1;
+          if (!driftOpts.json && !driftOpts.ci) {
+            console.error('\nERROR: Drift exceeds RED threshold (' + (report.aggregate_drift_score * 100).toFixed(1) + '%). Phase completion blocked.');
+            console.error('Fix drifting requirements or adjust drift.thresholds in .forge/config.json\n');
+          }
+        }
       } else {
         error('Unknown drift subcommand. Available: report');
       }

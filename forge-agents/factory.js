@@ -105,7 +105,10 @@ function loadCatalog() {
 
       entry.priority = parseInt(entry.priority, 10) || 5;
       _catalog.push(entry);
-    } catch { /* skip malformed catalog files */ }
+    } catch (err) {
+      // Log malformed catalog file but continue loading others
+      if (process.env.FORGE_DEBUG) console.error('Warning: malformed catalog file ' + file + ': ' + err.message);
+    }
   }
 
   return _catalog;
@@ -363,7 +366,18 @@ function loadConstitution(cwd) {
     if (fs.existsSync(constitutionPath)) {
       return fs.readFileSync(constitutionPath, 'utf8').trim();
     }
-  } catch { /* constitution not available */ }
+    // Constitution enabled but file missing — warn
+    if (config.constitution?.enabled !== false) {
+      try {
+        const ldg = ledger();
+        ldg.logWarning(cwd, {
+          warning: 'Constitution enabled but .forge/constitution.md not found — agent executing without non-negotiable rules. Run /forge-init to create it.',
+          source: 'factory:loadConstitution',
+          severity: 'high',
+        });
+      } catch {}
+    }
+  } catch { /* config not available */ }
   return null;
 }
 
@@ -598,7 +612,9 @@ function analyzeTask(plan, cwd) {
       } finally {
         sq.close();
       }
-    } catch { /* system graph not available or query failed */ }
+    } catch (err) {
+      if (process.env.FORGE_DEBUG) console.error('System graph query failed: ' + err.message);
+    }
   }
 
   // Ledger state
@@ -609,7 +625,9 @@ function analyzeTask(plan, cwd) {
     if (ledgerState.exists) {
       ledgerContent = ledger().read(cwd);
     }
-  } catch { /* ledger may not exist */ }
+  } catch (err) {
+    if (process.env.FORGE_DEBUG) console.error('Ledger read failed: ' + err.message);
+  }
 
   return {
     plan,
@@ -643,6 +661,15 @@ function selectAgents(analysis) {
   if (matches.length === 0) {
     const catalog = loadCatalog();
     const general = catalog.find(a => a.name === 'general-executor');
+    // Warn about fallback to general executor
+    try {
+      const ldg = ledger();
+      ldg.logWarning(process.cwd(), {
+        warning: 'No specialist catalog agent matched this plan — falling back to general-executor. Consider adding a specialist agent for this technology stack.',
+        source: 'factory:selectAgents',
+        severity: 'medium',
+      });
+    } catch {}
     return {
       agents: general ? [general] : [],
       primary: general || null,
@@ -1451,7 +1478,16 @@ function buildAgentConfig(planPath, cwd, opts = {}) {
     if ((cfgFull.hash_lock && cfgFull.hash_lock.enabled) || testFirst) {
       computeHashLocks(taskId, plan, cwd);
     }
-  } catch { /* hash lock computation is non-fatal */ }
+  } catch (err) {
+    try {
+      const ldg = ledger();
+      ldg.logWarning(cwd, {
+        warning: 'Hash lock computation failed: ' + err.message + ' — test files will NOT be tamper-protected',
+        source: 'factory:computeHashLocks',
+        severity: 'high',
+      });
+    } catch {}
+  }
 
   // Task prompt (the actual plan content)
   const taskPrompt = plan.raw;

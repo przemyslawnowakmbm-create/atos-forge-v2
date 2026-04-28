@@ -2098,6 +2098,19 @@ async function verify(opts) {
     }
   }
 
+  // Log skipped layers to ledger
+  const skippedLayers = layers.filter(l => l.skipped);
+  if (skippedLayers.length > 0 && opts.logLedger !== false && logLedger) {
+    try {
+      const _ledger = require('../forge-session/ledger');
+      _ledger.logWarning(cwd, {
+        warning: 'Verification skipped ' + skippedLayers.length + ' layer(s): ' + skippedLayers.map(l => l.name).join(', ') + '. Some quality checks were not performed.',
+        source: 'verify-engine',
+        severity: 'medium',
+      });
+    } catch {}
+  }
+
   return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
 }
 

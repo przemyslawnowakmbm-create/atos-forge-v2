@@ -77,8 +77,8 @@ function containsSecret(text) {
 
 let input = '';
 const stdinTimeout = setTimeout(() => {
-  // 4-second safety: if no input arrives, fail-open
-  allow();
+  // 4-second safety: if no input arrives, fail-closed for safety
+  block('Guard hook timed out waiting for input — blocking for safety');
 }, 4000);
 
 process.stdin.setEncoding('utf8');
@@ -123,13 +123,13 @@ process.stdin.on('end', () => {
 
     // All checks passed
     allow();
-  } catch {
-    // Fail-open on any error
-    allow();
+  } catch (e) {
+    // Fail-closed on any error for safety
+    block('Guard hook error: ' + (e.message || 'unknown') + ' — blocking for safety');
   }
 });
 
-process.stdin.on('error', () => {
+process.stdin.on('error', (err) => {
   clearTimeout(stdinTimeout);
-  allow();
+  block('Guard hook stdin error: ' + (err.message || 'unknown') + ' — blocking for safety');
 });

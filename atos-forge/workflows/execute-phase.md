@@ -103,6 +103,44 @@ node -e "require('$HOME/.claude/forge-session/crash-recovery').writeLock('$(pwd)
 ```
 </step>
 
+<step name="pre_execution_gate">
+**Pre-execution validation gate — blocks execution if critical issues exist.**
+
+1. **Requirements validation:**
+```bash
+REQ_VALID=$(node "$TOOLS" requirements validate --raw 2>/dev/null || echo '{"valid":true}')
+REQ_ERRORS=$(echo "$REQ_VALID" | jq -r '.summary.errors // 0')
+if [ "$REQ_ERRORS" -gt 0 ]; then
+  echo "BLOCKED: $REQ_ERRORS requirement(s) have errors (vague, ambiguous, or untestable)."
+  echo "Run: forge-tools requirements validate to see details."
+  echo "Fix the requirements before executing."
+  exit 1
+fi
+```
+
+2. **Plan coverage check:**
+For each plan in this phase, verify it has a `requirements` field:
+```bash
+for plan in "$PHASE_DIR"/*-PLAN.md; do
+  [ -f "$plan" ] || continue
+  HAS_REQS=$(grep -c '^requirements:' "$plan" 2>/dev/null || echo "0")
+  if [ "$HAS_REQS" = "0" ]; then
+    echo "WARNING: $(basename $plan) has no requirements field — coverage protocol may be violated."
+    node "$TOOLS" ledger log-warning "Plan $(basename $plan) has no requirements field" --severity medium 2>/dev/null
+  fi
+done
+```
+
+3. **Constitution check:**
+```bash
+if [ ! -f ".forge/constitution.md" ]; then
+  echo "WARNING: No .forge/constitution.md found. Agents will execute without non-negotiable rules."
+  echo "Run /forge-init to create one, or create manually."
+  node "$TOOLS" ledger log-warning "Constitution file missing — agents executing without safety rules" --severity high 2>/dev/null
+fi
+```
+</step>
+
 <step name="execute_plans">
 **Execute each plan sequentially with verification gates between them.**
 

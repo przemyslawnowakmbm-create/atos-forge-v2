@@ -654,7 +654,7 @@ function cmdRequirementsValidate(cwd, raw) {
     // Check 1: Testable — must have a measurable/observable outcome
     const hasVerb = /\b(can|returns|displays|shows|receives|creates|deletes|updates|sends|redirects|renders|validates|rejects|accepts|prevents|allows|denies|stores|loads|generates|exports|imports|triggers|notifies)\b/i.test(text);
     if (!hasVerb) {
-      issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'testable', message: 'No action verb found — may not be testable. Use "User can...", "System returns...", etc.' });
+      issues.push({ id: req.id, line: req.line, severity: 'error', rule: 'testable', message: 'No action verb found — may not be testable. Use "User can...", "System returns...", etc.' });
     }
 
     // Check 2: User-centric — should describe user-observable behavior
@@ -666,13 +666,13 @@ function cmdRequirementsValidate(cwd, raw) {
     // Check 3: No weasel words
     const foundWeasels = weaselWords.filter(w => new RegExp('\\b' + w.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'i').test(textLower));
     if (foundWeasels.length > 0) {
-      issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'unambiguous', message: `Contains ambiguous terms: ${foundWeasels.join(', ')}. Replace with measurable criteria.` });
+      issues.push({ id: req.id, line: req.line, severity: 'error', rule: 'unambiguous', message: `Contains ambiguous terms: ${foundWeasels.join(', ')}. Replace with measurable criteria.` });
     }
 
     // Check 4: Atomic — check for "and" joining distinct behaviors
     const andParts = text.split(/\band\b/i);
     if (andParts.length >= 3) {
-      issues.push({ id: req.id, line: req.line, severity: 'warning', rule: 'atomic', message: 'Contains multiple "and" conjunctions — consider splitting into separate requirements.' });
+      issues.push({ id: req.id, line: req.line, severity: 'error', rule: 'atomic', message: 'Contains multiple "and" conjunctions — consider splitting into separate requirements.' });
     }
 
     // Check 5: Not too short (likely vague)

@@ -224,6 +224,27 @@ function parsePlan(planPath) {
   const objMatch = raw.match(/##\s*Objective\s*\n([\s\S]*?)(?=\n##|\n<|\Z)/);
   plan.objective = objMatch ? objMatch[1].trim() : '';
 
+  // Warn if no requirements field (coverage protocol may be violated)
+  if (!plan.frontmatter.requirements || plan.frontmatter.requirements.length === 0) {
+    plan.warnings = plan.warnings || [];
+    plan.warnings.push('Plan has no requirements field — coverage protocol may be violated');
+  }
+
+  // Warn on incomplete tasks (missing verify/done)
+  for (const task of plan.tasks) {
+    if (!task.verify) {
+      plan.warnings = plan.warnings || [];
+      plan.warnings.push('Task ' + task.id + ' has no <verify> element — cannot confirm completion');
+    }
+    if (!task.done) {
+      plan.warnings = plan.warnings || [];
+      plan.warnings.push('Task ' + task.id + ' has no <done> element — no acceptance criteria');
+    }
+  }
+
+  // Mechanical coverage flag
+  plan.has_requirements = !!(plan.frontmatter.requirements && plan.frontmatter.requirements.length > 0);
+
   return plan;
 }
 

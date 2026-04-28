@@ -19,6 +19,21 @@ async function cmdVerifyRegression(cwd, args, raw) {
     regression.saveBaseline(cwd, result, opts.phase || 0);
   }
 
+  // Enforce fail_on_regression
+  if (!result.passed && result.regressions && result.regressions.length > 0) {
+    try {
+      const { loadConfig } = require('../../../forge-config/config');
+      const { config } = loadConfig(cwd);
+      if (config.verification?.regression?.fail_on_regression !== false) {
+        process.exitCode = 1;
+        if (!opts.json && !raw) {
+          console.error('\nERROR: ' + result.regressions.length + ' regression(s) detected. Execution blocked.');
+          console.error('Run with --update-baseline to accept current state, or fix the regressions.\n');
+        }
+      }
+    } catch {}
+  }
+
   if (opts.json || raw) {
     output(result, raw);
   } else {
