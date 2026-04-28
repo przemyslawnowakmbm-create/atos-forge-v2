@@ -77,6 +77,7 @@ const DEFAULTS = {
   },
   verification: {
     layers: {
+      hash_lock: true,
       structural: true,
       type_check: true,
       interface_contracts: true,

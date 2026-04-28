@@ -403,4 +403,6 @@ module.exports = {
   cmdVerifyArtifacts,
   cmdVerifyKeyLinks,
   cmdVerifyWork,
+  formatCIAnnotations,
+  formatJUnitXml,
 };
