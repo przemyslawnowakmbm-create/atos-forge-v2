@@ -1421,9 +1421,11 @@ function buildAgentConfig(planPath, cwd, opts = {}) {
   const verification = defineVerification(analysis);
 
   // Step 5b: Hash locks (tamper detection for test files + verification criteria)
+  // Enabled when hash_lock.enabled is true OR when test_first is on (default: on)
   try {
     const { config: cfgFull } = require('../forge-config/config').loadConfig(cwd);
-    if (cfgFull.hash_lock && cfgFull.hash_lock.enabled) {
+    const testFirst = cfgFull.execution?.test_first !== false;
+    if ((cfgFull.hash_lock && cfgFull.hash_lock.enabled) || testFirst) {
       computeHashLocks(taskId, plan, cwd);
     }
   } catch { /* hash lock computation is non-fatal */ }

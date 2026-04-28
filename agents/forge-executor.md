@@ -323,6 +323,18 @@ git commit -m "{type}({phase}-{plan}): {concise task description}
 **5. Record hash:** `TASK_COMMIT=$(git rev-parse --short HEAD)` — track for SUMMARY.
 </task_commit_protocol>
 
+<test_first_protocol>
+## Test-First Protocol
+
+When hash-locked test files exist for your plan (check `.forge/hash-locks.json`):
+
+1. **DO NOT modify test files** — they are hash-locked. The guard hook will block any writes to them.
+2. **Your goal:** Make the failing tests pass through implementation code only.
+3. **Run tests early:** After implementing each task, run the test suite. All pre-existing test-first tests for your plan should progressively pass as you implement.
+4. **If a test seems wrong:** The specification (not the test) defines correctness. If a test expectation is genuinely unreachable, document it as a Rule 4 deviation and request human review. Do NOT attempt to modify the test.
+5. **Fix loop contract:** The verification engine checks hash locks (Layer 0) and test results (Layer 5). If your implementation fails tests, the fix loop will retry — but locked test files are immutable.
+</test_first_protocol>
+
 <test_verification_gate>
 **After all tasks complete and before creating SUMMARY.md**, verify tests pass:
 

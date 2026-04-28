@@ -384,6 +384,30 @@ async function main() {
       break;
     }
 
+    case 'drift': {
+      const subcommand = args[1] || 'report';
+      if (subcommand === 'report') {
+        const driftMod = require('./lib/drift.cjs');
+        const driftOpts = { phase: undefined, json: raw };
+        for (let i = 2; i < args.length; i++) {
+          if (args[i] === '--phase' && args[i + 1]) driftOpts.phase = parseInt(args[++i], 10);
+          if (args[i] === '--json' || args[i] === '--raw') driftOpts.json = true;
+          if (args[i] === '--ci') driftOpts.ci = true;
+        }
+        const report = driftMod.computeDriftReport(cwd, driftOpts);
+        if (driftOpts.ci) {
+          process.stdout.write(driftMod.formatDriftAnnotations(report) + '\n');
+        } else if (driftOpts.json) {
+          console.log(JSON.stringify(report, null, 2));
+        } else {
+          console.log(driftMod.formatDriftMarkdown(report));
+        }
+      } else {
+        error('Unknown drift subcommand. Available: report');
+      }
+      break;
+    }
+
     case 'generate-slug': {
       cmdGenerateSlug(args[1], raw);
       break;

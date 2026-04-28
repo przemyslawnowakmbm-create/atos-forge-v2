@@ -53,6 +53,8 @@ const DEFAULTS = {
     min_action_budget: 15000,
     chars_per_token: 4,
     budget_ceiling_usd: null,
+    test_first: true,
+    test_first_skip_types: ['config', 'docs', 'devops'],
   },
   agents: {
     factory_enabled: true,
@@ -107,7 +109,7 @@ const DEFAULTS = {
     enforcement: 'strict',
   },
   hash_lock: {
-    enabled: false,
+    enabled: true,
     lock_test_files: true,
     lock_must_haves: true,
     lock_verification_steps: true,
@@ -117,6 +119,35 @@ const DEFAULTS = {
     block_env_writes: true,
     block_locked_test_writes: true,
     block_secrets: true,
+  },
+  drift: {
+    enabled: true,
+    thresholds: {
+      green_max: 0.10,
+      yellow_max: 0.25,
+    },
+    block_on_red: true,
+    report_path: '.forge/drift-report.json',
+  },
+  browser: {
+    ports: [3000, 5173, 4200, 8080, 8000],
+    viewports: [
+      { name: 'mobile', width: 375, height: 812 },
+      { name: 'tablet', width: 768, height: 1024 },
+      { name: 'desktop', width: 1024, height: 768 },
+      { name: 'wide', width: 1440, height: 900 },
+    ],
+    diff_threshold: 0.05,
+    fail_diff_threshold: 0.15,
+    screenshots: true,
+    accessibility: true,
+  },
+  ci: {
+    provider: 'github',
+    pr_creation: true,
+    comment_results: true,
+    junit_output: false,
+    annotations: true,
   },
   knowledge: {
     enabled: true,
