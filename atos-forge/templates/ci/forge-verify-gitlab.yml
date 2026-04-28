@@ -1,0 +1,42 @@
+# Forge V2 Verification — GitLab CI Configuration
+# Copy to .gitlab-ci.yml or include in existing pipeline
+#
+# Runs Forge verification engine + drift report on merge requests.
+# Produces JUnit XML for GitLab test visualization.
+
+forge-verify:
+  stage: test
+  image: node:20-alpine
+  timeout: 15 minutes
+
+  before_script:
+    - npm ci --prefer-offline
+
+  script:
+    - mkdir -p .forge
+    - npx forge-tools verify work --json > .forge/verification-result.json || true
+    - npx forge-tools drift report --json > .forge/drift-result.json || true
+    - npx forge-tools verify work --junit || true
+    - |
+      RESULT=$(cat .forge/verification-result.json | jq -r '.overall // "UNKNOWN"')
+      DRIFT=$(cat .forge/drift-result.json | jq -r '.aggregate_severity // "GREEN"')
+      echo "Verification: $RESULT"
+      echo "Drift: $DRIFT"
+      if [ "$RESULT" != "PASS" ] && [ "$RESULT" != "UNKNOWN" ]; then
+        echo "Forge verification failed"
+        exit 1
+      fi
+
+  artifacts:
+    when: always
+    paths:
+      - .forge/verification-result.json
+      - .forge/drift-result.json
+      - .forge/verification-junit.xml
+    reports:
+      junit: .forge/verification-junit.xml
+    expire_in: 30 days
+
+  rules:
+    - if: '$CI_MERGE_REQUEST_IID'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

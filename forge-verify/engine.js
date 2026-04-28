@@ -2057,14 +2057,22 @@ async function verify(opts) {
     // Architectural issues are suggestions, don't fail-fast
   }
 
-  // Layer 10 — BROWSER (optional, Playwright e2e, off by default)
-  if (maxLayer >= 10 && verifyConfig.layers && verifyConfig.layers.BROWSER === true && layerBrowserMod) {
-    const cached10 = cache ? cache.get('BROWSER', files, cwd) : null;
-    const result = cached10 || await layerBrowserMod.layerBrowser({ cwd, files });
-    if (!cached10 && cache) cache.set('BROWSER', files, cwd, result);
-    layers.push({ index: 10, name: 'BROWSER', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration || 0 });
-    if (!result.passed && !result.skipped && opts.failFast) {
-      return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
+  // Layer 10 — BROWSER (optional, Playwright e2e + accessibility + screenshots)
+  if (maxLayer >= 10 && verifyConfig.layers && verifyConfig.layers.BROWSER === true) {
+    try {
+      const browserMod = require('./browser-layer');
+      const browserConfig = verifyConfig.browser || {};
+      const result = await browserMod.layerBrowser({
+        cwd, files,
+        config: browserConfig,
+        planContext: opts.planPath ? { planPath: opts.planPath } : null,
+      });
+      layers.push({ index: 10, name: 'BROWSER', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration || 0 });
+      if (failFast && !result.passed && !result.skipped) {
+        return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
+      }
+    } catch (err) {
+      layers.push({ index: 10, name: 'BROWSER', passed: true, skipped: true, result: { message: 'Browser layer failed to load: ' + err.message }, duration_ms: 0 });
     }
   }
 

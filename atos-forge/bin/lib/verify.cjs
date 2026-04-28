@@ -310,6 +310,8 @@ async function cmdVerifyWork(cwd, args, raw) {
 
   // Parse sub-args
   const opts = { cwd };
+  let ciMode = false;
+  let junitMode = false;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--files' && args[i + 1]) { opts.files = args[++i].split(','); }
@@ -318,15 +320,79 @@ async function cmdVerifyWork(cwd, args, raw) {
     else if (a === '--commit') { opts.commit = true; }
     else if (a === '--json' || a === '--raw') { opts.json = true; }
     else if (a === '--no-agent') { opts.noAgent = true; }
+    else if (a === '--ci') { ciMode = true; }
+    else if (a === '--junit') { junitMode = true; }
   }
 
   if (raw) opts.json = true;
 
   const result = await verifyLoop.verifyLoop(opts);
 
+  if (ciMode) {
+    process.stdout.write(formatCIAnnotations(result) + '\n');
+  }
+  if (junitMode) {
+    const junitPath = path.join(cwd, '.forge', 'verification-junit.xml');
+    const forgeDir = path.join(cwd, '.forge');
+    if (!fs.existsSync(forgeDir)) fs.mkdirSync(forgeDir, { recursive: true });
+    fs.writeFileSync(junitPath, formatJUnitXml(result));
+  }
   if (raw) {
     output(result, raw);
   }
+}
+
+function formatCIAnnotations(result) {
+  const lines = [];
+  const layers = result.loops?.[0]?.verify_result?.layers || [];
+  for (const layer of layers) {
+    if (layer.skipped || layer.passed) continue;
+    const issues = layer.result?.issues || layer.result?.checks?.filter(c => !c.passed) || [];
+    for (const issue of issues.slice(0, 10)) {
+      const file = issue.file || '';
+      const line = issue.line || 1;
+      const severity = issue.severity === 'error' ? 'error' : 'warning';
+      const msg = (issue.label || issue.message || `${layer.name} failed`).replace(/\n/g, ' ');
+      lines.push(`::${severity} file=${file},line=${line}::${msg}`);
+    }
+    if (issues.length === 0) {
+      lines.push(`::error::Layer ${layer.name} failed`);
+    }
+  }
+  if (result.escalated) {
+    lines.push(`::error::Verification escalated: ${result.escalation_reason || 'unknown reason'}`);
+  }
+  return lines.join('\n');
+}
+
+function escapeXml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatJUnitXml(result) {
+  const layers = result.loops?.[0]?.verify_result?.layers || [];
+  const failures = layers.filter(l => !l.passed && !l.skipped).length;
+  const totalTime = (result.loops?.[0]?.verify_result?.total_duration_ms || 0) / 1000;
+
+  const testcases = layers.map(layer => {
+    if (layer.skipped) {
+      return `    <testcase name="${escapeXml(layer.name)}" classname="forge-verify"><skipped/></testcase>`;
+    } else if (layer.passed) {
+      return `    <testcase name="${escapeXml(layer.name)}" classname="forge-verify" time="${((layer.duration_ms || 0) / 1000).toFixed(2)}"/>`;
+    } else {
+      const msg = JSON.stringify(layer.result || {}).slice(0, 500);
+      return `    <testcase name="${escapeXml(layer.name)}" classname="forge-verify" time="${((layer.duration_ms || 0) / 1000).toFixed(2)}">
+      <failure message="${escapeXml(layer.name)} failed">${escapeXml(msg)}</failure>
+    </testcase>`;
+    }
+  });
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="forge-verify" tests="${layers.length}" failures="${failures}" time="${totalTime.toFixed(2)}">
+${testcases.join('\n')}
+  </testsuite>
+</testsuites>`;
 }
 
 module.exports = {

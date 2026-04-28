@@ -306,8 +306,16 @@ Layers (fail-fast order, each toggleable via config):
    - Reads .planning/codebase/ARCHITECTURE.md and CONVENTIONS.md
    - Spawns Claude CLI to review changed files against documented conventions
    - Enable via: verification.layers.architectural = true
-10. BROWSER (varies, optional, off by default) — Playwright e2e tests
+10. BROWSER (varies, optional, off by default) — Playwright e2e + accessibility + screenshots
+   - Dev server auto-detection (package.json dev/start/serve) and lifecycle management
+   - Multi-viewport screenshot capture (mobile/tablet/desktop/wide) with baseline comparison
+   - Accessibility audit via axe-core injection (critical/serious=FAIL, moderate=WARNING, minor=INFO)
+   - Existing Playwright e2e test execution (e2e/, tests/e2e/, playwright/ directories)
+   - Screenshots saved to .forge/screenshots/{current,baseline}/
+   - Config: verification.browser.{ports, viewports, diff_threshold, fail_diff_threshold, screenshots, accessibility}
+   - Template: atos-forge/templates/playwright.config.ts
    - Enable via: verification.layers.browser = true
+   - Requires: playwright (optional), axe-core (optional for a11y)
 
 Output: { overall, layers[], fix_suggestions[], auto_fixable, graph_diff }
 Rich terminal display with pass/fail/skip per layer, duration, specific error details.
