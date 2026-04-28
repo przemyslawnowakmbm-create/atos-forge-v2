@@ -180,13 +180,14 @@ function layerHashLock(opts) {
           });
         }
       } else if (entry.type === 'must_haves') {
-        // must_haves are in the plan frontmatter — check against plan file if available
+        // must_haves — parse with same method as factory (JSON.stringify of parsed object)
         if (planPath && fs.existsSync(planPath)) {
           try {
-            const planContent = fs.readFileSync(planPath, 'utf8');
-            const fmMatch = planContent.match(/must_haves:\s*\n((?:\s+.+\n?)*)/);
-            if (fmMatch) {
-              const currentHash = crypto.createHash('sha256').update(fmMatch[0]).digest('hex');
+            const assessor = require('../forge-agents/plan-assessment');
+            const parsed = assessor.parsePlan(planPath);
+            const mh = parsed.frontmatter?.must_haves;
+            if (mh) {
+              const currentHash = crypto.createHash('sha256').update(JSON.stringify(mh)).digest('hex');
               if (currentHash !== entry.sha256) {
                 violations.push({ type: 'must_haves_tampered', plan: planId, message: 'Plan must_haves were modified during execution.' });
               }
