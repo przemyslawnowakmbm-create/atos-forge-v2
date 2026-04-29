@@ -522,8 +522,11 @@ async function main() {
       } else if (subcommand === 'impact') {
         const { handleRequirementsImpact } = require('./lib/req-impact.cjs');
         handleRequirementsImpact(cwd, args.slice(2), raw);
+      } else if (subcommand === 'conflicts') {
+        const { cmdRequirementsConflicts } = require('./lib/req-conflicts.cjs');
+        cmdRequirementsConflicts(cwd, args.slice(2), raw);
       } else {
-        error('Unknown requirements subcommand. Available: mark-complete, enhance, validate, impact');
+        error('Unknown requirements subcommand. Available: mark-complete, enhance, validate, impact, conflicts');
       }
       break;
     }

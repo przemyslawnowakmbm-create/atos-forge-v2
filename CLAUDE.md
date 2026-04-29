@@ -81,6 +81,11 @@ CLI commands:
   node atos-forge/bin/forge-tools.cjs requirements impact [--save-baseline] [--reqs IDs] [--json]
     — Requirement change impact analysis: detects changes vs baseline, traces to affected plans/files/tests
     Programmatic: require('atos-forge/bin/lib/req-impact.cjs').{buildTraceabilityMap, detectRequirementChanges, analyzeImpact, saveRequirementsBaseline}
+  node atos-forge/bin/forge-tools.cjs requirements conflicts [--json] [--include-semantic] [--system <path>]
+    — Detect requirement conflicts: dependency cycles (blocker), technology exclusivity (blocker/warning),
+      cross-category scope overlap (warning). With --include-semantic, invokes requirement-analyzer agent
+      for LLM-based semantic contradiction detection. With --system, cross-checks against external requirements.
+    Programmatic: require('atos-forge/bin/lib/req-conflicts.cjs').{parseRequirementsGraph, detectCycles, detectOverlappingScope, detectTechConflicts, detectConflicts, cmdRequirementsConflicts}
 
 Enhancement workflow (`/forge-enhance-requirements`):
   Quality audit — check each requirement against 5 criteria (specific, testable, user-centric, atomic, unambiguous)
@@ -224,12 +229,13 @@ Selects and configures specialist agents from a pre-built catalog:
   node forge-agents/factory.js build <plan-file> --root .    — Output full agent config as JSON
   node forge-agents/factory.js build-all <dir> --root .      — Build configs for all .md plans in directory
 
-18 agents in `forge-agents/catalog/`:
+19 agents in `forge-agents/catalog/`:
   typescript-api, nextjs-api, react-frontend, python-backend, java-backend, database-engineer,
   test-engineer, security-engineer, ui-styling, api-integration, devops-config,
   data-pipeline, refactor-engineer, mobile-engineer, documentation, general-executor,
   semantic-verifier (verifier, not executor — judges plan compliance from diff),
-  drift-analyzer (measures spec-to-implementation drift per requirement)
+  drift-analyzer (measures spec-to-implementation drift per requirement),
+  requirement-analyzer (semantic contradiction detection, invoked by `requirements conflicts --include-semantic`)
 
 Priority system: specialists=10, docs=8, refactor=5, general=1.
 If no catalog agent matches, creates a new agent definition and saves it to catalog.

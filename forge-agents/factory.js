@@ -382,6 +382,58 @@ function loadConstitution(cwd) {
 }
 
 /**
+ * Parse glossary markdown table into structured terms.
+ */
+function parseGlossaryTable(content) {
+  if (!content || !content.trim()) return null;
+  const terms = [];
+  const rowPattern = /^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|$/gm;
+  let match;
+  while ((match = rowPattern.exec(content)) !== null) {
+    const term = match[1].trim();
+    if (term === 'Term' || term.startsWith('---') || term.startsWith('-') || !term) continue;
+    terms.push({ term, definition: match[2].trim(), aliases: match[3].trim(), usedIn: match[4].trim() });
+  }
+  if (terms.length === 0) return null;
+  return { raw: content, terms };
+}
+
+/**
+ * Load service-level glossary from .forge/glossary.md.
+ * @param {string} cwd - Project root directory
+ */
+function loadGlossary(cwd) {
+  try {
+    const glossaryPath = path.resolve(cwd, '.forge', 'glossary.md');
+    if (!fs.existsSync(glossaryPath)) return null;
+    return parseGlossaryTable(fs.readFileSync(glossaryPath, 'utf8'));
+  } catch { return null; }
+}
+
+/**
+ * Load system-level glossary from .forge-system/glossary.md (parent or configured path).
+ * @param {string} cwd - Project root directory
+ */
+function loadSystemGlossary(cwd) {
+  try {
+    // Check .forge-system/ in cwd (for monorepo root)
+    const localPath = path.resolve(cwd, '.forge-system', 'glossary.md');
+    if (fs.existsSync(localPath)) return parseGlossaryTable(fs.readFileSync(localPath, 'utf8'));
+
+    // Check parent directories (service inside a system)
+    let dir = cwd;
+    for (let i = 0; i < 4; i++) {
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+      const candidate = path.join(dir, '.forge-system', 'glossary.md');
+      if (fs.existsSync(candidate)) return parseGlossaryTable(fs.readFileSync(candidate, 'utf8'));
+    }
+  } catch {}
+  return null;
+}
+
+/**
  * Compute SHA256 hashes for test files, must_haves, and verification_steps.
  * Writes to .forge/hash-locks.json keyed by plan task ID.
  * The verification engine reads these locks post-execution to detect tampering.
@@ -781,6 +833,32 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext, cwd) {
     parts.push('These rules MUST be followed. Violation is equivalent to a verification failure.');
     parts.push('If a rule conflicts with a plan instruction, the CONSTITUTION takes precedence.\n');
     parts.push(constitutionContent);
+  }
+
+  // Domain Glossary — shared vocabulary (service-level + system-level)
+  const effectiveCwd = cwd || process.cwd();
+  const systemGlossary = loadSystemGlossary(effectiveCwd);
+  const serviceGlossary = loadGlossary(effectiveCwd);
+  if (systemGlossary || serviceGlossary) {
+    parts.push('\n## Domain Glossary');
+    parts.push('Use these terms consistently in all generated code, variable names, and documentation.');
+    parts.push('If user or plan uses an alias, map it to the canonical term.\n');
+    if (systemGlossary && systemGlossary.terms.length > 0) {
+      parts.push('**Organization-wide terms:**');
+      parts.push('| Term | Definition | Aliases |');
+      parts.push('|------|-----------|---------|');
+      for (const t of systemGlossary.terms) parts.push(`| ${t.term} | ${t.definition} | ${t.aliases} |`);
+      parts.push('');
+    }
+    if (serviceGlossary && serviceGlossary.terms.length > 0) {
+      if (systemGlossary) parts.push('**Service-specific terms:**');
+      else {
+        parts.push('| Term | Definition | Aliases |');
+        parts.push('|------|-----------|---------|');
+      }
+      for (const t of serviceGlossary.terms) parts.push(`| ${t.term} | ${t.definition} | ${t.aliases} |`);
+      parts.push('');
+    }
   }
 
   // Base execution rules
@@ -1794,6 +1872,8 @@ module.exports = {
   matchCatalogAgents,
   loadCatalog,
   loadConstitution,
+  loadGlossary,
+  loadSystemGlossary,
   computeHashLocks,
   extractPlanSignals,
   pruneAgentBody,
