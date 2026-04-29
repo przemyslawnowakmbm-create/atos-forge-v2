@@ -122,6 +122,14 @@ const DEFAULTS = {
       warn_on_change: true,
     },
   },
+  architecture: {
+    enabled: true,
+    approval_required: true,
+    style: 'flexible',
+    grilling_depth: 'relentless',
+    glossary_auto_capture: true,
+    register_in_graph: true,
+  },
   repeated_error_detection: {
     enabled: true,
     max_identical_errors: 3,
