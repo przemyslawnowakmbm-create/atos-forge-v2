@@ -403,8 +403,32 @@ async function main() {
         }
         const result = mutationMod.runMutationTesting(cwd, opts);
         if (raw || opts.json) { output(result, true); } else { console.log(mutationMod.formatMutationReport(result)); }
+      } else if (subcommand === 'entropy') {
+        const entropyMod = require(path.join(getForgeRoot(), 'forge-verify', 'entropy'));
+        const opts = {};
+        for (let i = 2; i < args.length; i++) {
+          if (args[i] === '--module' && args[i + 1]) opts.module = args[++i];
+          if (args[i] === '--phase' && args[i + 1]) opts.phase = parseInt(args[++i], 10);
+          if (args[i] === '--compare-baseline') opts.compareBaseline = true;
+          if (args[i] === '--save-snapshot') opts.saveSnapshot = true;
+          if (args[i] === '--json' || args[i] === '--raw') opts.json = true;
+        }
+        const report = entropyMod.computeEntropy(cwd, opts);
+        if (opts.saveSnapshot && opts.phase) entropyMod.saveSnapshot(cwd, opts.phase, report);
+        if (opts.compareBaseline && opts.phase) {
+          const baseline = entropyMod.loadSnapshot(cwd, opts.phase - 1);
+          if (baseline) {
+            const comparison = entropyMod.compareSnapshots(report, baseline);
+            if (raw || opts.json) { output({ report, comparison }, true); }
+            else { console.log(entropyMod.formatEntropyReport(report)); console.log(entropyMod.formatComparison(comparison)); }
+            if (comparison.aggregateChange.verdict === 'block') process.exitCode = 1;
+            break;
+          }
+        }
+        if (raw || opts.json) { output(report, true); }
+        else { console.log(entropyMod.formatEntropyReport(report)); }
       } else {
-        error('Unknown verify subcommand. Available: plan-structure, phase-completeness, references, commits, artifacts, key-links, work, uat-eval, regression, coverage, mutation');
+        error('Unknown verify subcommand. Available: plan-structure, phase-completeness, references, commits, artifacts, key-links, work, uat-eval, regression, coverage, mutation, entropy');
       }
       break;
     }

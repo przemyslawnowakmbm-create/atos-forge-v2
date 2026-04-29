@@ -114,6 +114,15 @@ const DEFAULTS = {
       timeout_multiplier: 2,
       min_score: 0.70,
     },
+    entropy: {
+      enabled: true,
+      auto_snapshot: true,
+      thresholds: {
+        warn_percent: 10,
+        block_percent: 25,
+      },
+      large_file_loc: 500,
+    },
   },
   requirements: {
     impact_tracking: {
