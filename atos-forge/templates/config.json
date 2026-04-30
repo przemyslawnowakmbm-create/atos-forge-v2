@@ -16,7 +16,6 @@
   },
   "execution": {
     "mode": "interactive",
-    "container_backend": "worktree",
     "context_budget": 200000,
     "safety_margin": 0.20,
     "assessment_threshold": 0.80,
@@ -28,17 +27,6 @@
     "budget_ceiling_usd": null,
     "test_first": true,
     "test_first_skip_types": ["config", "docs", "devops"]
-  },
-  "containers": {
-    "max_concurrent": "auto",
-    "max_memory_per_container": "2g",
-    "max_cpu_per_container": 1.0,
-    "max_total_memory": "auto",
-    "max_total_cpu": "auto",
-    "timeout_seconds": 600,
-    "network_access": false,
-    "cleanup_on_exit": true,
-    "image_prefix": "forge-agent"
   },
   "agents": {
     "factory_enabled": true,
@@ -61,6 +49,7 @@
   },
   "verification": {
     "layers": {
+      "hash_lock": true,
       "structural": true,
       "type_check": true,
       "interface_contracts": true,
@@ -70,13 +59,57 @@
       "contract": true,
       "semantic": false,
       "architectural": false,
-      "browser": false
+      "browser": false,
+      "mutation": false
     },
     "auto_fix": true,
     "max_fix_loops": 3,
     "type_check_command": null,
     "test_command": null,
-    "test_timeout": 300
+    "test_timeout": 300,
+    "regression": {
+      "enabled": true,
+      "fail_on_regression": true,
+      "baseline_path": ".forge/test-baseline.json"
+    },
+    "coverage": {
+      "enabled": false,
+      "min_line_coverage": 80,
+      "min_branch_coverage": 60,
+      "fail_below_threshold": false,
+      "tool": "auto",
+      "report_path": ".forge/coverage-report.json"
+    },
+    "mutation": {
+      "operators": ["negate_condition", "flip_boolean", "remove_return", "boundary", "arithmetic"],
+      "max_mutants_per_file": 10,
+      "timeout_multiplier": 2,
+      "min_score": 0.70
+    },
+    "entropy": {
+      "enabled": true,
+      "auto_snapshot": true,
+      "thresholds": {
+        "warn_percent": 10,
+        "block_percent": 25
+      },
+      "large_file_loc": 500
+    }
+  },
+  "requirements": {
+    "impact_tracking": {
+      "enabled": true,
+      "baseline_path": ".forge/requirements-baseline.json",
+      "warn_on_change": true
+    }
+  },
+  "architecture": {
+    "enabled": true,
+    "approval_required": true,
+    "style": "flexible",
+    "grilling_depth": "relentless",
+    "glossary_auto_capture": true,
+    "register_in_graph": true
   },
   "repeated_error_detection": {
     "enabled": true,
@@ -184,7 +217,8 @@
     "research": true,
     "plan_check": true,
     "verifier": true,
-    "auto_advance": false
+    "auto_advance": false,
+    "arch_review": true
   },
   "parallelization": {
     "enabled": true,

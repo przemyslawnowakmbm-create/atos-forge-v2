@@ -93,6 +93,92 @@ Enhancement workflow (`/forge-enhance-requirements`):
   Add mode — interactively write new high-quality requirements with AI assistance
   Cascade check — warns if ROADMAP.md needs updating after changes
 
+## Architecture Phase
+Two-level architecture design for enterprise scale.
+
+### System Architecture
+`/forge-system-architect` designs multi-service system architecture.
+Produces: `.forge-system/SYSTEM-ARCHITECTURE.md`, `CONTRACT-REGISTRY.md`, `glossary.md`
+Grills user on: service boundaries, communication patterns (REST/events/gRPC), data ownership, cross-cutting concerns.
+Human approval gate required before per-service architecture can proceed.
+
+### Per-Service Architecture
+`/forge-architect` designs per-service module architecture.
+Reads: REQUIREMENTS.md, SYSTEM-ARCHITECTURE.md (if multi-service), PROJECT.md, codebase map.
+Produces: `.planning/ARCHITECTURE.md` (prescriptive), `.forge/glossary.md`
+Grills relentlessly until ALL decision branches resolved (modules, data model, APIs, security, NFRs, file structure).
+ADRs from ARCHITECTURE.md become locked decisions for all downstream plans.
+
+ARCHITECTURE.md is read by:
+- Planner (module boundaries → file placement)
+- Plan-checker Dimension 9 (architectural compliance — BLOCKER severity)
+- Verification Layer 9 (post-execution fitness check)
+- Module detector (architecture-informed module boundaries)
+
+Configuration in .forge/config.json (architecture section):
+  enabled (default true), approval_required (default true), style ('flexible'),
+  grilling_depth ('relentless'), glossary_auto_capture (default true).
+
+## Domain Glossary
+Two-level shared vocabulary loaded into every agent's system prompt.
+
+- **System glossary** (`.forge-system/glossary.md`): organization-wide terms shared across all services
+- **Service glossary** (`.forge/glossary.md`): service-specific terms
+
+Format: Markdown table with Term | Definition | Aliases | Used in columns.
+Loaded by `forge-agents/factory.js` → `loadGlossary()` + `loadSystemGlossary()`.
+Factory searches parent directories (up to 4 levels) for system glossary.
+
+Programmatic: require('forge-agents/factory').{loadGlossary, loadSystemGlossary}
+
+## Requirement Conflict Detection
+Multi-scope conflict analysis on REQUIREMENTS.md:
+  node atos-forge/bin/forge-tools.cjs requirements conflicts [--json] [--system <path>]
+
+Detects:
+- Dependency cycles (Tarjan's SCC algorithm, handles self-loops)
+- Overlapping scope (>60% Jaccard keyword similarity across categories)
+- Technology exclusivity (PostgreSQL vs MongoDB = blocker, REST vs GraphQL = warning)
+- Cross-service entity conflicts (with --system flag)
+
+Conflicts with severity "blocker" prevent planning.
+Optional: --include-semantic spawns LLM agent for contradiction detection.
+
+Programmatic: require('atos-forge/bin/lib/req-conflicts.cjs').detectConflicts(cwd, opts)
+
+## Code Entropy Metrics
+Robert Martin's package metrics computed from the code graph:
+  node atos-forge/bin/forge-tools.cjs verify entropy [--module M] [--phase N]
+    [--compare-baseline] [--save-snapshot] [--json]
+
+Per-module metrics: Ca (afferent coupling), Ce (efferent coupling),
+I (instability = Ce/(Ca+Ce)), A (abstractness), D (distance from main sequence = |A+I-1|),
+cohesion, complexity, file size distribution.
+
+Phase snapshots at `.forge/entropy-snapshots/phase-{N}.json`.
+Trend comparison: >10% distance increase = warn, >25% = block.
+
+Configuration in .forge/config.json (verification.entropy section):
+  enabled (default true), auto_snapshot (default true),
+  thresholds.warn_percent (default 10), thresholds.block_percent (default 25).
+
+Programmatic: require('forge-verify/entropy').{computeEntropy, compareSnapshots,
+  saveSnapshot, loadSnapshot, classifyHealth}
+
+## Cross-Service Contract Governance
+Validates contracts between services defined in CONTRACT-REGISTRY.md:
+
+parseContractRegistry(): parses REST, Event, gRPC contracts from markdown.
+detectBreakingChanges(): compares against baseline — endpoint removal (blocker),
+  schema field removal (blocker), status code changes (warning).
+verifyContracts(): main entry — reads registry, compares baseline, returns results.
+
+Baseline at `.forge-system/contract-baseline.json`.
+Communication-pattern agnostic: REST, events, gRPC all supported.
+
+Programmatic: require('forge-system/contract-verifier').{verifyContracts,
+  parseContractRegistry, detectBreakingChanges, saveContractBaseline}
+
 ## Code Graph
 Before modifying any file, query the code graph for context:
   node forge-graph/query.js context-for-task <file1> <file2> ...
@@ -229,13 +315,15 @@ Selects and configures specialist agents from a pre-built catalog:
   node forge-agents/factory.js build <plan-file> --root .    — Output full agent config as JSON
   node forge-agents/factory.js build-all <dir> --root .      — Build configs for all .md plans in directory
 
-19 agents in `forge-agents/catalog/`:
+21 agents in `forge-agents/catalog/`:
   typescript-api, nextjs-api, react-frontend, python-backend, java-backend, database-engineer,
   test-engineer, security-engineer, ui-styling, api-integration, devops-config,
   data-pipeline, refactor-engineer, mobile-engineer, documentation, general-executor,
   semantic-verifier (verifier, not executor — judges plan compliance from diff),
   drift-analyzer (measures spec-to-implementation drift per requirement),
-  requirement-analyzer (semantic contradiction detection, invoked by `requirements conflicts --include-semantic`)
+  requirement-analyzer (semantic contradiction detection, invoked by `requirements conflicts --include-semantic`),
+  architect (per-service architecture design, produces ARCHITECTURE.md),
+  system-architect (multi-service system architecture, produces SYSTEM-ARCHITECTURE.md + CONTRACT-REGISTRY.md)
 
 Priority system: specialists=10, docs=8, refactor=5, general=1.
 If no catalog agent matches, creates a new agent definition and saves it to catalog.
@@ -448,12 +536,14 @@ Single source of truth for all Forge configuration:
 Merge order: defaults ← ~/.forge/config.json (global) ← .forge/config.json (project).
 Deep merge: objects merged recursively, arrays replaced, nulls preserved.
 
-Schema sections (17 primary + 4 legacy):
+Schema sections (20 primary + 4 legacy):
 - project: { name, description }
 - graph: { enabled, auto_update, languages, ignore_patterns, module_detection, capability_detection, dashboard_auto_regenerate, snapshot_retention }
 - execution: { mode, context_budget, assessment_threshold, auto_split, max_fix_loops, test_first (default true), test_first_skip_types, ... }
 - agents: { factory_enabled, default_archetype, model_profiles: { quality, balanced, budget }, active_profile }
-- verification: { layers: { structural, type_check, interface_contracts, dependency_analysis, tests, behavioral, contract, semantic, architectural, browser }, auto_fix, test_command, type_check_command }
+- verification: { layers: { ..., mutation }, auto_fix, test_command, type_check_command, regression: {...}, coverage: {...}, mutation: {...}, entropy: {...} }
+- requirements: { impact_tracking: { enabled, baseline_path, warn_on_change } }
+- architecture: { enabled, approval_required, style, grilling_depth, glossary_auto_capture, register_in_graph }
 - hash_lock: { enabled (default true), lock_test_files, lock_must_haves, lock_verification_steps }
 - knowledge: { enabled, auto_promote, max_entries, promote_severity_threshold }
 - impact_analysis: { enabled, auto_detect, max_depth, scope_threshold }
@@ -466,6 +556,7 @@ Schema sections (17 primary + 4 legacy):
 - system: { enabled, auto_detect_interfaces, workers, discovery_depth, default_delivery, sync_on_commit, graph_path, registry_path, ignore_repos }
 - constitution: { enabled, path, enforcement }
 - guard: { enabled, block_env_writes, block_locked_test_writes, block_secrets }
+- decisions: { enabled, dedup_threshold }
 - Legacy: workflow (incl. arch_review), parallelization, gates, safety (backward compat with .planning/config.json)
 
 Key functions:
@@ -498,9 +589,9 @@ Subcommands:
   node atos-forge/bin/forge-tools.cjs doctor [--raw for JSON]
   node forge-config/doctor.js --root . [--json]
 
-16 health checks across 3 categories:
-1. Dependencies (5): Node.js, Git, Claude CLI, tree-sitter, better-sqlite3
-2. Project Health (10): Configuration, Code Graph (with staleness warning >24h), Dashboard, Session Ledger, Snapshots, Git Hooks (post-commit forge updater), System Graph (existence + staleness + stats), Interfaces (existence + validation), Playwright (optional, info if not installed), Drift Report Freshness (warn if stale vs latest VERIFICATION.md)
+24 health checks across 3 categories:
+1. Dependencies (7): Node.js, Git, Claude CLI, Codex CLI, tree-sitter, better-sqlite3, chalk
+2. Project Health (15): Configuration, Code Graph (with staleness warning >24h), Dashboard, Session Ledger, Snapshots, Git Hooks (post-commit forge updater), System Graph (existence + staleness + stats), Interfaces (existence + validation), Playwright (optional, info if not installed), Drift Report Freshness (warn if stale vs latest VERIFICATION.md), Crash Lock (stale lock detection), Architecture Approval (ARCHITECTURE.md status), Glossary Existence (.forge/glossary.md), Entropy Snapshot Freshness (>7 days = warn), Contract Registry (.forge-system/CONTRACT-REGISTRY.md)
 3. System (1): Resources (cores, RAM)
 
 Box-drawing terminal output with status icons. Returns { checks[], summary: { ok, warn, fail, skip } }.

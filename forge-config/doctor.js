@@ -379,6 +379,99 @@ function checkPlaywright(cwd) {
   return { name: 'Playwright', status: 'info', detail: 'not installed (optional — needed for browser verification layer)' };
 }
 
+function checkArchitectureApproval(cwd) {
+  const archPath = path.join(cwd, '.planning', 'ARCHITECTURE.md');
+  if (!fs.existsSync(archPath)) {
+    return { name: 'Architecture', status: 'info', detail: 'no ARCHITECTURE.md found (create via /forge-architect)' };
+  }
+  try {
+    const content = fs.readFileSync(archPath, 'utf8');
+    // Check frontmatter for status field
+    const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+    if (fmMatch) {
+      const statusMatch = fmMatch[1].match(/status:\s*(\S+)/i);
+      if (statusMatch) {
+        const status = statusMatch[1].toLowerCase();
+        if (status === 'approved') {
+          return { name: 'Architecture', status: 'ok', detail: 'ARCHITECTURE.md approved' };
+        }
+        if (status === 'pending_approval' || status === 'pending') {
+          return { name: 'Architecture', status: 'warn', detail: 'ARCHITECTURE.md pending approval' };
+        }
+        return { name: 'Architecture', status: 'warn', detail: `ARCHITECTURE.md status: ${status}` };
+      }
+    }
+    // No frontmatter or no status field — treat as present but unapproved
+    return { name: 'Architecture', status: 'warn', detail: 'ARCHITECTURE.md exists but no approval status in frontmatter' };
+  } catch (e) {
+    return { name: 'Architecture', status: 'warn', detail: `error reading: ${e.message.slice(0, 60)}` };
+  }
+}
+
+function checkGlossary(cwd) {
+  const glossaryPath = path.join(cwd, '.forge', 'glossary.md');
+  if (!fs.existsSync(glossaryPath)) {
+    return { name: 'Glossary', status: 'info', detail: 'no glossary.md (created during /forge-architect)' };
+  }
+  try {
+    const stat = fs.statSync(glossaryPath);
+    const sizeKB = (stat.size / 1024).toFixed(1);
+    return { name: 'Glossary', status: 'ok', detail: `${sizeKB}KB` };
+  } catch (e) {
+    return { name: 'Glossary', status: 'warn', detail: `error: ${e.message.slice(0, 60)}` };
+  }
+}
+
+function checkEntropySnapshots(cwd) {
+  const snapshotDir = path.join(cwd, '.forge', 'entropy-snapshots');
+  if (!fs.existsSync(snapshotDir)) {
+    return { name: 'Entropy Snapshots', status: 'info', detail: 'no snapshots (run verify entropy --save-snapshot)' };
+  }
+  try {
+    const files = fs.readdirSync(snapshotDir).filter(f => f.endsWith('.json'));
+    if (files.length === 0) {
+      return { name: 'Entropy Snapshots', status: 'info', detail: 'directory exists but no snapshots' };
+    }
+    // Find latest snapshot
+    let latestMtime = 0;
+    for (const f of files) {
+      const stat = fs.statSync(path.join(snapshotDir, f));
+      if (stat.mtimeMs > latestMtime) latestMtime = stat.mtimeMs;
+    }
+    const ageMs = Date.now() - latestMtime;
+    const ageDays = Math.floor(ageMs / (24 * 3600000));
+    const stale = ageDays >= 7;
+    const freshness = ageDays < 1 ? 'today' : `${ageDays}d ago`;
+    return {
+      name: 'Entropy Snapshots',
+      status: stale ? 'warn' : 'ok',
+      detail: `${files.length} snapshot(s), latest ${freshness}`,
+      extra: stale ? 'latest snapshot is >7 days old — run verify entropy --save-snapshot' : undefined,
+    };
+  } catch (e) {
+    return { name: 'Entropy Snapshots', status: 'warn', detail: `error: ${e.message.slice(0, 60)}` };
+  }
+}
+
+function checkContractRegistry(cwd) {
+  // Search in .forge-system/ and parent directories
+  const candidates = [
+    path.join(cwd, '.forge-system', 'CONTRACT-REGISTRY.md'),
+    path.join(path.dirname(cwd), '.forge-system', 'CONTRACT-REGISTRY.md'),
+  ];
+  const found = candidates.find(c => fs.existsSync(c));
+  if (!found) {
+    return { name: 'Contract Registry', status: 'info', detail: 'not found (only relevant for multi-service projects)' };
+  }
+  try {
+    const stat = fs.statSync(found);
+    const sizeKB = (stat.size / 1024).toFixed(1);
+    return { name: 'Contract Registry', status: 'ok', detail: `${sizeKB}KB` };
+  } catch (e) {
+    return { name: 'Contract Registry', status: 'warn', detail: `error: ${e.message.slice(0, 60)}` };
+  }
+}
+
 function checkDriftReportFreshness(cwd) {
   const driftPath = path.join(cwd, '.forge', 'drift-report.json');
   if (!fs.existsSync(driftPath)) {
@@ -449,6 +542,10 @@ function doctor(cwd, opts = {}) {
   checks.push(checkInterfaces(root));
   checks.push(checkPlaywright(root));
   checks.push(checkDriftReportFreshness(root));
+  checks.push(checkArchitectureApproval(root));
+  checks.push(checkGlossary(root));
+  checks.push(checkEntropySnapshots(root));
+  checks.push(checkContractRegistry(root));
 
   // Crash lock check
   try {
@@ -578,5 +675,9 @@ module.exports = {
   checkInterfaces,
   checkPlaywright,
   checkDriftReportFreshness,
+  checkArchitectureApproval,
+  checkGlossary,
+  checkEntropySnapshots,
+  checkContractRegistry,
   checkSystem,
 };

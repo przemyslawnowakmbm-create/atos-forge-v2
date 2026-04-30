@@ -1,7 +1,7 @@
 # Forge V2 — Future Improvement Reference
 
-Last updated: 2026-04-29
-Status: 4 of 25 items implemented. 21 remaining.
+Last updated: 2026-04-27
+Status: 9 of 26 items implemented. 17 remaining.
 
 ---
 
@@ -94,22 +94,12 @@ Track accumulated complexity per phase: file sizes, function lengths, dependency
 
 ## Category 3: Requirements Intelligence
 
-### 3a. Requirement Conflict Detection [P2]
+### 3a. Requirement Conflict Detection ✅ IMPLEMENTED
 
-Two requirements that contradict each other: "User can delete their account permanently" vs "System retains user data for 7 years for compliance." The validator checks individual requirements but not cross-requirement consistency.
-
-**Conflict types to detect:**
-- Direct contradiction (delete vs retain, allow vs deny)
-- Resource conflict (two requirements claim the same UI space or API endpoint)
-- Temporal conflict (requirement A needs feature before requirement B provides it, circular dependency)
-- Scope conflict (requirement A says "all users" but requirement B restricts to "admin only")
-
-**Implementation approach:**
-- Semantic analysis of the full requirement set — likely needs LLM judgment (not deterministic)
-- New agent: `forge-agents/catalog/requirement-analyzer.md` that reads all requirements and identifies conflicts
-- Add as optional step in `/forge-enhance-requirements` workflow
-- CLI: `forge-tools requirements conflicts [--json]`
-- Output: `{ conflicts: [{ req_a, req_b, conflict_type, description, severity }] }`
+Module: `atos-forge/bin/lib/req-conflicts.cjs`
+CLI: `forge-tools requirements conflicts [--json] [--system <path>] [--include-semantic]`
+Detects: dependency cycles (Tarjan's SCC), overlapping scope (Jaccard), technology exclusivity, cross-service entity conflicts.
+Agent: `forge-agents/catalog/requirement-analyzer.md` for semantic contradiction detection via `--include-semantic`.
 
 ---
 
@@ -291,23 +281,13 @@ Configurable human gates at the phase level: "Plans for the auth module require 
 
 ## Category 7: Architecture & Design
 
-### 7a. Architecture Phase Before Planning [P1]
+### 7a. Architecture Phase Before Planning ✅ IMPLEMENTED
 
-Every serious AI coding framework now includes an explicit architecture step between requirements and planning. Forge V2 currently jumps from requirements → planning, with the planner making architectural decisions implicitly. For enterprise projects, architecture should be a deliberate, reviewed, approved step.
-
-**Research sources:** Amazon Kiro (steering files + gated design phase), GitHub Spec-Kit (Specify → Plan → Tasks → Implement with validation gates), MetaGPT (dedicated Architect agent), Augment Intent (Coordinator drafts architecture before decomposition).
-
-**Implementation approach:**
-- New workflow: `/forge-architect` that produces `.planning/ARCHITECTURE.md`
-- Content: module boundaries, interface contracts, data model (ERD), technology decisions, dependency rules, security model
-- New agent: `forge-agents/catalog/architect.md` — a specialist that reads requirements + research and produces architectural design
-- Human approval gate: architecture must be approved before `/forge-plan-phase` can proceed
-- Architecture document consumed by planner (informing file structure, module ownership, patterns)
-- Integration: plan-checker Dimension 9 (Architectural Fitness) becomes meaningful — it validates plans against the approved architecture
-
-**Key tool: Archgate** — open-source CLI that turns Architecture Decision Records (ADRs) into executable TypeScript rules that block merges in CI. Each ADR gets a companion `.rules.ts` file; violations report exact file/line. Maps directly to Forge's verification engine.
-
-Research: `research/architecture-and-scale.md`
+Two-level architecture: `/forge-system-architect` (multi-service) and `/forge-architect` (per-service).
+Agents: `forge-agents/catalog/system-architect.md`, `forge-agents/catalog/architect.md`
+Produces: `.planning/ARCHITECTURE.md`, `.forge-system/SYSTEM-ARCHITECTURE.md`, `CONTRACT-REGISTRY.md`, glossaries.
+Human approval gate required. ADRs become locked decisions for all downstream plans.
+Config: `architecture` section in `.forge/config.json`.
 
 ---
 
@@ -343,28 +323,13 @@ Research: `research/architecture-and-scale.md`
 
 ## Category 8: Large Codebase Management
 
-### 8a. Code Entropy Metrics [P1]
+### 8a. Code Entropy Metrics ✅ IMPLEMENTED
 
-Track and measure software entropy — the increasing disorder/complexity over time. Without active countermeasures, complexity grows quadratically (Lehman's Second Law). AI-generated code accelerates this: 110,000+ surviving AI-introduced issues found in production repos by Feb 2026.
-
-**Metrics to track per phase:**
-- Cyclomatic complexity (average and max per module)
-- Coupling metrics (afferent/efferent coupling, instability index)
-- Cohesion metrics (LCOM — Lack of Cohesion of Methods)
-- File size distribution (average LOC, files >500 LOC count)
-- Dependency depth (longest import chain)
-- Duplication percentage (near-duplicate code blocks)
-
-**Implementation approach:**
-- New module: `forge-verify/entropy.js` — computes entropy metrics from AST (reuse tree-sitter from forge-graph)
-- Per-phase snapshot stored in `.forge/entropy-snapshots/phase-{N}.json`
-- Trend comparison: if entropy increases >10% phase-over-phase, warn. >25% = block.
-- Integration: sub-metric of drift report (specification drift + entropy drift)
-- CLI: `forge-tools verify entropy [--json] [--compare-baseline]`
-
-**Key reference:** Adam Wasserman, "Software Entropy: A Practical Approach" — framework for assigning entropy a concrete numerical value. Also: March 2026 arXiv paper providing formal statistical mechanics definition computable via mutation analysis.
-
-Research: `research/architecture-and-scale.md`
+Module: `forge-verify/entropy.js`
+CLI: `forge-tools verify entropy [--module M] [--phase N] [--compare-baseline] [--save-snapshot] [--json]`
+Per-module metrics: Ca, Ce, instability, abstractness, distance from main sequence, cohesion, complexity.
+Phase snapshots at `.forge/entropy-snapshots/phase-{N}.json`. Trend comparison: >10% warn, >25% block.
+Config: `verification.entropy` section in `.forge/config.json`.
 
 ---
 
@@ -404,23 +369,24 @@ Research: `research/architecture-and-scale.md`
 
 ---
 
-### 8d. Shared Language / Domain Glossary [P1]
+### 8d. Shared Language / Domain Glossary ✅ IMPLEMENTED
 
-A project-wide glossary of domain terms that gets loaded into every agent's context. Eliminates ambiguity, improves code naming consistency, and makes the codebase more AI-navigable. Inspired by the mattpocock/skills `/grill-with-docs` pattern (37K stars).
+Two-level glossary: `.forge-system/glossary.md` (organization-wide) + `.forge/glossary.md` (service-specific).
+Format: Markdown table with Term | Definition | Aliases | Used in columns.
+Loaded by `forge-agents/factory.js` into every agent's system prompt via `loadGlossary()` + `loadSystemGlossary()`.
+Created during `/forge-architect` and `/forge-system-architect` workflows.
+Factory searches parent directories (up to 4 levels) for system glossary.
 
-**Implementation approach:**
-- New file: `.forge/glossary.md` (or CONTEXT.md following the Pocock convention)
-- Format: term → definition, one per line. Example: "Order: A confirmed purchase with payment. Not to be confused with Cart (unpurchased items)."
-- Created by: `/forge-discuss-phase` or `/forge-architect` during early project setup
-- Loaded by: factory's `composeSystemPrompt()` — injected into every agent's session context
-- Enforced by: agents use glossary terms for all naming (variables, functions, files, API endpoints)
-- Updated by: when new domain concepts emerge during execution, the executor logs them as "suggested glossary additions" in SUMMARY.md
+---
 
-**Key insight from research:** Pocock calls this "the single coolest technique" — a shared language glossary reduces token consumption (agents don't need lengthy explanations of domain concepts), improves naming consistency across generated code, and makes the codebase more navigable for both humans and AI.
+### 8e. Cross-Service Contract Governance ✅ IMPLEMENTED
 
-**Related pattern:** The `/grill-me` → `/grill-with-docs` → `/to-prd` pipeline (mattpocock/skills) maps to Forge's discuss-phase → enhance-requirements → plan-phase. The grilling approach — relentless one-question-at-a-time interviewing with recommended answers — could strengthen Forge's discuss-phase workflow.
-
-Research: `research/grill-me-skills.md`
+Module: `forge-system/contract-verifier.js`
+Validates contracts between services defined in `CONTRACT-REGISTRY.md`.
+Detects breaking changes: endpoint removal (blocker), schema field removal (blocker), status code changes (warning).
+Communication-pattern agnostic: REST, events, gRPC all supported.
+Baseline at `.forge-system/contract-baseline.json`.
+Programmatic: require('forge-system/contract-verifier').{verifyContracts, parseContractRegistry, detectBreakingChanges, saveContractBaseline}
 
 ---
 
@@ -428,14 +394,7 @@ Research: `research/grill-me-skills.md`
 
 | Priority | Items | Status |
 |----------|-------|--------|
-| P1 | 1a (Cost tracking), 4a (MCP server), **7a (Architecture phase)**, **8a (Code entropy)**, **8d (Shared language)** | Not started |
-| P2 | 1b (Model routing), 3a (Conflict detection), 3c (AC compiler), 6a (Audit trail), **7b (ADRs)**, **7c (Fitness functions)**, **8b (Semantic search)**, **8c (Method-level impact)** | Not started |
-| P3 | 2c (Tech debt), 4b (Dashboard), 4c (Notifications), 5a (Cross-project), 5b (Patterns), 5c (Anti-patterns), 6b (Multi-team), 6c (Approvals) | Not started |
-| Done | 1c (Regression), 2a (Mutation), 2b (Coverage), 3b (Req impact) | ✅ Implemented |
-
-| Priority | Items | Status |
-|----------|-------|--------|
 | P1 | 1a (Cost tracking), 4a (MCP server) | Not started |
-| P2 | 1b (Model routing), 3a (Conflict detection), 3c (AC compiler), 6a (Audit trail) | Not started |
+| P2 | 1b (Model routing), 3c (AC compiler), 6a (Audit trail), 7b (ADRs), 7c (Fitness functions), 8b (Semantic search), 8c (Method-level impact) | Not started |
 | P3 | 2c (Tech debt), 4b (Dashboard), 4c (Notifications), 5a (Cross-project), 5b (Patterns), 5c (Anti-patterns), 6b (Multi-team), 6c (Approvals) | Not started |
-| Done | 1c (Regression), 2a (Mutation), 2b (Coverage), 3b (Req impact) | ✅ Implemented |
+| Done | 1c (Regression), 2a (Mutation), 2b (Coverage), 3a (Conflict detection), 3b (Req impact), 7a (Architecture phase), 8a (Code entropy), 8d (Shared language), 8e (Contract governance) | ✅ Implemented |
