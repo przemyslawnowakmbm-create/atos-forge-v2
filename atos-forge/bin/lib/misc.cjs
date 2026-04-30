@@ -212,7 +212,14 @@ function cmdSummaryExtract(cwd, summaryPath, fields, raw) {
     if (!decisionsList || !Array.isArray(decisionsList)) return [];
     return decisionsList.map(d => {
       if (typeof d === 'object' && d !== null) {
-        return { summary: d.summary || String(d), rationale: d.rationale || null };
+        // YAML parser returns {summary, rationale} or {"Key": "Value"} for "- Key: Value"
+        if (d.summary) return { summary: d.summary, rationale: d.rationale || null };
+        // Handle YAML-parsed "- Key: Value" → { Key: "Value" }
+        const keys = Object.keys(d);
+        if (keys.length === 1) {
+          return { summary: keys[0], rationale: d[keys[0]] || null };
+        }
+        return { summary: String(d), rationale: null };
       }
       if (typeof d !== 'string') return { summary: String(d), rationale: null };
       const colonIdx = d.indexOf(':');

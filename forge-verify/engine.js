@@ -10,13 +10,14 @@
  *   2. TYPE/COMPILE  (10-30s) — tsc --noEmit, mypy, go build as applicable
  *   3. INTERFACE     (5-15s)  — graph contract hashes → detect breaks → verify consumers
  *   4. DEPENDENCY    (<5s)    — new circular deps, orphaned imports
- *   5. TESTS         (30s-5m) — graph-identified test files + integration
- *   6. BEHAVIORAL    (varies) — plan's custom verify steps (curl, CLI, etc.)
- *   7. CONTRACT      (5-30s)  — cross-repo contract verification (code↔YAML drift,
+ *   5. KEY_LINKS     (<5s)    — deterministic wiring verification (source-only pattern matching)
+ *   6. TESTS         (30s-5m) — graph-identified test files + integration
+ *   7. BEHAVIORAL    (varies) — plan's custom verify steps (curl, CLI, etc.)
+ *   8. CONTRACT      (5-30s)  — cross-repo contract verification (code↔YAML drift,
  *                                backward compat, consumer ripple via system-graph.db)
- *   8. SEMANTIC      (30-60s) — agent-based spec compliance (plan must_haves vs diff)
- *   9. ARCHITECTURAL (30-60s) — agent-based architectural fitness review
- *  10. BROWSER       (varies) — Playwright e2e tests
+ *   9. SEMANTIC      (30-60s) — agent-based spec compliance (plan must_haves vs diff)
+ *  10. ARCHITECTURAL (30-60s) — agent-based architectural fitness review
+ *  11. BROWSER       (varies) — Playwright e2e tests
  *
  * Output: { overall, layers[], fix_suggestions[], auto_fixable, graph_diff }
  *
@@ -64,6 +65,7 @@ const LAYER_NAMES = [
   'TYPE_COMPILE',
   'INTERFACE_CONTRACTS',
   'DEPENDENCY',
+  'KEY_LINKS',
   'TESTS',
   'BEHAVIORAL',
   'CONTRACT',
@@ -651,7 +653,90 @@ function layerDependency(opts) {
 }
 
 // ============================================================
-// Layer 5 — TESTS
+// Layer 5 — KEY_LINKS (deterministic wiring verification)
+// ============================================================
+
+/**
+ * Layer 5 — KEY_LINKS: deterministic wiring verification.
+ * Checks that source files contain the specified patterns (imports, function calls).
+ * Source-only matching — never checks the target file content.
+ */
+function layerKeyLinks(opts) {
+  const start = Date.now();
+  const issues = [];
+
+  if (!opts.planPath || !fs.existsSync(opts.planPath)) {
+    return { passed: true, skipped: true, reason: 'No plan path provided', issues: [], duration_ms: Date.now() - start };
+  }
+
+  // Parse key_links from plan
+  let keyLinks = [];
+  try {
+    const YAML = require('yaml');
+    const content = fs.readFileSync(opts.planPath, 'utf8');
+    const fmMatch = content.match(/^---\n([\s\S]+?)\n---/);
+    if (fmMatch) {
+      const fm = YAML.parse(fmMatch[1]) || {};
+      keyLinks = fm.must_haves?.key_links || [];
+    }
+  } catch {
+    // Try regex fallback
+    try {
+      const assessor = require('../forge-agents/plan-assessment');
+      const plan = assessor.parsePlan(opts.planPath);
+      keyLinks = plan.frontmatter?.must_haves?.key_links || [];
+    } catch {}
+  }
+
+  if (keyLinks.length === 0) {
+    return { passed: true, skipped: true, reason: 'No key_links declared in plan', issues: [], duration_ms: Date.now() - start };
+  }
+
+  for (const link of keyLinks) {
+    const source = link.source || link.from;
+    const target = link.target || link.to;
+    const pattern = link.pattern || link.via;
+
+    if (!source || !pattern) {
+      issues.push({ source, target, pattern, verified: false, detail: 'Missing source or pattern in key_link declaration' });
+      continue;
+    }
+
+    const sourcePath = path.resolve(opts.cwd, source);
+    if (!fs.existsSync(sourcePath)) {
+      issues.push({ source, target, pattern, verified: false, detail: `Source file "${source}" not found` });
+      continue;
+    }
+
+    const sourceContent = fs.readFileSync(sourcePath, 'utf8');
+    let regex;
+    try {
+      regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    } catch {
+      regex = new RegExp(pattern);
+    }
+
+    if (regex.test(sourceContent)) {
+      issues.push({ source, target, pattern, verified: true, detail: 'Pattern found in source file' });
+    } else {
+      issues.push({ source, target, pattern, verified: false, detail: `Pattern "${pattern}" not found in source file "${source}"` });
+    }
+  }
+
+  const allVerified = issues.every(i => i.verified);
+
+  return {
+    passed: allVerified,
+    skipped: false,
+    issues,
+    verified: issues.filter(i => i.verified).length,
+    total: issues.length,
+    duration_ms: Date.now() - start,
+  };
+}
+
+// ============================================================
+// Layer 6 — TESTS
 // ============================================================
 
 /**
@@ -1876,7 +1961,7 @@ function resolveAffectedFiles(changedFiles, cwd) {
 async function verify(opts) {
   const cwd = opts.cwd || process.cwd();
   const failFast = opts.failFast !== false;
-  const maxLayer = opts.maxLayer ?? 7;
+  const maxLayer = opts.maxLayer ?? 8;
   const logLedger = opts.logLedger !== false;
 
   // Load verification config from .forge/config.json or .planning/config.json
@@ -2001,66 +2086,75 @@ async function verify(opts) {
     }
   }
 
-  // Layer 5 — TESTS
-  if (maxLayer >= 5 && !(verifyConfig.layers && verifyConfig.layers.TESTS === false)) {
+  // Layer 5 — KEY_LINKS (deterministic wiring verification)
+  if (maxLayer >= 5 && !(verifyConfig.layers && verifyConfig.layers.KEY_LINKS === false)) {
+    const result = layerKeyLinks({ cwd, files, planPath: opts.planPath });
+    layers.push({ index: 5, name: 'KEY_LINKS', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+    if (failFast && !result.passed && !result.skipped) {
+      return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
+    }
+  }
+
+  // Layer 6 — TESTS
+  if (maxLayer >= 6 && !(verifyConfig.layers && verifyConfig.layers.TESTS === false)) {
     const testTimeout = (verifyConfig.test_timeout) || 300;
-    const cached5 = cache ? cache.get('TESTS', files, cwd) : null;
-    const result = cached5 || layerTests({ cwd, dbPath, files, timeout: testTimeout, config: verifyConfig });
-    if (!cached5 && cache) cache.set('TESTS', files, cwd, result);
-    layers.push({ index: 5, name: 'TESTS', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+    const cached6 = cache ? cache.get('TESTS', files, cwd) : null;
+    const result = cached6 || layerTests({ cwd, dbPath, files, timeout: testTimeout, config: verifyConfig });
+    if (!cached6 && cache) cache.set('TESTS', files, cwd, result);
+    layers.push({ index: 6, name: 'TESTS', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
     if (failFast && !result.passed) {
       return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
     }
   }
 
-  // Layer 6 — BEHAVIORAL
-  if (maxLayer >= 6 && !(verifyConfig.layers && verifyConfig.layers.BEHAVIORAL === false)) {
-    const cached6 = cache ? cache.get('BEHAVIORAL', files, cwd) : null;
-    const result = cached6 || layerBehavioral({ cwd, verifySteps, timeout: 120, planPath: opts.planPath, files });
-    if (!cached6 && cache) cache.set('BEHAVIORAL', files, cwd, result);
-    layers.push({ index: 6, name: 'BEHAVIORAL', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+  // Layer 7 — BEHAVIORAL
+  if (maxLayer >= 7 && !(verifyConfig.layers && verifyConfig.layers.BEHAVIORAL === false)) {
+    const cached7 = cache ? cache.get('BEHAVIORAL', files, cwd) : null;
+    const result = cached7 || layerBehavioral({ cwd, verifySteps, timeout: 120, planPath: opts.planPath, files });
+    if (!cached7 && cache) cache.set('BEHAVIORAL', files, cwd, result);
+    layers.push({ index: 7, name: 'BEHAVIORAL', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
     if (failFast && !result.passed) {
       return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
     }
   }
 
-  // Layer 7 — CONTRACT (cross-repo contract verification)
-  if (maxLayer >= 7 && !(verifyConfig.layers && verifyConfig.layers.CONTRACT === false)) {
+  // Layer 8 — CONTRACT (cross-repo contract verification)
+  if (maxLayer >= 8 && !(verifyConfig.layers && verifyConfig.layers.CONTRACT === false)) {
     const cl = contractLayer();
     if (cl) {
       const systemDbPath = opts.systemDbPath
         || process.env.FORGE_SYSTEM_GRAPH_PATH
         || process.env.FORGE_SYSTEM_GRAPH
         || cl.resolveSystemDb(cwd);
-      const cached7 = cache ? cache.get('CONTRACT', files, cwd) : null;
-      const result = cached7 || cl.layerContract({ cwd, files, systemDbPath, config: verifyConfig });
-      if (!cached7 && cache) cache.set('CONTRACT', files, cwd, result);
-      layers.push({ index: 7, name: 'CONTRACT', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+      const cached8 = cache ? cache.get('CONTRACT', files, cwd) : null;
+      const result = cached8 || cl.layerContract({ cwd, files, systemDbPath, config: verifyConfig });
+      if (!cached8 && cache) cache.set('CONTRACT', files, cwd, result);
+      layers.push({ index: 8, name: 'CONTRACT', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
     } else {
-      layers.push({ index: 7, name: 'CONTRACT', passed: true, skipped: true, result: { passed: true, skipped: true, reason: 'contract-layer.js not available', drift: [], compatibility: [], ripple: [], duration_ms: 0 }, duration_ms: 0 });
+      layers.push({ index: 8, name: 'CONTRACT', passed: true, skipped: true, result: { passed: true, skipped: true, reason: 'contract-layer.js not available', drift: [], compatibility: [], ripple: [], duration_ms: 0 }, duration_ms: 0 });
     }
   }
 
-  // Layer 8 — SEMANTIC (optional, agent-based, off by default)
-  if (maxLayer >= 8 && verifyConfig.layers && verifyConfig.layers.SEMANTIC === true) {
+  // Layer 9 — SEMANTIC (optional, agent-based, off by default)
+  if (maxLayer >= 9 && verifyConfig.layers && verifyConfig.layers.SEMANTIC === true) {
     const result = layerSemantic({ cwd, files, planPath: opts.planPath });
-    layers.push({ index: 8, name: 'SEMANTIC', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+    layers.push({ index: 9, name: 'SEMANTIC', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
     if (failFast && !result.passed) {
       return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
     }
   }
 
-  // Layer 9 — ARCHITECTURAL (optional, agent-based, off by default)
-  if (maxLayer >= 9 && verifyConfig.layers && verifyConfig.layers.ARCHITECTURAL === true) {
-    const cached9 = cache ? cache.get('ARCHITECTURAL', files, cwd) : null;
-    const result = cached9 || layerArchitectural({ cwd, files });
-    if (!cached9 && cache) cache.set('ARCHITECTURAL', files, cwd, result);
-    layers.push({ index: 9, name: 'ARCHITECTURAL', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
+  // Layer 10 — ARCHITECTURAL (optional, agent-based, off by default)
+  if (maxLayer >= 10 && verifyConfig.layers && verifyConfig.layers.ARCHITECTURAL === true) {
+    const cached10 = cache ? cache.get('ARCHITECTURAL', files, cwd) : null;
+    const result = cached10 || layerArchitectural({ cwd, files });
+    if (!cached10 && cache) cache.set('ARCHITECTURAL', files, cwd, result);
+    layers.push({ index: 10, name: 'ARCHITECTURAL', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms });
     // Architectural issues are suggestions, don't fail-fast
   }
 
-  // Layer 10 — BROWSER (optional, Playwright e2e + accessibility + screenshots)
-  if (maxLayer >= 10 && verifyConfig.layers && verifyConfig.layers.BROWSER === true) {
+  // Layer 11 — BROWSER (optional, Playwright e2e + accessibility + screenshots)
+  if (maxLayer >= 11 && verifyConfig.layers && verifyConfig.layers.BROWSER === true) {
     try {
       const browserMod = require('./browser-layer');
       const browserConfig = verifyConfig.browser || {};
@@ -2069,16 +2163,16 @@ async function verify(opts) {
         config: browserConfig,
         planContext: opts.planPath ? { planPath: opts.planPath } : null,
       });
-      layers.push({ index: 10, name: 'BROWSER', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration || 0 });
+      layers.push({ index: 11, name: 'BROWSER', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration || 0 });
       if (failFast && !result.passed && !result.skipped) {
         return finalize({ cwd, layers, files, dbPath, opts, totalStart, verifySteps, capabilities, baselineCycleCount, logLedger });
       }
     } catch (err) {
-      layers.push({ index: 10, name: 'BROWSER', passed: true, skipped: true, result: { message: 'Browser layer failed to load: ' + err.message }, duration_ms: 0 });
+      layers.push({ index: 11, name: 'BROWSER', passed: true, skipped: true, result: { message: 'Browser layer failed to load: ' + err.message }, duration_ms: 0 });
     }
   }
 
-  // Layer 11 — MUTATION (optional, expensive, off by default)
+  // Layer 12 — MUTATION (optional, expensive, off by default)
   if (verifyConfig.layers && verifyConfig.layers.MUTATION === true) {
     try {
       const mutationMod = require('./mutation');
@@ -2092,9 +2186,9 @@ async function verify(opts) {
         testCommand: verifyConfig.test_command,
         timeout: verifyConfig.test_timeout,
       });
-      layers.push({ index: 11, name: 'MUTATION', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms || 0 });
+      layers.push({ index: 12, name: 'MUTATION', passed: result.passed, skipped: !!result.skipped, result, duration_ms: result.duration_ms || 0 });
     } catch (err) {
-      layers.push({ index: 11, name: 'MUTATION', passed: true, skipped: true, result: { message: 'Mutation testing failed: ' + err.message }, duration_ms: 0 });
+      layers.push({ index: 12, name: 'MUTATION', passed: true, skipped: true, result: { message: 'Mutation testing failed: ' + err.message }, duration_ms: 0 });
     }
   }
 
@@ -2189,6 +2283,7 @@ module.exports = {
   layerTypeCompile,
   layerInterfaceContracts,
   layerDependency,
+  layerKeyLinks,
   layerTests,
   layerBehavioral,
   get layerContract() { const cl = contractLayer(); return cl ? cl.layerContract : null; },

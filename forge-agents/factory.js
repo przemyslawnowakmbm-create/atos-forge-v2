@@ -826,6 +826,80 @@ function composeSystemPrompt(analysis, archetypeResult, sessionContext, cwd) {
     }
   }
 
+  // Plan Contract — structured rendering of plan requirements and must-haves
+  if (analysis.plan && analysis.plan.frontmatter) {
+    const fm = analysis.plan.frontmatter;
+    const parts_contract = [];
+    parts_contract.push('\n## Plan Contract');
+    parts_contract.push('This is what you MUST deliver. Verify each item before reporting completion.\n');
+
+    // Objective
+    if (analysis.plan.objective) {
+      parts_contract.push('### Objective');
+      parts_contract.push(analysis.plan.objective);
+      parts_contract.push('');
+    }
+
+    // Requirements
+    if (fm.requirements && fm.requirements.length > 0) {
+      parts_contract.push('### Requirements');
+      parts_contract.push('This plan addresses: ' + fm.requirements.join(', '));
+      parts_contract.push('');
+    }
+
+    // Observable truths
+    const mh = fm.must_haves;
+    if (mh) {
+      if (mh.truths && mh.truths.length > 0) {
+        parts_contract.push('### Observable Truths');
+        parts_contract.push('Each must be verifiably true after implementation:');
+        for (const t of mh.truths) {
+          parts_contract.push('- ' + t);
+        }
+        parts_contract.push('');
+      }
+
+      // Required artifacts
+      if (mh.artifacts && mh.artifacts.length > 0) {
+        parts_contract.push('### Required Artifacts');
+        parts_contract.push('Each file must exist and be substantive:');
+        for (const a of mh.artifacts) {
+          if (typeof a === 'string') {
+            parts_contract.push('- `' + a + '`');
+          } else if (a.path) {
+            parts_contract.push('- `' + a.path + '`' + (a.provides ? ' — ' + a.provides : ''));
+          }
+        }
+        parts_contract.push('');
+      }
+
+      // Required wiring
+      if (mh.key_links && mh.key_links.length > 0) {
+        parts_contract.push('### Required Wiring');
+        parts_contract.push('Each connection must exist in the source file:');
+        for (const kl of mh.key_links) {
+          const src = kl.source || kl.from || '?';
+          const tgt = kl.target || kl.to || '?';
+          const pat = kl.pattern || kl.via || '?';
+          parts_contract.push('- `' + src + '` must contain pattern `' + pat + '` (connecting to `' + tgt + '`)');
+        }
+        parts_contract.push('');
+      }
+    }
+
+    // Locked decisions
+    if (fm.locked_decisions && fm.locked_decisions.length > 0) {
+      parts_contract.push('### Locked Decisions');
+      parts_contract.push('Deviation from these is a verification failure:');
+      for (let i = 0; i < fm.locked_decisions.length; i++) {
+        parts_contract.push((i + 1) + '. ' + fm.locked_decisions[i]);
+      }
+      parts_contract.push('');
+    }
+
+    parts.push(parts_contract.join('\n'));
+  }
+
   // Constitution — non-negotiable hard rules (loaded from .forge/constitution.md)
   const constitutionContent = loadConstitution(cwd || process.cwd());
   if (constitutionContent) {

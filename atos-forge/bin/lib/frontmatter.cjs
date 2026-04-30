@@ -5,78 +5,71 @@ const { safeReadFile, output, error } = require('./core.cjs');
 // ─── Frontmatter Utilities ───────────────────────────────────────────────────
 
 function extractFrontmatter(content) {
-  const frontmatter = {};
   const match = content.match(/^---\n([\s\S]+?)\n---/);
-  if (!match) return frontmatter;
+  if (!match) return {};
 
-  const yaml = match[1];
-  const lines = yaml.split('\n');
+  try {
+    const YAML = require('yaml');
+    return YAML.parse(match[1]) || {};
+  } catch {
+    // Fallback to simple key-value extraction for robustness
+    const frontmatter = {};
+    const yaml = match[1];
+    const lines = yaml.split('\n');
 
-  // Stack to track nested objects: [{obj, key, indent}]
-  // obj = object to write to, key = current key collecting array items, indent = indentation level
-  let stack = [{ obj: frontmatter, key: null, indent: -1 }];
+    // Stack to track nested objects: [{obj, key, indent}]
+    let stack = [{ obj: frontmatter, key: null, indent: -1 }];
 
-  for (const line of lines) {
-    // Skip empty lines
-    if (line.trim() === '') continue;
+    for (const line of lines) {
+      if (line.trim() === '') continue;
 
-    // Calculate indentation (number of leading spaces)
-    const indentMatch = line.match(/^(\s*)/);
-    const indent = indentMatch ? indentMatch[1].length : 0;
+      const indentMatch = line.match(/^(\s*)/);
+      const indent = indentMatch ? indentMatch[1].length : 0;
 
-    // Pop stack back to appropriate level
-    while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
-      stack.pop();
-    }
-
-    const current = stack[stack.length - 1];
-
-    // Check for key: value pattern
-    const keyMatch = line.match(/^(\s*)([a-zA-Z0-9_-]+):\s*(.*)/);
-    if (keyMatch) {
-      const key = keyMatch[2];
-      const value = keyMatch[3].trim();
-
-      if (value === '' || value === '[') {
-        // Key with no value or opening bracket — could be nested object or array
-        // We'll determine based on next lines, for now create placeholder
-        current.obj[key] = value === '[' ? [] : {};
-        current.key = null;
-        // Push new context for potential nested content
-        stack.push({ obj: current.obj[key], key: null, indent });
-      } else if (value.startsWith('[') && value.endsWith(']')) {
-        // Inline array: key: [a, b, c]
-        current.obj[key] = value.slice(1, -1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-        current.key = null;
-      } else {
-        // Simple key: value
-        current.obj[key] = value.replace(/^["']|["']$/g, '');
-        current.key = null;
+      while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+        stack.pop();
       }
-    } else if (line.trim().startsWith('- ')) {
-      // Array item
-      const itemValue = line.trim().slice(2).replace(/^["']|["']$/g, '');
 
-      // If current context is an empty object, convert to array
-      if (typeof current.obj === 'object' && !Array.isArray(current.obj) && Object.keys(current.obj).length === 0) {
-        // Find the key in parent that points to this object and convert it
-        const parent = stack.length > 1 ? stack[stack.length - 2] : null;
-        if (parent) {
-          for (const k of Object.keys(parent.obj)) {
-            if (parent.obj[k] === current.obj) {
-              parent.obj[k] = [itemValue];
-              current.obj = parent.obj[k];
-              break;
+      const current = stack[stack.length - 1];
+
+      const keyMatch = line.match(/^(\s*)([a-zA-Z0-9_-]+):\s*(.*)/);
+      if (keyMatch) {
+        const key = keyMatch[2];
+        const value = keyMatch[3].trim();
+
+        if (value === '' || value === '[') {
+          current.obj[key] = value === '[' ? [] : {};
+          current.key = null;
+          stack.push({ obj: current.obj[key], key: null, indent });
+        } else if (value.startsWith('[') && value.endsWith(']')) {
+          current.obj[key] = value.slice(1, -1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+          current.key = null;
+        } else {
+          current.obj[key] = value.replace(/^["']|["']$/g, '');
+          current.key = null;
+        }
+      } else if (line.trim().startsWith('- ')) {
+        const itemValue = line.trim().slice(2).replace(/^["']|["']$/g, '');
+
+        if (typeof current.obj === 'object' && !Array.isArray(current.obj) && Object.keys(current.obj).length === 0) {
+          const parent = stack.length > 1 ? stack[stack.length - 2] : null;
+          if (parent) {
+            for (const k of Object.keys(parent.obj)) {
+              if (parent.obj[k] === current.obj) {
+                parent.obj[k] = [itemValue];
+                current.obj = parent.obj[k];
+                break;
+              }
             }
           }
+        } else if (Array.isArray(current.obj)) {
+          current.obj.push(itemValue);
         }
-      } else if (Array.isArray(current.obj)) {
-        current.obj.push(itemValue);
       }
     }
-  }
 
-  return frontmatter;
+    return frontmatter;
+  }
 }
 
 function reconstructFrontmatter(obj) {

@@ -48,7 +48,9 @@
   "engines": {
     "node": ">=16.7.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "yaml": "^2.8.3"
+  },
   "devDependencies": {
     "esbuild": "^0.24.0"
   },

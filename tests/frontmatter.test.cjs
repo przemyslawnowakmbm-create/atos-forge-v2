@@ -9,7 +9,7 @@ describe('frontmatter.cjs', () => {
     const result = fm.extractFrontmatter(content);
     assert.ok(result);
     assert.strictEqual(result.name, 'Test Plan');
-    assert.strictEqual(result.wave, '1');
+    assert.strictEqual(result.wave, 1);
   });
 
   it('extractFrontmatter returns empty for no frontmatter', () => {

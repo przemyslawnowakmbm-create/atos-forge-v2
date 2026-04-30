@@ -90,94 +90,112 @@ function parsePlan(planPath) {
   const raw = fs.readFileSync(planPath, 'utf8');
   const plan = { raw, path: planPath, frontmatter: {}, tasks: [], objective: '', files_modified: [] };
 
-  // Parse YAML frontmatter
+  // Parse YAML frontmatter using library
   const fmMatch = raw.match(/^---\n([\s\S]*?)\n---/);
   if (fmMatch) {
-    const fm = fmMatch[1];
-    const waveMatch = fm.match(/^wave:\s*(\d+)/m);
-    const depsMatch = fm.match(/^depends_on:\s*\[(.*?)\]/m);
-    const autoMatch = fm.match(/^autonomous:\s*(true|false)/m);
+    try {
+      const YAML = require('yaml');
+      const fm = YAML.parse(fmMatch[1]) || {};
+      plan.frontmatter = {
+        ...fm,
+        // Normalize specific fields
+        wave: typeof fm.wave === 'number' ? fm.wave : parseInt(fm.wave, 10) || 1,
+        depends_on: Array.isArray(fm.depends_on) ? fm.depends_on.map(String) : [],
+        autonomous: fm.autonomous !== false,
+        requirements: Array.isArray(fm.requirements) ? fm.requirements.map(String) : [],
+        has_tests: fm.has_tests === true,
+        files_modified: Array.isArray(fm.files_modified) ? fm.files_modified : [],
+        // Preserve must_haves as parsed (YAML handles nesting correctly)
+        must_haves: fm.must_haves || null,
+        locked_decisions: Array.isArray(fm.locked_decisions) ? fm.locked_decisions : [],
+      };
 
-    plan.frontmatter.wave = waveMatch ? parseInt(waveMatch[1]) : 1;
-    plan.frontmatter.depends_on = depsMatch ? depsMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [];
-    plan.frontmatter.autonomous = autoMatch ? autoMatch[1] === 'true' : true;
+      // Extract files_modified from YAML-parsed data
+      if (Array.isArray(fm.files_modified)) {
+        plan.files_modified = fm.files_modified;
+      }
+    } catch {
+      // Keep existing regex fallback
+      const fm = fmMatch[1];
+      const waveMatch = fm.match(/^wave:\s*(\d+)/m);
+      const depsMatch = fm.match(/^depends_on:\s*\[(.*?)\]/m);
+      const autoMatch = fm.match(/^autonomous:\s*(true|false)/m);
 
-    // Requirements list
-    const reqMatch = fm.match(/^requirements:\s*\[(.*?)\]/m);
-    if (reqMatch) {
-      plan.frontmatter.requirements = reqMatch[1].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean);
-    }
+      plan.frontmatter.wave = waveMatch ? parseInt(waveMatch[1]) : 1;
+      plan.frontmatter.depends_on = depsMatch ? depsMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [];
+      plan.frontmatter.autonomous = autoMatch ? autoMatch[1] === 'true' : true;
 
-    // Plan metadata
-    const phaseMatch = fm.match(/^phase:\s*(.+)/m);
-    const planNumMatch = fm.match(/^plan:\s*(.+)/m);
-    const typeMatch = fm.match(/^type:\s*(.+)/m);
-    const hasTestsMatch = fm.match(/^has_tests:\s*(true|false)/m);
-    if (phaseMatch) plan.frontmatter.phase = phaseMatch[1].trim().replace(/^["']|["']$/g, '');
-    if (planNumMatch) plan.frontmatter.plan = planNumMatch[1].trim().replace(/^["']|["']$/g, '');
-    if (typeMatch) plan.frontmatter.type = typeMatch[1].trim().replace(/^["']|["']$/g, '');
-    if (hasTestsMatch) plan.frontmatter.has_tests = hasTestsMatch[1] === 'true';
+      const reqMatch = fm.match(/^requirements:\s*\[(.*?)\]/m);
+      if (reqMatch) {
+        plan.frontmatter.requirements = reqMatch[1].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean);
+      }
 
-    // Locked decisions
-    const lockedMatch = fm.match(/^locked_decisions:\s*\n((?:\s+-\s+.+\n?)*)/m);
-    if (lockedMatch) {
-      plan.frontmatter.locked_decisions = lockedMatch[1].match(/^\s+-\s+(.+)/gm)
-        ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
-    }
+      const phaseMatch = fm.match(/^phase:\s*(.+)/m);
+      const planNumMatch = fm.match(/^plan:\s*(.+)/m);
+      const typeMatch = fm.match(/^type:\s*(.+)/m);
+      const hasTestsMatch = fm.match(/^has_tests:\s*(true|false)/m);
+      if (phaseMatch) plan.frontmatter.phase = phaseMatch[1].trim().replace(/^["']|["']$/g, '');
+      if (planNumMatch) plan.frontmatter.plan = planNumMatch[1].trim().replace(/^["']|["']$/g, '');
+      if (typeMatch) plan.frontmatter.type = typeMatch[1].trim().replace(/^["']|["']$/g, '');
+      if (hasTestsMatch) plan.frontmatter.has_tests = hasTestsMatch[1] === 'true';
 
-    // Must-haves (truths, artifacts, key_links)
-    const mustSection = fm.match(/^must_haves:\s*\n((?:\s+.+\n?)*)/m);
-    if (mustSection) {
-      const mh = mustSection[1];
-      plan.frontmatter.must_haves = {};
-
-      const truthsMatch = mh.match(/truths:\s*\n((?:\s+-\s+.+\n?)*)/);
-      if (truthsMatch) {
-        plan.frontmatter.must_haves.truths = truthsMatch[1].match(/^\s+-\s+(.+)/gm)
+      const lockedMatch = fm.match(/^locked_decisions:\s*\n((?:\s+-\s+.+\n?)*)/m);
+      if (lockedMatch) {
+        plan.frontmatter.locked_decisions = lockedMatch[1].match(/^\s+-\s+(.+)/gm)
           ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
       }
 
-      const artifactsMatch = mh.match(/artifacts:\s*\n((?:\s+-\s+.+\n?)*)/);
-      if (artifactsMatch) {
-        plan.frontmatter.must_haves.artifacts = artifactsMatch[1].match(/^\s+-\s+(.+)/gm)
-          ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
-      }
+      const mustSection = fm.match(/^must_haves:\s*\n((?:\s+.+\n?)*)/m);
+      if (mustSection) {
+        const mh = mustSection[1];
+        plan.frontmatter.must_haves = {};
 
-      const linksMatch = mh.match(/key_links:\s*\n((?:\s+-.+\n?|\s+\w+:.+\n?)*)/);
-      if (linksMatch) {
-        plan.frontmatter.must_haves.key_links = [];
-        const linkBlocks = linksMatch[1].split(/\n\s+-\s+(?=source:)/);
-        for (const block of linkBlocks) {
-          if (!block.trim()) continue;
-          const src = block.match(/source:\s*(.+)/);
-          const tgt = block.match(/target:\s*(.+)/);
-          const pat = block.match(/pattern:\s*(.+)/);
-          if (src && tgt) {
-            plan.frontmatter.must_haves.key_links.push({
-              source: src[1].trim(), target: tgt[1].trim(), pattern: pat ? pat[1].trim() : null,
-            });
+        const truthsMatch = mh.match(/truths:\s*\n((?:\s+-\s+.+\n?)*)/);
+        if (truthsMatch) {
+          plan.frontmatter.must_haves.truths = truthsMatch[1].match(/^\s+-\s+(.+)/gm)
+            ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
+        }
+
+        const artifactsMatch = mh.match(/artifacts:\s*\n((?:\s+-\s+.+\n?)*)/);
+        if (artifactsMatch) {
+          plan.frontmatter.must_haves.artifacts = artifactsMatch[1].match(/^\s+-\s+(.+)/gm)
+            ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
+        }
+
+        const linksMatch = mh.match(/key_links:\s*\n((?:\s+-.+\n?|\s+\w+:.+\n?)*)/);
+        if (linksMatch) {
+          plan.frontmatter.must_haves.key_links = [];
+          const linkBlocks = linksMatch[1].split(/\n\s+-\s+(?=source:)/);
+          for (const block of linkBlocks) {
+            if (!block.trim()) continue;
+            const src = block.match(/source:\s*(.+)/);
+            const tgt = block.match(/target:\s*(.+)/);
+            const pat = block.match(/pattern:\s*(.+)/);
+            if (src && tgt) {
+              plan.frontmatter.must_haves.key_links.push({
+                source: src[1].trim(), target: tgt[1].trim(), pattern: pat ? pat[1].trim() : null,
+              });
+            }
           }
         }
       }
-    }
 
-    // Multi-repo plan fields
-    const serviceMatch = fm.match(/^service:\s*(.+)/m);
-    const repoMatch = fm.match(/^repo:\s*(.+)/m);
-    const roleMatch = fm.match(/^role:\s*(.+)/m);
-    if (serviceMatch) plan.frontmatter.service = serviceMatch[1].trim().replace(/^["']|["']$/g, '');
-    if (repoMatch) plan.frontmatter.repo = repoMatch[1].trim().replace(/^["']|["']$/g, '');
-    if (roleMatch) plan.frontmatter.role = roleMatch[1].trim();
+      const serviceMatch = fm.match(/^service:\s*(.+)/m);
+      const repoMatch = fm.match(/^repo:\s*(.+)/m);
+      const roleMatch = fm.match(/^role:\s*(.+)/m);
+      if (serviceMatch) plan.frontmatter.service = serviceMatch[1].trim().replace(/^["']|["']$/g, '');
+      if (repoMatch) plan.frontmatter.repo = repoMatch[1].trim().replace(/^["']|["']$/g, '');
+      if (roleMatch) plan.frontmatter.role = roleMatch[1].trim();
 
-    // Extract files_modified (can be multiline YAML list)
-    const filesSection = fm.match(/^files_modified:\s*\n((?:\s+-\s+.+\n?)*)/m);
-    if (filesSection) {
-      plan.files_modified = filesSection[1].match(/^\s+-\s+(.+)/gm)
-        ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
-    } else {
-      const filesInline = fm.match(/^files_modified:\s*\[(.*?)\]/m);
-      if (filesInline) {
-        plan.files_modified = filesInline[1].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean);
+      const filesSection = fm.match(/^files_modified:\s*\n((?:\s+-\s+.+\n?)*)/m);
+      if (filesSection) {
+        plan.files_modified = filesSection[1].match(/^\s+-\s+(.+)/gm)
+          ?.map(l => l.replace(/^\s+-\s+/, '').trim()) || [];
+      } else {
+        const filesInline = fm.match(/^files_modified:\s*\[(.*?)\]/m);
+        if (filesInline) {
+          plan.files_modified = filesInline[1].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean);
+        }
       }
     }
   }
@@ -220,9 +238,10 @@ function parsePlan(planPath) {
   }
   plan.all_files = [...allFiles];
 
-  // Parse objective
-  const objMatch = raw.match(/##\s*Objective\s*\n([\s\S]*?)(?=\n##|\n<|\Z)/);
-  plan.objective = objMatch ? objMatch[1].trim() : '';
+  // Parse objective — try XML first, then markdown heading
+  const xmlObjMatch = raw.match(/<objective>([\s\S]*?)<\/objective>/);
+  const mdObjMatch = raw.match(/##\s*Objective\s*\n([\s\S]*?)(?=\n##|\n<|$)/);
+  plan.objective = (xmlObjMatch ? xmlObjMatch[1] : mdObjMatch ? mdObjMatch[1] : '').trim();
 
   // Warn if no requirements field (coverage protocol may be violated)
   if (!plan.frontmatter.requirements || plan.frontmatter.requirements.length === 0) {

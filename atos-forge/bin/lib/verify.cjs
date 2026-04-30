@@ -252,9 +252,11 @@ function cmdVerifyKeyLinks(cwd, planFilePath, raw) {
   const results = [];
   for (const link of keyLinks) {
     if (typeof link === 'string') continue;
-    const check = { from: link.from, to: link.to, via: link.via || '', verified: false, detail: '' };
+    const sourceFile = link.source || link.from;
+    const targetFile = link.target || link.to;
+    const check = { from: sourceFile, to: targetFile, via: link.via || '', verified: false, detail: '' };
 
-    const sourceContent = safeReadFile(path.join(cwd, link.from || ''));
+    const sourceContent = safeReadFile(path.join(cwd, sourceFile || ''));
     if (!sourceContent) {
       check.detail = 'Source file not found';
     } else if (link.pattern) {
@@ -264,20 +266,14 @@ function cmdVerifyKeyLinks(cwd, planFilePath, raw) {
           check.verified = true;
           check.detail = 'Pattern found in source';
         } else {
-          const targetContent = safeReadFile(path.join(cwd, link.to || ''));
-          if (targetContent && regex.test(targetContent)) {
-            check.verified = true;
-            check.detail = 'Pattern found in target';
-          } else {
-            check.detail = `Pattern "${link.pattern}" not found in source or target`;
-          }
+          check.detail = `Pattern "${link.pattern}" not found in source file "${sourceFile}"`;
         }
       } catch {
         check.detail = `Invalid regex pattern: ${link.pattern}`;
       }
     } else {
       // No pattern: just check source references target
-      if (sourceContent.includes(link.to || '')) {
+      if (sourceContent.includes(targetFile || '')) {
         check.verified = true;
         check.detail = 'Target referenced in source';
       } else {
