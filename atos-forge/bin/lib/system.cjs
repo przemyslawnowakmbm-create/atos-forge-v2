@@ -62,6 +62,15 @@ function cmdSystemInit(cwd, args, raw) {
 
   // Default: use cwd parent as discovery path if no source specified
   if (!cliArgs.some(a => a === '--path' || a === '--repos' || a === '--github-org')) {
+    // Check if discovery is enabled in config
+    try {
+      const { loadConfig } = require('../../../forge-config/config');
+      const { config } = loadConfig(cwd);
+      if (config.system && config.system.discovery === false) {
+        output({ error: 'System discovery disabled. Set system.discovery: true in .forge/config.json, or pass --repos/--path explicitly.' }, raw);
+        return;
+      }
+    } catch {}
     cliArgs.push('--path', path.dirname(cwd));
   }
 

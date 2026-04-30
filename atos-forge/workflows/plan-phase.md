@@ -26,6 +26,18 @@ Parse JSON for: `researcher_model`, `planner_model`, `checker_model`, `research_
 
 **If `planning_exists` is false:** Error — run `/forge-new-project` first.
 
+**Architecture gate check:**
+If init result contains `gate_failed: true`:
+```bash
+GATE_FAILED=$(echo "$INIT" | jq -r '.gate_failed // false')
+GATE_REASON=$(echo "$INIT" | jq -r '.gate_reason // ""')
+if [ "$GATE_FAILED" = "true" ]; then
+  echo "BLOCKED: $GATE_REASON"
+  echo "Run /forge-architect to design and approve the architecture first."
+  exit 1
+fi
+```
+
 ## 2. Parse and Normalize Arguments
 
 Extract from $ARGUMENTS: phase number (integer or decimal like `2.1`), flags (`--research`, `--skip-research`, `--gaps`, `--skip-verify`).

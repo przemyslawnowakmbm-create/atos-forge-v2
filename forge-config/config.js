@@ -514,6 +514,7 @@ function getVerification(cwd) {
 
   return {
     layers: {
+      HASH_LOCK: layers.hash_lock === true,
       STRUCTURAL: get('structural', 'STRUCTURAL'),
       TYPE_COMPILE: get('type_check', 'TYPE_COMPILE'),
       INTERFACE_CONTRACTS: get('interface_contracts', 'INTERFACE_CONTRACTS'),

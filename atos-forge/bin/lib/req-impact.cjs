@@ -37,6 +37,18 @@ function parseRequirements(cwd) {
       completed: content.charAt(match.index + 3) === 'x',
     });
   }
+
+  // Also try table format: | REQ-ID | Description | ...
+  const tablePattern = /^\|\s*([A-Z]+-\d+)\s*\|\s*([^|]+)/gm;
+  let tableMatch;
+  const existingIds = new Set(reqs.map(r => r.id));
+  while ((tableMatch = tablePattern.exec(content)) !== null) {
+    const id = tableMatch[1].trim();
+    if (existingIds.has(id)) continue;
+    reqs.push({ id, text: tableMatch[2].trim(), completed: false });
+    existingIds.add(id);
+  }
+
   return reqs;
 }
 

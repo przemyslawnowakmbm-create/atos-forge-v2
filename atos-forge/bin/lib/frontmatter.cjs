@@ -148,67 +148,86 @@ function spliceFrontmatter(content, newObj) {
 function parseMustHavesBlock(content, blockName) {
   // Extract a specific block from must_haves in raw frontmatter YAML
   // Handles 3-level nesting: must_haves > artifacts/key_links > [{path, provides, ...}]
-  const fmMatch = content.match(/^---\n([\s\S]+?)\n---/);
-  if (!fmMatch) return [];
 
-  const yaml = fmMatch[1];
-  // Find the block (e.g., "truths:", "artifacts:", "key_links:")
-  const blockPattern = new RegExp(`^\\s{4}${blockName}:\\s*$`, 'm');
-  const blockStart = yaml.search(blockPattern);
-  if (blockStart === -1) return [];
-
-  const afterBlock = yaml.slice(blockStart);
-  const blockLines = afterBlock.split('\n').slice(1); // skip the header line
-
-  const items = [];
-  let current = null;
-
-  for (const line of blockLines) {
-    // Stop at same or lower indent level (non-continuation)
-    if (line.trim() === '') continue;
-    const indent = line.match(/^(\s*)/)[1].length;
-    if (indent <= 4 && line.trim() !== '') break; // back to must_haves level or higher
-
-    if (line.match(/^\s{6}-\s+/)) {
-      // New list item at 6-space indent
-      if (current) items.push(current);
-      current = {};
-      // Check if it's a simple string item
-      const simpleMatch = line.match(/^\s{6}-\s+"?([^"]+)"?\s*$/);
-      if (simpleMatch && !line.includes(':')) {
-        current = simpleMatch[1];
-      } else {
-        // Key-value on same line as dash: "- path: value"
-        const kvMatch = line.match(/^\s{6}-\s+(\w+):\s*"?([^"]*)"?\s*$/);
-        if (kvMatch) {
-          current = {};
-          current[kvMatch[1]] = kvMatch[2];
-        }
-      }
-    } else if (current && typeof current === 'object') {
-      // Continuation key-value at 8+ space indent
-      const kvMatch = line.match(/^\s{8,}(\w+):\s*"?([^"]*)"?\s*$/);
-      if (kvMatch) {
-        const val = kvMatch[2];
-        // Try to parse as number
-        current[kvMatch[1]] = /^\d+$/.test(val) ? parseInt(val, 10) : val;
-      }
-      // Array items under a key
-      const arrMatch = line.match(/^\s{10,}-\s+"?([^"]+)"?\s*$/);
-      if (arrMatch) {
-        // Find the last key added and convert to array
-        const keys = Object.keys(current);
-        const lastKey = keys[keys.length - 1];
-        if (lastKey && !Array.isArray(current[lastKey])) {
-          current[lastKey] = current[lastKey] ? [current[lastKey]] : [];
-        }
-        if (lastKey) current[lastKey].push(arrMatch[1]);
+  // First try: extract from YAML-parsed frontmatter
+  try {
+    const YAML = require('yaml');
+    const fmMatch = content.match(/^---\n([\s\S]+?)\n---/);
+    if (fmMatch) {
+      const fm = YAML.parse(fmMatch[1]);
+      if (fm && fm.must_haves && fm.must_haves[blockName]) {
+        const block = fm.must_haves[blockName];
+        if (Array.isArray(block)) return block;
       }
     }
-  }
-  if (current) items.push(current);
+  } catch {}
 
-  return items;
+  // Fallback: legacy regex (for non-standard formats)
+  try {
+    const fmMatch = content.match(/^---\n([\s\S]+?)\n---/);
+    if (!fmMatch) return [];
+
+    const yaml = fmMatch[1];
+    // Find the block (e.g., "truths:", "artifacts:", "key_links:")
+    const blockPattern = new RegExp(`^\\s{4}${blockName}:\\s*$`, 'm');
+    const blockStart = yaml.search(blockPattern);
+    if (blockStart === -1) return [];
+
+    const afterBlock = yaml.slice(blockStart);
+    const blockLines = afterBlock.split('\n').slice(1); // skip the header line
+
+    const items = [];
+    let current = null;
+
+    for (const line of blockLines) {
+      // Stop at same or lower indent level (non-continuation)
+      if (line.trim() === '') continue;
+      const indent = line.match(/^(\s*)/)[1].length;
+      if (indent <= 4 && line.trim() !== '') break; // back to must_haves level or higher
+
+      if (line.match(/^\s{6}-\s+/)) {
+        // New list item at 6-space indent
+        if (current) items.push(current);
+        current = {};
+        // Check if it's a simple string item
+        const simpleMatch = line.match(/^\s{6}-\s+"?([^"]+)"?\s*$/);
+        if (simpleMatch && !line.includes(':')) {
+          current = simpleMatch[1];
+        } else {
+          // Key-value on same line as dash: "- path: value"
+          const kvMatch = line.match(/^\s{6}-\s+(\w+):\s*"?([^"]*)"?\s*$/);
+          if (kvMatch) {
+            current = {};
+            current[kvMatch[1]] = kvMatch[2];
+          }
+        }
+      } else if (current && typeof current === 'object') {
+        // Continuation key-value at 8+ space indent
+        const kvMatch = line.match(/^\s{8,}(\w+):\s*"?([^"]*)"?\s*$/);
+        if (kvMatch) {
+          const val = kvMatch[2];
+          // Try to parse as number
+          current[kvMatch[1]] = /^\d+$/.test(val) ? parseInt(val, 10) : val;
+        }
+        // Array items under a key
+        const arrMatch = line.match(/^\s{10,}-\s+"?([^"]+)"?\s*$/);
+        if (arrMatch) {
+          // Find the last key added and convert to array
+          const keys = Object.keys(current);
+          const lastKey = keys[keys.length - 1];
+          if (lastKey && !Array.isArray(current[lastKey])) {
+            current[lastKey] = current[lastKey] ? [current[lastKey]] : [];
+          }
+          if (lastKey) current[lastKey].push(arrMatch[1]);
+        }
+      }
+    }
+    if (current) items.push(current);
+
+    return items;
+  } catch {
+    return [];
+  }
 }
 
 // ─── Frontmatter CRUD Commands ───────────────────────────────────────────────
