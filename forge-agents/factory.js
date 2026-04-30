@@ -387,12 +387,18 @@ function loadConstitution(cwd) {
 function parseGlossaryTable(content) {
   if (!content || !content.trim()) return null;
   const terms = [];
-  const rowPattern = /^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|$/gm;
-  let match;
-  while ((match = rowPattern.exec(content)) !== null) {
-    const term = match[1].trim();
+  const rows = content.split('\n').filter(line => line.trim().startsWith('|'));
+  for (const row of rows) {
+    const cells = row.split('|').map(c => c.trim()).filter(Boolean);
+    if (cells.length < 2) continue;
+    const term = cells[0];
     if (term === 'Term' || term.startsWith('---') || term.startsWith('-') || !term) continue;
-    terms.push({ term, definition: match[2].trim(), aliases: match[3].trim(), usedIn: match[4].trim() });
+    terms.push({
+      term,
+      definition: cells[1] || '',
+      aliases: cells[2] || '',
+      usedIn: cells[3] || '',
+    });
   }
   if (terms.length === 0) return null;
   return { raw: content, terms };
@@ -406,7 +412,19 @@ function loadGlossary(cwd) {
   try {
     const glossaryPath = path.resolve(cwd, '.forge', 'glossary.md');
     if (!fs.existsSync(glossaryPath)) return null;
-    return parseGlossaryTable(fs.readFileSync(glossaryPath, 'utf8'));
+    const result = parseGlossaryTable(fs.readFileSync(glossaryPath, 'utf8'));
+    if (!result && fs.statSync(glossaryPath).size > 10) {
+      // File exists with content but parsing failed
+      try {
+        const ldg = ledger();
+        ldg.logWarning(cwd, {
+          warning: '.forge/glossary.md exists but no terms could be parsed — check table format',
+          source: 'factory:loadGlossary',
+          severity: 'low',
+        });
+      } catch {}
+    }
+    return result;
   } catch { return null; }
 }
 

@@ -199,18 +199,30 @@ function detectOverlappingScope(requirements) {
     keywordMap.set(req.id, extractKeywords(req.text));
   }
 
-  // Compare every cross-category pair
+  // Compare every pair
   for (let i = 0; i < requirements.length; i++) {
     for (let j = i + 1; j < requirements.length; j++) {
       const a = requirements[i];
       const b = requirements[j];
 
-      // Skip same-category pairs
-      if (a.category === b.category) continue;
-
       const kwA = keywordMap.get(a.id);
       const kwB = keywordMap.get(b.id);
       const similarity = jaccardSimilarity(kwA, kwB);
+
+      if (a.category === b.category) {
+        // Same category: check for near-duplicate instead of scope overlap
+        if (similarity > 0.80) {
+          conflicts.push({
+            type: 'potential_duplicate',
+            severity: 'info',
+            req_a: a.id,
+            req_b: b.id,
+            similarity: Math.round(similarity * 100) / 100,
+            message: `${a.id} and ${b.id} in same category have ${Math.round(similarity * 100)}% keyword overlap — may be duplicates`,
+          });
+        }
+        continue;
+      }
 
       if (similarity > OVERLAP_THRESHOLD) {
         conflicts.push({
@@ -261,14 +273,12 @@ function detectTechConflicts(requirements) {
     return names[gi] || `group_${gi}`;
   }
 
-  // Compare cross-category pairs for conflicting tech
+  // Compare all pairs for conflicting tech (same-category IS valid —
+  // two reqs in same domain using different DBs is a real conflict)
   for (let i = 0; i < requirements.length; i++) {
     for (let j = i + 1; j < requirements.length; j++) {
       const a = requirements[i];
       const b = requirements[j];
-
-      // Skip same-category pairs
-      if (a.category === b.category) continue;
 
       const refsA = findTechRefs(a.text);
       const refsB = findTechRefs(b.text);

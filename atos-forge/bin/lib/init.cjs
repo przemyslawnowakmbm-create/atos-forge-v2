@@ -127,6 +127,9 @@ function cmdInitPlanPhase(cwd, phase, includes, raw) {
   const phaseInfo = findPhaseInternal(cwd, phase);
 
   const result = {
+    // Architecture gate: defaults
+    gate_failed: false,
+    gate_reason: null,
     // Models
     researcher_model: resolveModelInternal(cwd, 'forge-phase-researcher'),
     planner_model: resolveModelInternal(cwd, 'forge-planner'),
@@ -155,6 +158,18 @@ function cmdInitPlanPhase(cwd, phase, includes, raw) {
     planning_exists: pathExistsInternal(cwd, '.planning'),
     roadmap_exists: pathExistsInternal(cwd, '.planning/ROADMAP.md'),
   };
+
+  // Architecture gate: if ARCHITECTURE.md exists, it must be approved
+  const archPath = path.join(cwd, '.planning', 'ARCHITECTURE.md');
+  if (fs.existsSync(archPath)) {
+    const archContent = fs.readFileSync(archPath, 'utf8');
+    const statusMatch = archContent.match(/^status:\s*(.*)/m);
+    const status = statusMatch ? statusMatch[1].trim() : 'unknown';
+    if (status !== 'approved') {
+      result.gate_failed = true;
+      result.gate_reason = 'ARCHITECTURE.md exists but status is "' + status + '" — must be "approved" before planning. Run /forge-architect to complete approval.';
+    }
+  }
 
   // Include file contents if requested via --include
   if (includes.has('state')) {

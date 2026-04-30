@@ -65,7 +65,23 @@ function computeEntropy(cwd, opts = {}) {
 
   let db;
   try {
-    const Database = require('better-sqlite3');
+    let Database;
+    try {
+      Database = require('better-sqlite3');
+    } catch {
+      try {
+        Database = require(path.join(__dirname, '..', 'forge-graph', 'node_modules', 'better-sqlite3'));
+      } catch {
+        return {
+          timestamp: new Date().toISOString(),
+          phase: opts.phase || null,
+          skipped: true,
+          reason: 'better-sqlite3 not available',
+          aggregate: { totalFiles: 0, totalModules: 0, avgInstability: 0, avgDistance: 0, avgCohesion: 1, totalLargeFiles: 0, health: 'green' },
+          modules: [],
+        };
+      }
+    }
     db = new Database(dbPath, { readonly: true });
   } catch {
     return {

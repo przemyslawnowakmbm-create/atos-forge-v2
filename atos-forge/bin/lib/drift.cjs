@@ -53,6 +53,21 @@ function parseRequirements(cwd) {
       completed: content.charAt(match.index + 3) === 'x',
     });
   }
+
+  // Also try table format: | REQ-ID | Description | ...
+  const tablePattern = /^\|\s*([A-Z]+-\d+)\s*\|\s*([^|]+)/gm;
+  let tableMatch;
+  const existingIds = new Set(reqs.map(r => r.id));
+  while ((tableMatch = tablePattern.exec(content)) !== null) {
+    const id = tableMatch[1].trim();
+    if (existingIds.has(id)) continue; // don't duplicate
+    reqs.push({
+      id,
+      text: tableMatch[2].trim(),
+      completed: false, // table format doesn't have checkboxes
+    });
+  }
+
   return reqs;
 }
 
@@ -172,31 +187,37 @@ function computeRequirementDrift(reqId, reqText, plans, verifications) {
 
   let totalItems = 0;
   let verifiedItems = 0;
+  let truthsVerified = 0;
+  let artifactsVerified = 0;
+  let linksVerified = 0;
+  let truthCount = 0;
+  let artifactCount = 0;
+  let linkCount = 0;
   const details = [];
 
   for (const plan of coveringPlans) {
     const mh = plan.frontmatter?.must_haves || {};
 
-    const truthCount = (mh.truths || []).length;
-    const artifactCount = (mh.artifacts || []).length;
-    const linkCount = (mh.key_links || []).length;
-    totalItems += truthCount + artifactCount + linkCount;
+    truthCount += (mh.truths || []).length;
+    artifactCount += (mh.artifacts || []).length;
+    linkCount += (mh.key_links || []).length;
+    totalItems += (mh.truths || []).length + (mh.artifacts || []).length + (mh.key_links || []).length;
 
     // Match against verifications
     for (const v of verifications) {
       for (const truth of v.truths) {
-        if (truth.verdict === 'VERIFIED') verifiedItems++;
-        else if (truth.verdict === 'UNCERTAIN') { verifiedItems += 0.5; details.push(`Truth '${truth.text}' — UNCERTAIN`); }
+        if (truth.verdict === 'VERIFIED') { verifiedItems++; truthsVerified++; }
+        else if (truth.verdict === 'UNCERTAIN') { verifiedItems += 0.5; truthsVerified += 0.5; details.push(`Truth '${truth.text}' — UNCERTAIN`); }
         else details.push(`Truth '${truth.text}' — ${truth.verdict}`);
       }
       for (const artifact of v.artifacts) {
-        if (artifact.verdict === 'VERIFIED') verifiedItems++;
-        else if (artifact.verdict === 'ORPHANED') { verifiedItems += 0.5; details.push(`Artifact '${artifact.path}' — ORPHANED (exists but not wired)`); }
+        if (artifact.verdict === 'VERIFIED') { verifiedItems++; artifactsVerified++; }
+        else if (artifact.verdict === 'ORPHANED') { verifiedItems += 0.5; artifactsVerified += 0.5; details.push(`Artifact '${artifact.path}' — ORPHANED (exists but not wired)`); }
         else details.push(`Artifact '${artifact.path}' — ${artifact.verdict}`);
       }
       for (const link of v.keyLinks) {
-        if (link.verdict === 'WIRED') verifiedItems++;
-        else if (link.verdict === 'PARTIAL') { verifiedItems += 0.5; details.push(`Link '${link.description}' — PARTIAL`); }
+        if (link.verdict === 'WIRED') { verifiedItems++; linksVerified++; }
+        else if (link.verdict === 'PARTIAL') { verifiedItems += 0.5; linksVerified += 0.5; details.push(`Link '${link.description}' — PARTIAL`); }
         else details.push(`Link '${link.description}' — ${link.verdict}`);
       }
     }
@@ -226,14 +247,14 @@ function computeRequirementDrift(reqId, reqText, plans, verifications) {
     requirement_id: reqId,
     specification: reqText,
     status: driftScore === 0 ? 'PERFECT' : driftScore < 0.10 ? 'GOOD' : driftScore < 0.25 ? 'DRIFTING' : 'SIGNIFICANT_DRIFT',
-    truths_specified: coveringPlans.reduce((n, p) => n + ((p.frontmatter?.must_haves?.truths) || []).length, 0),
-    truths_verified: verifiedItems,
-    truths_failed: totalItems - verifiedItems,
-    artifacts_specified: coveringPlans.reduce((n, p) => n + ((p.frontmatter?.must_haves?.artifacts) || []).length, 0),
-    artifacts_present: 0,
+    truths_specified: truthCount,
+    truths_verified: truthsVerified,
+    truths_failed: truthCount - truthsVerified,
+    artifacts_specified: artifactCount,
+    artifacts_present: artifactsVerified,
     artifacts_wired: 0,
-    key_links_specified: coveringPlans.reduce((n, p) => n + ((p.frontmatter?.must_haves?.key_links) || []).length, 0),
-    key_links_verified: 0,
+    key_links_specified: linkCount,
+    key_links_verified: linksVerified,
     drift_score: parseFloat(driftScore.toFixed(4)),
     drift_details: details,
   };

@@ -550,7 +550,7 @@ async function main() {
         const { cmdRequirementsConflicts } = require('./lib/req-conflicts.cjs');
         cmdRequirementsConflicts(cwd, args.slice(2), raw);
       } else {
-        error('Unknown requirements subcommand. Available: mark-complete, enhance, validate, impact, conflicts');
+        error('Unknown requirements subcommand. Available: mark-complete, enhance, validate, impact [--json] [--save-baseline], conflicts [--json] [--system <path>]');
       }
       break;
     }

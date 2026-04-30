@@ -234,8 +234,9 @@ const DEFAULTS = {
   system: {
     enabled: true,
     auto_detect_interfaces: true,
+    discovery: false,           // Must be explicitly enabled for multi-repo scanning
     workers: 'auto',
-    discovery_depth: 2,
+    discovery_depth: 0,         // 0 = only explicit repos, not filesystem scan
     default_delivery: 'local',
     sync_on_commit: false,
     graph_path: null,
@@ -463,8 +464,8 @@ function validate(config) {
     }
     const dd = config.system.discovery_depth;
     if (dd !== undefined && dd !== null) {
-      if (typeof dd !== 'number' || dd < 1 || dd > 5 || !Number.isInteger(dd)) {
-        errors.push(`system.discovery_depth: must be integer 1-5, got ${dd}`);
+      if (typeof dd !== 'number' || dd < 0 || dd > 5 || !Number.isInteger(dd)) {
+        errors.push(`system.discovery_depth: must be integer 0-5, got ${dd}`);
       }
     }
     const del = config.system.default_delivery;
