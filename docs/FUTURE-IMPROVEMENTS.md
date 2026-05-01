@@ -1,7 +1,7 @@
 # Forge V2 — Future Improvement Reference
 
-Last updated: 2026-04-27
-Status: 9 of 26 items implemented. 17 remaining.
+Last updated: 2026-05-01
+Status: 9 of 29 items implemented. 20 remaining.
 
 ---
 
@@ -390,7 +390,152 @@ Programmatic: require('forge-system/contract-verifier').{verifyContracts, parseC
 
 ---
 
+## Category 9: Patterns & Deterministic Verification
+
+### 9a. Patterns Library + Detector Integration (POC) [P1]
+
+**Hypothesis:** When agents have access to (a) explicit architectural patterns with structured selection criteria, (b) compositional relationships between patterns, and (c) deterministic Semgrep detectors that verify pattern compliance, the resulting architecture is measurably more disciplined than what agents produce from training data alone.
+
+**Scope:** Five patterns, 10-15 detectors, one new engine layer, architect agent retrieval. Run against e2e simulation and compare with/without patterns.
+
+**Five patterns (chosen for layer coverage + known pitfalls):**
+1. **Repository** (Fowler PoEAA) — data access abstraction. Detectors: no business logic, no HTTP calls, no raw SQL in repos
+2. **Service Layer** (Fowler PoEAA) — business logic isolation. Detectors: routes don't access DB directly, services handle authorization
+3. **API Gateway** (microservices.io) — gateway-level concerns. Detectors: services don't implement rate limiting individually, services don't validate JWT when gateway is declared
+4. **Database per Service** (microservices.io) — data ownership. Detectors: no cross-service DB imports, no shared connection strings
+5. **Transactional Outbox** (microservices.io) — event reliability. Detectors: no publish before commit, no publish in same transaction without outbox table
+
+**Pattern schema:** YAML files at `.forge/patterns/<pattern-id>.yaml` with:
+- `id`, `name`, `source` (attribution)
+- `applies_to`: workload_types, tech_stacks, scale
+- `context`, `problem`, `solution` (abstract + module_layout + per_stack hints)
+- `forces` (tradeoffs with severity)
+- `related_patterns`: works_with, conflicts_with, often_paired_with
+- `detectors`: list of {id, description, type: semgrep, rule_path, severity}
+
+**Detector format:** Semgrep YAML rules at `.forge/patterns/detectors/<pattern-id>/*.yaml`. Each rule includes `metadata.pattern_id` and `metadata.detector_id` linking back to the pattern.
+
+**New engine layer:** `ARCHITECTURE` (Layer 9 — between CONTRACT and SEMANTIC). Reads `applied_patterns` from ARCHITECTURE.md frontmatter, loads pattern YAMLs, runs Semgrep detectors against plan artifacts. Pass if zero violations.
+
+**Architect agent integration:** When `.forge/patterns/` exists, factory injects "## Available Patterns" section into architect prompt (~1500 tokens for 5 patterns). Architect declares `applied_patterns: [...]` in ARCHITECTURE.md frontmatter.
+
+**CLI:** `forge-tools verify architecture [--plan PATH] [--raw]` — standalone pattern compliance check.
+
+**Dependencies:** Semgrep CLI (system dependency, invoked via child_process.spawn).
+
+**POC success criteria:**
+- Architect declares 2+ applied_patterns in ARCHITECTURE.md
+- Detectors produce non-trivial output (some violations caught OR clean output verifiable as correct)
+- With-patterns vs without-patterns comparison shows measurable difference (more deliberate selection, fewer violations, more cited reasoning)
+
+**POC failure criteria:**
+- Agent ignores patterns library (same output with/without)
+- Detectors find zero violations regardless of code quality (rules too weak)
+- Detectors find violations on every plan (rules too aggressive)
+- >2x cost increase without quality improvement
+
+**Implementation plan (7 steps):**
+
+1. **Schema + library content** (~2 days)
+   - 5 YAML pattern files following the schema
+   - Per-stack hints for Python+SQLAlchemy and TypeScript+Prisma
+   - Validate YAML parseable
+
+2. **Detector files** (~2 days)
+   - 10-15 Semgrep YAML rules
+   - Test each against synthetic violating + non-violating fixtures
+   - Test fixtures at `tests/fixtures/architecture/`
+
+3. **Engine layer** (~1 day)
+   - New file: `forge-verify/architecture-layer.js`
+   - Wire into engine.js verify() between CONTRACT and SEMANTIC
+   - Config: `verification.layers.architecture: true`
+   - Skip conditions: no ARCHITECTURE.md, no applied_patterns, no Semgrep
+
+4. **CLI command** (~0.5 day)
+   - `cmdVerifyArchitecture` in verify.cjs
+   - Wire into forge-tools.cjs
+
+5. **Architect agent prompt** (~0.5 day)
+   - Modify factory.js to load patterns and inject "## Available Patterns" section
+   - Architect grilling prompt addition: "cite which forces drove the decision"
+   - ARCHITECTURE.md frontmatter: `applied_patterns: [pattern-id, ...]`
+
+6. **Tests** (~1 day)
+   - 12-15 tests: layer skip, fail, pass, schema validation, detector loading
+   - Test fixtures: violating + correct code samples
+
+7. **Documentation + report** (~0.5 day)
+   - `docs/PATTERNS-LIBRARY.md`: schema ref, how to extend, limitations
+   - `docs/PATTERNS-POC-REPORT.md`: comparison test results, hypothesis verdict
+
+**Total: ~7-8 days**
+
+**What this POC does NOT include:**
+- Full 130+ pattern library
+- Embedding/vector RAG retrieval
+- Compositional rule enforcement (related_patterns logic)
+- Amendment learning loop
+- Multi-org publishing
+- Cross-language beyond Python/TypeScript
+- Cross-cutting concerns (logging, error envelope, observability)
+- Coupling to constitution layer
+
+Research: `research/architecture-and-scale.md`, `research/grill-me-skills.md`
+
+**Files to create:**
+- `.forge/patterns/*.yaml` (5 pattern files)
+- `.forge/patterns/detectors/<pattern-id>/*.yaml` (10-15 detector files)
+- `forge-verify/architecture-layer.js`
+- `tests/architecture-layer.test.cjs`
+- `tests/fixtures/architecture/*` (5-10 fixture files)
+- `docs/PATTERNS-LIBRARY.md`
+
+**Files to modify:**
+- `forge-verify/engine.js` (add layer invocation)
+- `forge-config/config.js` (add ARCHITECTURE to layers)
+- `forge-agents/factory.js` (inject patterns into prompt)
+- `atos-forge/bin/lib/verify.cjs` (add cmdVerifyArchitecture)
+- `atos-forge/bin/forge-tools.cjs` (wire command)
+
+---
+
+### 9b. Full Patterns Library (post-POC) [P3]
+
+Scale from 5 to 130+ patterns if POC validates hypothesis. Includes:
+- Embedding/vector RAG for pattern retrieval at scale
+- Compositional rule enforcement (related_patterns logic)
+- Amendment learning loop (agents suggest pattern modifications)
+- Multi-org pattern publishing and sharing
+- Cross-language detector coverage (Java, Go, Rust, C#)
+- Cross-cutting concern patterns (logging, error handling, observability)
+
+**Prerequisite:** 9a POC must validate hypothesis first.
+
+---
+
+### 9c. Constitutional Enforcement Layer [P2]
+
+Deterministic verification layer that greps for constitution violations. The constitution rules are mostly grep-able:
+- No SHA-256/MD5 for passwords → pattern match in auth code
+- No localStorage for tokens → pattern match in client code
+- No string concatenation in SQL → pattern match in DB code
+- No @ts-ignore without documented reason → pattern match
+
+Each constitution rule gets a Semgrep or regex detector. Engine layer fails on match. This is the deterministic enforcement the audit identified as missing — constitution currently lives only in the prompt, not in verification.
+
+**Integration:** Could share infrastructure with 9a (Semgrep-based detectors). Build after POC validates the detector approach.
+
+---
+
 ## Priority Summary
+
+| Priority | Items | Status |
+|----------|-------|--------|
+| P1 | 1a (Cost tracking), 4a (MCP server), **9a (Patterns Library POC)** | Not started |
+| P2 | 1b (Model routing), 3c (AC compiler), 6a (Audit trail), 7b (ADRs), 7c (Fitness functions), 8b (Semantic search), 8c (Method-level impact), **9c (Constitutional enforcement)** | Not started |
+| P3 | 2c (Tech debt), 4b (Dashboard), 4c (Notifications), 5a (Cross-project), 5b (Patterns), 5c (Anti-patterns), 6b (Multi-team), 6c (Approvals), **9b (Full patterns library)** | Not started |
+| Done | 1c (Regression), 2a (Mutation), 2b (Coverage), 3a (Conflict detection), 3b (Req impact), 7a (Architecture phase), 8a (Code entropy), 8d (Shared language), 8e (Contract governance) | ✅ Implemented |
 
 | Priority | Items | Status |
 |----------|-------|--------|
